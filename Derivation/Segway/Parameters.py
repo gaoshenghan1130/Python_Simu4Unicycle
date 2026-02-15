@@ -7,4 +7,8 @@ class Parameters:
         self.I = self.m * self.h**2
         self.g = 9.81
 
+        self.v_desired = 1.0
+        self.gamma_desired = 0.0
+        self.s_desired = 0.0
+
 params = Parameters()
