@@ -6,13 +6,15 @@ class Model1:
     def __init__(self):
         # Main equation: Z' = A Z + B M, where Z = [x, x', gamma, gamma']^T
         m = params.m
+        m_w = params.m_w
         h = params.h
         I = params.I
+        I_w = params.I_w
         g = params.g
         R = params.R
 
         # Linearized mass matrix at equilibrium on the left-hand side
-        M0 = np.array([[m, m * h], [m * h, m * h**2 + I]])
+        M0 = np.array([[m + m_w + I_w / R**2, m * h], [m * h, m * h**2 + I ]])
 
         N = np.linalg.inv(M0)  # to move it to the right-hand side
 
