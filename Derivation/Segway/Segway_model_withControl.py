@@ -1,4 +1,4 @@
-from Segway_model2 import Model2
+from Segway_model import Model
 import numpy as np
 from Parameters import params
 from scipy.integrate import solve_ivp
@@ -10,7 +10,7 @@ class Mode(Enum):
     VELOCITY= auto()
     POSITION = auto()
 
-class ModelWithControl(Model2):
+class ModelWithControl(Model):
     def __init__(self):
         super().__init__()
 

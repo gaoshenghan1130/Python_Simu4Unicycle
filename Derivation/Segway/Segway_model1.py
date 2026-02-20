@@ -1,7 +1,8 @@
 from Parameters import params
+from typing_extensions import deprecated
 import numpy as np
 
-
+@deprecated("Model1 is incorrect, the sign of the gravity term is wrongly calculated. Please use Model instead.")
 class Model1:
     def __init__(self):
         # Main equation: Z' = A Z + B M, where Z = [x, x', gamma, gamma']^T
@@ -45,5 +46,5 @@ class Model1:
         z = np.asarray(z)
         return self.A @ z + self.B[:, 0] * M
 
-
-Segway_model1 = Model1()  # Light singleton pattern
+    
+# Segway_model1 = Model1()  # Light singleton pattern, deprecated, please use Model instead.
