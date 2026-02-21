@@ -14,18 +14,5 @@ conda env create -f Setup/environment.yml
 
 ### Segway
 
-[Segway Details](Derivation/Segway/Segway.ipynb)
+- For Segway Linear Model with PD control [Details](Derivation/Segway/Segway.ipynb)
 
-The following is the results of the modeling for Segway:
-
-- Balance mode:
-
-![Balance mode](Asset/static/Balance_seg.png)
-
-- Velocity mode:
-
-![Velocity mode](Asset/static/Vel_seg.png)
-
-- Position mode:
-
-![Position mode](Asset/static/Pos_seg.png)

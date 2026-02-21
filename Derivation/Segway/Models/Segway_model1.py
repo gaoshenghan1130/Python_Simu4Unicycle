@@ -1,8 +1,11 @@
 from Parameters import params
 from typing_extensions import deprecated
 import numpy as np
+from Factories import register_model
+from Config import MODEL_T
 
 @deprecated("Model1 is incorrect, the sign of the gravity term is wrongly calculated. Please use Model instead.")
+@register_model(MODEL_T.MODEL1)
 class Model1:
     def __init__(self):
         # Main equation: Z' = A Z + B M, where Z = [x, x', gamma, gamma']^T
@@ -10,12 +13,11 @@ class Model1:
         m_w = params.m_w
         h = params.h
         I = params.I
-        I_w = params.I_w
         g = params.g
         R = params.R
 
         # Linearized mass matrix at equilibrium on the left-hand side
-        M0 = np.array([[m + m_w + I_w / R**2, m * h], [m * h, m * h**2 + I ]])
+        M0 = np.array([[m + m_w / R**2, m * h], [m * h, m * h**2 + I ]])
 
         N = np.linalg.inv(M0)  # to move it to the right-hand side
 
@@ -45,6 +47,3 @@ class Model1:
     def state_space(self, z, M) -> np.ndarray:
         z = np.asarray(z)
         return self.A @ z + self.B[:, 0] * M
-
-    
-# Segway_model1 = Model1()  # Light singleton pattern, deprecated, please use Model instead.

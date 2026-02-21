@@ -1,7 +1,10 @@
 from Parameters import params
 import numpy as np
+from typing_extensions import override
+from Factories import register_model
+from Config import MODEL_T
 
-
+@register_model(MODEL_T.LINEAR)
 class Model:
     def __init__(self):
         # Main equation: Z' = A Z + B M, where Z = [x, x', gamma, gamma']^T
@@ -9,12 +12,11 @@ class Model:
         m_w = params.m_w
         h = params.h
         I = params.I
-        I_w = params.I_w
         g = params.g
         R = params.R
 
         # Linearized mass matrix at equilibrium on the left-hand side
-        M0 = np.array([[m + m_w + I_w / R**2, m * h], [m * h, m * h**2 + I ]])
+        M0 = np.array([[m + m_w / R**2, m * h], [m * h, m * h**2 + I ]])
 
         N = np.linalg.inv(M0)  # to move it to the right-hand side
 
@@ -60,5 +62,3 @@ class Model:
         z = np.asarray(z)
         return self.A @ z + self.B[:, 0] * M
 
-
-Segway_model = Model()  # Light singleton pattern

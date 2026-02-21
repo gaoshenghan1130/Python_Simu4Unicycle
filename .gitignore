@@ -1,0 +1,10 @@
+*/__pycache__/*
+*/*/__pycache__/*
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+dist
+build
+
+.DS_Store

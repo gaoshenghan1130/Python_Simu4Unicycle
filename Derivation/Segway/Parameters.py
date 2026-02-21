@@ -5,8 +5,7 @@ class Parameters:
         self.m_w = 4
         self.h = 0.2
         self.R = 0.5
-        self.I = self.m * self.h * self.h # Assuming the body is a rod pivoting at one end
-        self.I_w = 0.5 * self.m_w * self.R * self.R # Assuming the wheel is a solid disk
+        self.I = self.m * self.h * self.h # Assuming the body is a rod pivoting at one end 
         self.g = 9.81
 
         self.v_desired = 1.0
