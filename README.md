@@ -1,6 +1,6 @@
 # Matlab_Simu4Unicycle
 
-This respository provides a model for the control equations of a unicycle.
+This respository provides a model for of a unicycle.
 
 # Environment
 

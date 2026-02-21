@@ -9,7 +9,7 @@ class Controller_Factory:
     def create_controller(controller_type: CONTROL_STRATEGY, control_mode: CONTROL_MODE) -> "Controller":
         controller_class = _CONTROLLER_REGISTRY.get(controller_type)
         if controller_class is None:
-            raise ValueError(f"No controller registered for type: {controller_type}, please use @register_controller decorater to register the controller class first.")
+            raise ValueError(f"No controller registered for type: {controller_type}, please use @register_controller decorater to register the controller class first. And remember to import the controller class in Controllers/__init__.py")
         
         # Controller should not have any required parameters in the constructor
         return controller_class(control_mode)

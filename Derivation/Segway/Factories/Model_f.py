@@ -11,7 +11,7 @@ class Model_Factory:
     def create_model(model_type: MODEL_T) -> "Model":
         model_class = _MODEL_REGISTRY.get(model_type)
         if model_class is None:
-            raise ValueError(f"No model registered for type: {model_type}, please use @register_model decorater to register the model class first.")
+            raise ValueError(f"No model registered for type: {model_type}, please use @register_model decorater to register the model class first. And remember to import the model class in Models/__init__.py")
         
         # Model should not have any required parameters in the constructor
         return model_class()

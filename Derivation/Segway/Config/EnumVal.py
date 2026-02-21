@@ -1,19 +1,22 @@
-from enum import Enum
+from enum import Enum, auto
 
 
 class MODEL_T(int, Enum):
-    LINEAR = 1 # base
-    NONLINEAR = 2
-    MODEL1 = 3
-    MODEL2 = 4
+    LINEAR = auto()  # base
+    NONLINEAR = auto()
+    NONLINEAR_DAMP = auto()
+    NONLINEAR_DAMP_SMOOTHER = auto()
+    MODEL1 = auto()
+    MODEL2 = auto()
 
 
 class CONTROL_MODE(int, Enum):
-    BALANCE = 1
-    VELOCITY = 2
-    POSITION = 3
+    BALANCE = auto()  # base
+    VELOCITY = auto()
+    POSITION = auto()
 
 
 class CONTROL_STRATEGY(int, Enum):
-    PD = 1 # base
-    LQR = 2
+    PD = auto()  # base
+    PID = auto()
+    LQR = auto()

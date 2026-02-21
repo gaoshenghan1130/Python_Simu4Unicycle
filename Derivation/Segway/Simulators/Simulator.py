@@ -7,18 +7,22 @@ from Controllers import Controller
 
 
 class Simulator:
-    def __init__(self, model: Model, controller : Controller):
+    def __init__(self, model: Model, controller : Controller, record_Torque=False):
         self.model = model
         self.controller = controller
         self.sol = None
+        self.record_Torque = record_Torque
+        self.torque_history = []
 
     def close_loop_dynamics(self, t, z, desired_gamma, desired_velocity, desired_position):
-        M = self.controller.control_law(z, desired_gamma, desired_velocity, desired_position) # Get torque
-        dzdt = self.model.state_space(z, M,) # Get state derivatives
+        M = self.controller.control_law(z = z, t = t, desired_gamma = desired_gamma, desired_velocity = desired_velocity, desired_position = desired_position) # Get torque
+        dzdt = self.model.state_space(z, M) # Get state derivatives
+        if self.record_Torque:
+            self.torque_history.append((t, M))
         return dzdt
 
     def simulate(self, z0, t_span, t_eval, desired_gamma, desired_velocity, desired_position):
-        sol = solve_ivp(lambda t, z: self.close_loop_dynamics(t, z, desired_gamma, desired_velocity, desired_position), t_span, z0, t_eval=t_eval)
+        sol = solve_ivp(lambda t, z: self.close_loop_dynamics(z=z, t=t, desired_gamma=desired_gamma, desired_velocity=desired_velocity, desired_position=desired_position), t_span, z0, t_eval=t_eval)
         self.sol = sol
 
     def plot_results(self):
@@ -43,15 +47,25 @@ class Simulator:
         plt.legend()
         plt.grid()
 
+        if self.record_Torque:
+            plt.figure(figsize=(12, 4))
+            torque_times, torques = zip(*self.torque_history)
+            plt.plot(torque_times, torques, label='Control Torque (M)')
+            plt.title('Control Torque Over Time')
+            plt.xlabel('Time (s)')
+            plt.ylabel('Torque (N*m)')
+            plt.legend()
+            plt.grid()
+
         plt.tight_layout()
         plt.show()
 
     @staticmethod
-    def create_simulator(model_type: MODEL_T, control_strategy: CONTROL_STRATEGY, control_mode: CONTROL_MODE)-> "Simulator":
+    def create_simulator(model_type: MODEL_T, control_strategy: CONTROL_STRATEGY, control_mode: CONTROL_MODE, record_Torque=False)-> "Simulator":
         # create model and controller instances using the factory
         from Factories import Model_Factory, Controller_Factory
         model = Model_Factory.create_model(model_type)
         controller = Controller_Factory.create_controller(control_strategy, control_mode)
         
         # create simulator instance
-        return Simulator(model, controller)
+        return Simulator(model, controller, record_Torque=record_Torque)
