@@ -18,3 +18,5 @@ conda env create -f Setup/environment.yml
 
 - For Segway Nonlinear Model with PD control [Details](Derivation/Segway/Segway_nonLinear.ipynb)
 
+- For Segway Nonlinear Model with Motor Damping, applied PD and PID control [Details](Derivation/Segway/Segway_motorDamping.ipynb)
+
