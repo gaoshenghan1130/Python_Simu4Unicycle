@@ -28,7 +28,7 @@ class Model_nonLinear(Model):
 
         # Mass matrix on the left-hand side
         M_matrix = np.array(
-            [[m + m_w, m * h * np.cos(gamma)], [m * h * np.cos(gamma), m * h**2 + I]]
+            [[m + m_w, m * h * np.cos(gamma)], [m * h * np.cos(gamma), m * h**2 ]]
         )
 
         N = np.linalg.inv(M_matrix)  # to move it to the right-hand side

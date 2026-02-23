@@ -16,7 +16,7 @@ class Model:
         R = params.R
 
         # Linearized mass matrix at equilibrium on the left-hand side
-        M0 = np.array([[m + m_w / R**2, m * h], [m * h, m * h**2 + I ]])
+        M0 = np.array([[m + m_w / R**2, m * h], [m * h, m * h**2 ]])
 
         N = np.linalg.inv(M0)  # to move it to the right-hand side
 
