@@ -3,7 +3,7 @@ class Parameters:
         # All in SI units
         self.m = 3
         self.m_w = 4
-        self.h = 0.2
+        self.h = 0.1
         self.R = 0.5
         self.I = self.m * self.h * self.h # Assuming the body is a rod pivoting at one end 
         self.g = 9.81
