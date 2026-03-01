@@ -22,7 +22,6 @@ class Model_nonLinear(Model):
         m = params.m
         m_w = params.m_w
         h = params.h
-        I = params.I
         g = params.g
         R = params.R
 

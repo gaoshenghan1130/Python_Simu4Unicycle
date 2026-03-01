@@ -12,7 +12,7 @@ class Controller:
     def control_law(
         self,
         z,
-        t, # for time difference calculation in the future if needed
+        t,  # for time difference calculation in the future if needed
         desired_gamma=0.0,
         desired_velocity=0.0,
         desired_position=0.0,
