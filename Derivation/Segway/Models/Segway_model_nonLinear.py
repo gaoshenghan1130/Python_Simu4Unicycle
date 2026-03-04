@@ -20,7 +20,7 @@ class Model_nonLinear(Model):
 
         x, x_dot, gamma, gamma_dot = _z
         m = params.m
-        m_w = params.m_w
+        m_w = params.m_w * 1.5 # add moment of inertia to the wheel
         h = params.h
         g = params.g
         R = params.R
