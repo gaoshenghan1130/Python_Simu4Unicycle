@@ -26,7 +26,7 @@ class Model_motorDamp(Model_nonLinear):
             )
 
         x, x_dot, gamma, gamma_dot = _z
-        m = params.m
+        m = params.m + 1/12 * (params.h_b**2 + params.w_b**2) / params.R**2  # add moment of inertia of the pendulum to the mass
         m_w = params.m_w * 1.5  # add moment of inertia to the wheel
         h = params.h
         g = params.g
