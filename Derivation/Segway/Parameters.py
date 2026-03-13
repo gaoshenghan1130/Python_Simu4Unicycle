@@ -8,12 +8,15 @@ class Parameters:
         self.I = 0.0
         self.g = 9.81
 
+        self.w_b = 0.1
+        self.h_b = 0.05
+
         self.v_desired = 1.0
         self.gamma_desired = 0.0
         self.s_desired = 0.0
 
         # for motor damping
-        self.B = 0
+        self.B = 0.306
         self.B_0 = 0
         self.K_tandamp = 10.0  # for smoothing the damping torque
 
