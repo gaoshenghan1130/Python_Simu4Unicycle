@@ -2,7 +2,7 @@ class Parameters:
     def __init__(self):
         # All in SI units
         self.m = 1 # pendulum mass
-        self.m_w = 1.5 # wheel mass
+        self.m_w = 1.5 # wheel mass 3.06 for real
         self.h = 0.1 # pendulum length(distance between the center of mass of the wheel and the center of mass of the pendulum)
         self.R = 0.25 # radius of the wheel
         self.I = 0.0 # moment of inertia of the wheel, not used now because currently it is calculated with equivalent point mass

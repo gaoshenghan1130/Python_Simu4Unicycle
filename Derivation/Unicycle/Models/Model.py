@@ -19,7 +19,7 @@ class UnicycleModel:
 
         args = q_u + controls + phys_params # To combine all the params together for function evaluation
 
-        print(f"Evaluating M and f at t={t:.2f}, state={state}, controls={u_input}, params={params}")
+        # print(f"Evaluating M and f at t={t:.2f}, state={state}, controls={u_input}, params={params}")
 
         M_eval = self.M(*args)
         f_eval = self.f(*args)
