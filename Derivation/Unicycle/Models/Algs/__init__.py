@@ -1,4 +1,4 @@
-from Algs.Kane import kaneDerivation
-from Algs.Derivation import Derivation
+from Models.Algs.Kane import KaneDerivation
+from Models.Algs.Derivation import Derivation
 
-__all__ = ["kaneDerivation", "Derivation"]
+__all__ = ["KaneDerivation", "Derivation"]
