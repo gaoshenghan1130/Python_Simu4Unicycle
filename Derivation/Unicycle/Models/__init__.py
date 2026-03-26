@@ -1,4 +1,4 @@
 from Models.Model import UnicycleModel
-from Models.GetDynamics import GetDynamics
+from Models import GetDynamics, Register, Algs
 
-__all__ = ['UnicycleModel', 'GetDynamics']
+__all__ = ['UnicycleModel', 'GetDynamics', 'Register', 'Algs']
