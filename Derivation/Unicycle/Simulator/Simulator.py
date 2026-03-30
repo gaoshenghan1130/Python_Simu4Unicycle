@@ -1,7 +1,9 @@
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 from Models import UnicycleModel
-from Config import MODEL_T
+from Controllers import Controller, get_controller
+from typing import Optional
+from Config import CONTROL_T, CONTROL_MODE_T
 
 
 class Simulator:
@@ -26,8 +28,8 @@ class Simulator:
         if compare:
             self.sol2 = None  # used to comparing two different simulations
 
-    def _ode_wrapper(self, t, state, model: UnicycleModel, controller):
-        u_input = controller(t, state)  # get control input from the controller function
+    def _ode_wrapper(self, t, state, model: UnicycleModel, controller:Controller):
+        u_input = controller.compute_control(t, state)  # get control input from the controller function
 
         return model.get_equations_of_motion(t, state, u_input, self.params)
 
@@ -36,14 +38,14 @@ class Simulator:
         x0,
         t_span,
         t_eval,
-        controller=None,
+        controller: Optional[Controller] = None,
         x0_2=None,
         t_span_2=None,
         t_eval_2=None,
-        controller_2=None,
+        controller_2: Optional[Controller] = None,
     ):
         if controller is None:
-            controller = lambda t, s: {"T_W": 0.0, "F_L": 0.0}
+            controller = get_controller(CONTROL_T.EMPTY, CONTROL_MODE_T.POSITION)
 
         sol = solve_ivp(
             fun=self._ode_wrapper,
@@ -63,7 +65,7 @@ class Simulator:
                     "For comparison, x0_2, t_span_2, and t_eval_2 must be provided."
                 )
             if controller_2 is None:
-                controller_2 = lambda t, s: {"T_W": 0.0, "F_L": 0.0}
+                controller_2 = get_controller(CONTROL_T.EMPTY, CONTROL_MODE_T.POSITION)
             sol2 = solve_ivp(
                 fun=self._ode_wrapper,
                 t_span=t_span_2,
