@@ -1,7 +1,7 @@
 import re
 import csv
 import io
-from Phaser.advancedPhaser import getvel, sgFilter, setInit2Zero, butterLowpassFilter
+from Phaser.advancedPhaser import getvel, sgFilter, setInit2Zero, butterLowpassFilter, polyFitFilter, splineFitFilter
 
 
 def phaseMojucoData(file_path):
@@ -114,7 +114,12 @@ def parse_mixed_csv(file_path):
         # for i in range(10,200):
         #     segment['data'] = sgFilter(segment['data'], window_size=i, columnIndex=3)
 
-        segment['data'] = butterLowpassFilter(segment['data'], cutoff=5, fs=100, order=4, columnIndex=3)
+        #segment['data'] = butterLowpassFilter(segment['data'], cutoff=5, fs=100, order=4, columnIndex=3)
+         
+        #segment['data'] = sgFilter(segment['data'], window_size=20, columnIndex=3)
+
+
+        segment['data'] = splineFitFilter(segment['data'], s=0.1, columnIndex=3)
 
 
         segment['data'] = getvel(segment['data'])
@@ -122,7 +127,7 @@ def parse_mixed_csv(file_path):
 
        # segment['data'] = sgFilter(segment['data'], window_size=20, columnIndex=4)
 
-        # 4. 归零
+        #set initial velocity to zero
         segment['data'] = setInit2Zero(segment['data'])
 
     return mode_segments

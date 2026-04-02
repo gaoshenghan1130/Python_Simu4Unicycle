@@ -42,4 +42,4 @@ if __name__ == "__main__":
     if all_position_data['Real'] is not None and all_position_data['Math'] is not None and all_position_data['Mujoco'] is not None:
         plot_comparison(all_position_data, output_file='position_comparison.png')
     if all_velocity_data['Real'] is not None and all_velocity_data['Math'] is not None and all_velocity_data['Mujoco'] is not None:
-        plot_comparison(all_velocity_data, output_file='velocity_comparison.png', isvelocity= False)
+        plot_comparison(all_velocity_data, output_file='velocity_comparison.png', isvelocity= True)
