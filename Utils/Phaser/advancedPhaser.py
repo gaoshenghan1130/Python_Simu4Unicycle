@@ -1,6 +1,37 @@
 from scipy.signal import savgol_filter
 import numpy as np
 from scipy.signal import butter, filtfilt
+from scipy.interpolate import UnivariateSpline
+
+def splineFitFilter(data, s=0.05, columnIndex=3):
+    """
+    s (smoothing factor): 关键参数！
+    s 越大，曲线越平滑（越不看重原始坑洼）；
+    s 越小，曲线越贴合原始阶梯。
+    """
+    ndata = np.array(data, dtype=float)
+    x = ndata[:, 0]  # 时间轴
+    y = ndata[:, columnIndex] # 目标数据
+    
+    # 样条拟合：s 是平滑因子。针对你图中的量级（0.2-0.8），s 设为 0.05-0.2 比较合适
+    spl = UnivariateSpline(x, y, s=s)
+    
+    y_smooth = spl(x)
+    
+    ndata[:, columnIndex] = y_smooth
+    return ndata.tolist()
+
+def polyFitFilter(data, degree=12, columnIndex=3):
+    ndata = np.array(data, dtype=float)
+    y = ndata[:, columnIndex]
+    x = ndata[:, 0]  # the first column is time, which we can use as x-axis for fitting
+    
+    coeffs = np.polyfit(x, y, degree)
+    
+    y_smooth = np.polyval(coeffs, x)
+    
+    ndata[:, columnIndex] = y_smooth
+    return ndata.tolist()
 
 def butterLowpassFilter(data, cutoff=2.0, fs=100, order=2, columnIndex=3):
     ndata = np.array(data, dtype=float)
@@ -10,7 +41,6 @@ def butterLowpassFilter(data, cutoff=2.0, fs=100, order=2, columnIndex=3):
     normal_cutoff = cutoff / nyquist
     b, a = butter(order, normal_cutoff, btype='low', analog=False) # type: ignore
     
-    # 使用 filtfilt 是双向滤波，可以消除时间延迟（零相位偏移）
     x_smooth = filtfilt(b, a, x)
     
     ndata[:, columnIndex] = x_smooth
