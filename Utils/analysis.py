@@ -1,14 +1,16 @@
+import os
+from dotenv import load_dotenv
+
 from Phaser.phaseRawData import parse_mixed_csv, phaseMathData, phaseMojucoData
 from Plotters.multiploter import plot_comparison
 
-raw_data_path = r"c:\Users\labuser\Desktop\unicycle_project_umich\LOGS\ValidLogs\log_2026-04-01_14-20-46.533.csv"
+load_dotenv()
 
-math_position_data_path = r"c:\Users\labuser\Desktop\Matlab_Simu4Unicycle\Derivation\Segway\LOG\simulation_POSITION_Model_motorDamp_Controller.csv"
-math_velocity_data_path = r"c:\Users\labuser\Desktop\Matlab_Simu4Unicycle\Derivation\Segway\LOG\simulation_VELOCITY_Model_motorDamp_Controller.csv"
-
-mojuco_position_data_path = r"c:\Users\labuser\Desktop\Unicycle_Mujoco_Simulation\csv\mydata\position.csv"
-mojuco_velocity_data_path = r"c:\Users\labuser\Desktop\Unicycle_Mujoco_Simulation\csv\mydata\velocity.csv"
-
+raw_data_path = os.getenv("RAW_DATA_PATH")
+math_position_data_path = os.getenv("MATH_POS_PATH")
+math_velocity_data_path = os.getenv("MATH_VEL_PATH")
+mojuco_position_data_path = os.getenv("MUJOCO_POS_PATH")
+mojuco_velocity_data_path = os.getenv("MUJOCO_VEL_PATH")
 
 if __name__ == "__main__":
     real_parsed_data = parse_mixed_csv(raw_data_path)
