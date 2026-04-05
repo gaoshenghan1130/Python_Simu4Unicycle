@@ -1,19 +1,19 @@
 class Parameters:
     def __init__(self):
         # All in SI units
-        self.m = 1 # pendulum mass
-        self.m_w = 1.5 # wheel mass 3.06 for real
-        self.h = 0.1 # pendulum length(distance between the center of mass of the wheel and the center of mass of the pendulum)
-        self.R = 0.25 # radius of the wheel
+        self.m = 0.7 # pendulum mass
+        self.m_w = 3.06 # wheel mass 3.06 for real
+        self.h = 0.18 # pendulum length(distance between the center of mass of the wheel and the center of mass of the pendulum)
+        self.R = 0.2527 # radius of the wheel
         self.I = 0.0 # moment of inertia of the wheel, not used now because currently it is calculated with equivalent point mass
         self.g = 9.81
 
-        self.w_b = 0.1 # width of the pendulum body
-        self.h_b = 0.05 # height of the pendulum body
+        self.w_b = 0.1363 # width of the pendulum body
+        self.h_b = 0.0684 # height of the pendulum body
 
 
         ### This part will be override by the run_simulation() function always ######
-        self.v_desired = 1.0 # desired velocity of the segway
+        self.v_desired = 0.0 # desired velocity of the segway
         self.gamma_desired = 0.0 # desired angle of the pendulum, 0 means upright position
         self.s_desired = 0.0 # desired position of the segway,
         ##################################################################################
@@ -34,7 +34,7 @@ class Parameters:
         # for PD controller
         self.K_gamma = 3.0
         self.K_dgamma = 0.8
-        self.K_velocity = 4.0
+        self.K_velocity = 3.3
         self.K_position = 2
 
         # for PID controller, used only when declared using PID in run_simulation()

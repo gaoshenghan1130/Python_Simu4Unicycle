@@ -4,16 +4,10 @@ from scipy.signal import butter, filtfilt
 from scipy.interpolate import UnivariateSpline
 
 def splineFitFilter(data, s=0.05, columnIndex=3):
-    """
-    s (smoothing factor): 关键参数！
-    s 越大，曲线越平滑（越不看重原始坑洼）；
-    s 越小，曲线越贴合原始阶梯。
-    """
     ndata = np.array(data, dtype=float)
-    x = ndata[:, 0]  # 时间轴
-    y = ndata[:, columnIndex] # 目标数据
+    x = ndata[:, 0] 
+    y = ndata[:, columnIndex]
     
-    # 样条拟合：s 是平滑因子。针对你图中的量级（0.2-0.8），s 设为 0.05-0.2 比较合适
     spl = UnivariateSpline(x, y, s=s)
     
     y_smooth = spl(x)
