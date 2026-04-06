@@ -2,6 +2,7 @@ from Models.Segway_model import Model
 from Models.Segway_model_nonLinear import Model_nonLinear
 from Models.Segway_model_motorDamp import Model_motorDamp
 from Models.Segway_model_motorDamp_Smoother import Model_motorDamp_Smoother
+from Models.Segway_model_rollingResistance import Model_rollingResistance
 from Models.Segway_model1 import Model1
 from Models.Segway_model2 import Model2
 
