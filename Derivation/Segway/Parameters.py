@@ -5,7 +5,7 @@ class Parameters:
         self.m_w = 3.06 # wheel mass 3.06 for real
         self.h = 0.18 # pendulum length(distance between the center of mass of the wheel and the center of mass of the pendulum)
         self.R = 0.2527 # radius of the wheel
-        self.I = 0.0 # moment of inertia of the wheel, not used now because currently it is calculated with equivalent point mass
+        self.I = 0.1045709321 # moment of inertia of the wheel, I_yy
         self.g = 9.81
 
         self.w_b = 0.1363 # width of the pendulum body
@@ -26,7 +26,7 @@ class Parameters:
         self.K_tandamp = 10.0  # for smoothing the damping torque, only used in motorDamp_Smooth Model
 
         # for rolling resistance
-        self.mu_rolling = 0.048
+        self.mu_rolling = 0.0048
 
 
         ############################################################################
