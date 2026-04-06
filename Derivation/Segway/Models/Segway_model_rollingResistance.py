@@ -25,6 +25,7 @@ class Model_rollingResistance(Model_motorDamp):
         g = params.g
         R = params.R
         mu = params.mu_rolling
+        smooth_factor = params.smooth_factor
 
         M_matrix = np.array(
             [[m + m_w, m * h * np.cos(gamma)], [m * h * np.cos(gamma), m * h**2 ]]
@@ -38,12 +39,21 @@ class Model_rollingResistance(Model_motorDamp):
             x_dot / R - gamma_dot
         )  # omega = phi' - gamma' = x_dot/R - gamma_dot
 
-        x_ddot = N[0, 0] * ((M - T) / R - mu * (m + m_w) * g * np.sign(x_dot) / R + m * h * gamma_dot**2 * np.sin(gamma)) + N[
+        rollingResistance = mu * (m + m_w) * g * np.tanh(smooth_factor * x_dot) / R  # rolling resistance force
+
+        # if np.abs(x_dot) <= 0.005:  # if the wheel is almost stationary, we can assume no rolling resistance
+        #     rollingResistance = 0  # no rolling resistance if the wheel is not moving
+
+        #rollingResistance = mu * x_dot/R
+
+        print(f"Rolling Resistance: {rollingResistance:.4f} N")
+
+        x_ddot = N[0, 0] * ((M - T) / R - rollingResistance  + m * h * gamma_dot**2 * np.sin(gamma)) + N[
             0, 1
         ] * (-(M - T) + m * g * h * np.sin(gamma))
 
         gamma_ddot = N[1, 0] * (
-            (M - T) / R - mu * (m + m_w) * g * np.sign(x_dot) / R + m * h * gamma_dot**2 * np.sin(gamma)
+            (M - T) / R - rollingResistance + m * h * gamma_dot**2 * np.sin(gamma)
         ) + N[1, 1] * (-(M - T) + m * g * h * np.sin(gamma))
 
         return np.array([x_dot, x_ddot, gamma_dot, gamma_ddot])
