@@ -27,6 +27,7 @@ class Parameters:
 
         # for rolling resistance
         self.mu_rolling = 0.0048
+        self.smooth_factor = 1.2  # for smoothing the rolling resistance transition, with tanh
 
 
         ############################################################################
