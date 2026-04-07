@@ -2,6 +2,7 @@ from Simulators import Simulator
 from Factories import Model_Factory, Controller_Factory
 from Config import MODEL_T, CONTROL_STRATEGY, CONTROL_MODE
 import numpy as np
+from ParamTuners import paramTuner
 
 
 def run_simulation(
@@ -15,7 +16,8 @@ def run_simulation(
     controller_type: CONTROL_STRATEGY = CONTROL_STRATEGY.PD,
     plot_results=True,
     record_Torque=False,
-    export_CSV_flag=False
+    export_CSV_flag=False,
+    export2list = None
 ):
     # Create simulator instance using the factory method
     simulator = Simulator.create_simulator(model_type, controller_type, control_mode, record_Torque=record_Torque)
@@ -27,6 +29,8 @@ def run_simulation(
         simulator.plot_results()
     if export_CSV_flag:
         simulator.export_CSV()
+    if export2list is not None:
+        simulator.exportResult(export2list) # export to a list inside the code to avoid fileIO, faster theoretically
 
 
 def modelCheck(model_type: MODEL_T, initial_state, time_span):

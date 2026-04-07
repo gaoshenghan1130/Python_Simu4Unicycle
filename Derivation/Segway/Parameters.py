@@ -21,12 +21,12 @@ class Parameters:
         ######################## This part is used for damping #######################
         # for motor damping
         self.B = 0.306 #slop of damping
-        self.B_0 = 0 # damping at zero velocity, positive and negative values will be auto adjusted to make always oppose the motion(but is set to 0 now because it will cause occillations that can't be handled by the PD controller)
+        self.B_0 = 0.0 # damping at zero velocity, positive and negative values will be auto adjusted to make always oppose the motion(but is set to 0 now because it will cause occillations that can't be handled by the PD controller)
 
         self.K_tandamp = 10.0  # for smoothing the damping torque, only used in motorDamp_Smooth Model
 
         # for rolling resistance
-        self.mu_rolling = 0.0048
+        self.mu_rolling = 0.005
         self.smooth_factor = 1.2  # for smoothing the rolling resistance transition, with tanh
 
 
