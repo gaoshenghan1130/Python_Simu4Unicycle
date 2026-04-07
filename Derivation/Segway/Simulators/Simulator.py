@@ -52,6 +52,16 @@ class Simulator:
         )
         self.sol = sol
 
+    def exportResult(self, list):
+        list.clear() # clear the list before appending new results, to avoid confusion with previous results. The list is passed in as an argument, so it can be defined and used outside of this function as well.
+        if self.sol is None:
+            raise ValueError(
+                "No simulation results to export. Please run simulate() first."
+            )
+        for item in self.sol:
+            list.append(item)
+
+
     def plot_results(self):
         if self.sol is None:
             raise ValueError(
