@@ -1,6 +1,6 @@
 import numpy as np
 from Models.Segway_model_nonLinear import Model_nonLinear
-from typing import override
+from typing_extensions import override
 from Parameters import params
 from Factories import register_model
 from Config import MODEL_T

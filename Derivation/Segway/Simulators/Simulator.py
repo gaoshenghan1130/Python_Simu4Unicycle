@@ -58,8 +58,10 @@ class Simulator:
             raise ValueError(
                 "No simulation results to export. Please run simulate() first."
             )
-        for item in self.sol:
-            list.append(item)
+        combined_data = np.vstack((self.sol.t, self.sol.y)) # y is a 2D array [x_c, x_c_dot, gamma, gamma_dot], we want to combine it with time to export together
+    
+        for row in combined_data.tolist():
+            list.append(row)
 
 
     def plot_results(self):

@@ -1,6 +1,6 @@
 from Parameters import params
 import numpy as np
-from typing import override
+from typing_extensions import override
 from Models.Segway_model import Model
 from Factories import register_model
 from Config import MODEL_T

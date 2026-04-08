@@ -1,5 +1,5 @@
 from Models.Segway_model_motorDamp import Model_motorDamp
-from typing import override
+from typing_extensions import override
 from Factories import register_model
 from Config import MODEL_T
 from Parameters import params

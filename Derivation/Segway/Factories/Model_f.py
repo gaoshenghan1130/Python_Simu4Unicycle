@@ -1,5 +1,5 @@
 from Config import MODEL_T
-from typing import TYPE_CHECKING
+from typing_extensions import TYPE_CHECKING
 from Factories.registers import _MODEL_REGISTRY
 
 if TYPE_CHECKING:

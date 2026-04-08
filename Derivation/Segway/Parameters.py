@@ -44,6 +44,18 @@ class Parameters:
         self.posDeadZone = 0.005
         self.clip_integral = 1.0
 
+    def getParamsByName(self, name):
+        res = getattr(self, name, None)        
+        if res is None:
+            raise ValueError(f"Parameter {name} not found in Parameters class.")
+        return res
+    
+    def updateParams(self, new_params): # also by name
+        for k, v in new_params.items():
+            if hasattr(self, k):
+                setattr(self, k, v)
+            else:
+                raise ValueError(f"Parameter {k} not found in Parameters class.")
 
 params = Parameters()  # Light singleton pattern
 
