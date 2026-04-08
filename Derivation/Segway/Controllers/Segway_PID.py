@@ -3,7 +3,7 @@ from Parameters import params
 from Config import CONTROL_MODE, CONTROL_STRATEGY
 from Factories import register_controller
 from Controllers.Segway_Controller import Controller
-from typing import override, Optional
+from typing_extensions import override, Optional
 
 
 @register_controller(CONTROL_STRATEGY.PID)

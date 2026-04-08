@@ -2,7 +2,6 @@ from Simulators import Simulator
 from Factories import Model_Factory, Controller_Factory
 from Config import MODEL_T, CONTROL_STRATEGY, CONTROL_MODE
 import numpy as np
-from ParamTuners import paramTuner
 
 
 def run_simulation(

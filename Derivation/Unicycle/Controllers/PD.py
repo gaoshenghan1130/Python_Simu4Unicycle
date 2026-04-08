@@ -1,6 +1,6 @@
 from Config import CONTROL_T, CONTROL_MODE_T
 from Controllers.Register import register_control
-from typing import override
+from typing_extensions import override
 from Controllers import Controller
 
 

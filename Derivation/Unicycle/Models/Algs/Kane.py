@@ -13,7 +13,7 @@ from sympy import lambdify
 import numpy as np
 import dill
 from Models.Algs.Derivation import Derivation
-from typing import override
+from typing_extensions import override
 from Models.Register import register_model
 import os
 

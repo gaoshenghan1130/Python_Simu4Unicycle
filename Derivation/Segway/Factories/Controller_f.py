@@ -1,5 +1,5 @@
 from Config import CONTROL_STRATEGY, CONTROL_MODE
-from typing import TYPE_CHECKING
+from typing_extensions import TYPE_CHECKING
 from Factories.registers import _CONTROLLER_REGISTRY
 if TYPE_CHECKING:
     from Controllers import Controller
