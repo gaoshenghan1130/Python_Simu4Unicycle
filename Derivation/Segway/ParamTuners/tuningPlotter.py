@@ -10,6 +10,8 @@ class tuningPlotter:
         self.ax = None
         self.columnIndex = columnIndex
 
+        print("real_set example:", self.ax_real_set)  # Debug print to check the structure of real_set
+
     def start(self):
         print(f"Initialized tuningPlotter with topic: {self.topic}, ax_real_name: {self.ax_real_name}, ax_try_name: {self.ax_try_name}")
 
@@ -23,12 +25,12 @@ class tuningPlotter:
         self.ax.legend()
 
 
-    def update(self, ax_try_set, columnIndex=1):
+    def update(self, ax_try_set):
             if self.fig is None or self.ax is None:
                 raise ValueError("Plotter not initialized. Please call start() before update().")
             
             t_try = ax_try_set[0]  
-            v_try = ax_try_set[columnIndex] 
+            v_try = ax_try_set[self.columnIndex] 
 
             self.ax.clear()
 

@@ -3,6 +3,7 @@ import copy
 import math
 import random
 from typing import List
+from IPython import display  # 必须导入
 
 class ParamTuner:
     def __init__(self, param_dict, simulation, penaltyFunc):
@@ -10,12 +11,10 @@ class ParamTuner:
         self.simulation = simulation
         self.penaltyFunc = penaltyFunc
 
-    def perturb(self, params, scale=0.05):
+    def perturb(self, params, scale=0.1):
         new_params = copy.deepcopy(params)
         for k in new_params:
-            new_params[k] += torch.randn(1).item() * scale * (abs(params[k]) + 1e-6)  # in case 0 is met
-
-            #print(f"Perturbed {k}: {params[k]:.4f} -> {new_params[k]:.4f}")
+            new_params[k] += torch.randn(1).item() * scale * (abs(params[k]) + 1e-6)
         return new_params
 
     def _installParams(self, p_dict):
@@ -26,14 +25,17 @@ class ParamTuner:
         if new_score < old_score:
             return True
         else:
-            # exp(-(delta) / T)
             delta = new_score - old_score
+            # 避免 T 过小时出现除以 0 的错误
+            if temperature < 1e-10: return False 
             accept_prob = math.exp(-delta / temperature)
             return random.random() < accept_prob
 
     def tune(self, resultStorage: List[List[float]], max_iter=200, T=1.0, cooling=0.99, plotter=None):
         current_params = copy.deepcopy(self.param_dict)
         self._installParams(current_params)
+
+        print("initial params:", current_params)
         
         resultStorage.clear()
         self.simulation(resultStorage)
@@ -41,7 +43,6 @@ class ParamTuner:
 
         best_params = copy.deepcopy(current_params)
         best_score = current_score
-
         current_T = T
 
         for i in range(max_iter):
@@ -52,21 +53,32 @@ class ParamTuner:
             self.simulation(resultStorage)
             new_score = self.penaltyFunc(resultStorage)
 
+            # 模拟退火接受逻辑
             if self.acceptance(current_score, new_score, current_T):
                 current_params = copy.deepcopy(candidate)
                 current_score = new_score
-
-                #print(f"Better or Accepted new score: {new_score:.6f} at iteration {i}")
                 
                 if current_score < best_score:
                     best_score = current_score
                     best_params = copy.deepcopy(current_params)
-                    print(f"Iter {i}: New Best Score Found: {best_score:.6f}")
-                    print(f"Best Parameters: {best_params}")
-            current_T *= cooling
 
+                print(f"Iteration {i+1}/{max_iter}, Current Score: {current_score:.6f}, Best Score: {best_score:.6f}")
+            else:
+                pass
+
+            
+
+                
+
+            current_T *= cooling
+        
         if plotter is not None:
-            plotter.update(resultStorage)
+                    display.clear_output(wait=True)
+                    
+                    print(f"Best Score: {best_score:.6f}")
+                    print(f"Best Parameters: {best_params}")
+
+                    plotter.update(resultStorage)
 
         self.param_dict = best_params
         self._installParams(best_params)
