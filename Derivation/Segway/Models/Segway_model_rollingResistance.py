@@ -46,6 +46,7 @@ class Model_rollingResistance(Model_motorDamp):
 
         #rollingResistance = mu * x_dot/R
 
+
         # print(f"Rolling Resistance: {rollingResistance:.4f} N")
 
         x_ddot = N[0, 0] * ((M - T) / R - rollingResistance  + m * h * gamma_dot**2 * np.sin(gamma)) + N[
@@ -55,5 +56,8 @@ class Model_rollingResistance(Model_motorDamp):
         gamma_ddot = N[1, 0] * (
             (M - T) / R - rollingResistance + m * h * gamma_dot**2 * np.sin(gamma)
         ) + N[1, 1] * (-(M - T) + m * g * h * np.sin(gamma))
+
+        # print("gamma_ddot:", gamma_ddot)
+        # print("gamma_ddot * h * sin(gamma):", gamma_ddot * h * np.sin(gamma))
 
         return np.array([x_dot, x_ddot, gamma_dot, gamma_ddot])
