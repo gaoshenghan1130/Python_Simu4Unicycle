@@ -11,7 +11,7 @@ class ParamTuner:
         self.simulation = simulation
         self.penaltyFunc = penaltyFunc
 
-    def perturb(self, params, scale=0.1):
+    def perturb(self, params, scale=0.05):
         new_params = copy.deepcopy(params)
         for k in new_params:
             new_params[k] += torch.randn(1).item() * scale * (abs(params[k]) + 1e-6)
@@ -26,12 +26,11 @@ class ParamTuner:
             return True
         else:
             delta = new_score - old_score
-            # 避免 T 过小时出现除以 0 的错误
             if temperature < 1e-10: return False 
             accept_prob = math.exp(-delta / temperature)
             return random.random() < accept_prob
 
-    def tune(self, resultStorage: List[List[float]], max_iter=200, T=1.0, cooling=0.99, plotter=None):
+    def tune(self, resultStorage: List[List[float]], max_iter=200, T=0.1, cooling=0.99, plotter=None):
         current_params = copy.deepcopy(self.param_dict)
         self._installParams(current_params)
 
@@ -53,7 +52,6 @@ class ParamTuner:
             self.simulation(resultStorage)
             new_score = self.penaltyFunc(resultStorage)
 
-            # 模拟退火接受逻辑
             if self.acceptance(current_score, new_score, current_T):
                 current_params = copy.deepcopy(candidate)
                 current_score = new_score
