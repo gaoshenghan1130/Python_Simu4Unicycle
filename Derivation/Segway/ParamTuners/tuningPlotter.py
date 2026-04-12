@@ -1,4 +1,5 @@
 from matplotlib import pyplot as plt
+from typing import Dict, Tuple
 
 class tuningPlotter:
     def __init__(self, topic, ax_real_name, ax_try_name, ax_real_set, columnIndex):
@@ -18,7 +19,7 @@ class tuningPlotter:
         # plot the real data
         plt.ion()
         self.fig, self.ax = plt.subplots()
-        self.ax.plot(self.ax_real_set, label=self.ax_real_name)
+        self.plotRealData()  # Plot the real data first
         self.ax.set_title(self.topic)
         self.ax.set_xlabel("Time step")
         self.ax.set_ylabel("Value")
@@ -32,20 +33,32 @@ class tuningPlotter:
             t_try = ax_try_set[0]  
             v_try = ax_try_set[self.columnIndex] 
 
-            self.ax.clear()
-
-            real_x = [item[0] for item in self.ax_real_set]
-            real_y = [item[1] for item in self.ax_real_set]
-            
-            self.ax.plot(real_x, real_y, label=self.ax_real_name) 
+            self.ax.clear() 
             
             self.ax.plot(t_try, v_try, label=self.ax_try_name)
             
             self.ax.set_title(self.topic)
             self.ax.set_xlabel("Time / Step")
             self.ax.set_ylabel("Value")
-            self.ax.legend()
             
-            # 必须调用 draw 或 pause 才能在 ion 模式下刷新界面
+            
+            self.plotRealData()  # Re-plot the real data to ensure it stays visible after clearing the axes
+
+            self.ax.legend()
             plt.draw()
             plt.pause(0.01)
+
+    def plotRealData(self):
+        if isinstance(self.ax_real_set, list) and len(self.ax_real_set) > 0 and isinstance(self.ax_real_set[0], Tuple):
+            for i, real_set in self.ax_real_set:
+                if self.ax is not None:
+
+                    real_x = [item[0] for item in real_set]
+                    real_y = [item[1] for item in real_set]
+
+                    self.ax.plot(real_x, real_y, label=(self.ax_real_name + f" {i}"))
+        else:
+            real_x = [item[0] for item in self.ax_real_set]
+            real_y = [item[1] for item in self.ax_real_set]
+            if self.ax is not None:
+                self.ax.plot(real_x, real_y, label=self.ax_real_name)

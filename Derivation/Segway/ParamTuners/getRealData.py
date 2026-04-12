@@ -123,7 +123,7 @@ def parse_mixed_csv(file_path):
         #segment['data'] = sgFilter(segment['data'], window_size=20, columnIndex=3)
 
 
-        segment['data'] = splineFitFilter(segment['data'], s=0.1, columnIndex=3)
+        segment['data'] = splineFitFilter(segment['data'], s=0.3, columnIndex=3)
 
 
         segment['data'] = getvel(segment['data'])

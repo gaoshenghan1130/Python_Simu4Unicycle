@@ -3,7 +3,7 @@ class Parameters:
         # All in SI units
         self.m = 0.7 # pendulum mass
         self.m_w = 3.06 # wheel mass 3.06 for real
-        self.h = 0.18 # pendulum length(distance between the center of mass of the wheel and the center of mass of the pendulum)
+        self.h = 0.115 # pendulum length(distance between the center of mass of the wheel and the center of mass of the pendulum)
         self.R = 0.2527 # radius of the wheel
         self.I = 0.1045709321 # moment of inertia of the wheel, I_yy
         self.g = 9.81
@@ -11,6 +11,7 @@ class Parameters:
         self.w_b = 0.1363 # width of the pendulum body
         self.h_b = 0.0684 # height of the pendulum body
 
+        self.tau_motor = 0.05 # motor time constant (L/R), estimated from step response of the real segway, can be adjusted for better fit
 
         ### This part will be override by the run_simulation() function always ######
         self.v_desired = 0.0 # desired velocity of the segway
@@ -28,6 +29,7 @@ class Parameters:
         # for rolling resistance
         self.mu_rolling = 0.005
         self.smooth_factor = 1.2  # for smoothing the rolling resistance transition, with tanh
+
 
 
         ############################################################################

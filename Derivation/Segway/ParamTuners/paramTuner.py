@@ -30,7 +30,7 @@ class ParamTuner:
             accept_prob = math.exp(-delta / temperature)
             return random.random() < accept_prob
 
-    def tune(self, resultStorage: List[List[float]], max_iter=200, T=0.1, cooling=0.99, plotter=None):
+    def tune(self, resultStorage: List[List[float]], max_iter=200, T=0.0, cooling=0.99, plotter=None):
         current_params = copy.deepcopy(self.param_dict)
         self._installParams(current_params)
 
