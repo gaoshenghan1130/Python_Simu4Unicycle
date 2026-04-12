@@ -15,6 +15,11 @@ class ParamTuner:
         new_params = copy.deepcopy(params)
         for k in new_params:
             new_params[k] += torch.randn(1).item() * scale * (abs(params[k]) + 1e-6)
+
+        if new_params['m_w'] is not None and new_params['m'] is not None:
+            new_params['m_w'] = - new_params['m'] + 7.3
+
+        
         return new_params
 
     def _installParams(self, p_dict):
