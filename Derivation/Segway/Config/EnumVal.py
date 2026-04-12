@@ -7,6 +7,7 @@ class MODEL_T(int, Enum):
     NONLINEAR_DAMP = auto()
     NONLINEAR_DAMP_SMOOTHER = auto()
     ROLLING_RESISTANCE = auto()
+    ROLLING_RESISTANCE_LATENCY = auto() 
     MODEL1 = auto()
     MODEL2 = auto()
 

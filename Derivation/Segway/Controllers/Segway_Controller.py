@@ -19,9 +19,9 @@ class Controller:
     ):
         # Z is the state vector [x_c, x_c', gamma, gamma']
         _z = np.asarray(z)
-        if _z.shape[0] != 4:
+        if _z.shape[0] < 4:
             raise ValueError(
-                "State vector z must have four elements: [x_c, x_c_dot, gamma, gamma_dot]"
+                "State vector z must have at least four elements: [x_c, x_c_dot, gamma, gamma_dot]"
             )
         mode = self.control_mode
         x_c = _z[0]
