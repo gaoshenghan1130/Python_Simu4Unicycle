@@ -11,9 +11,14 @@ build
 
 */*/LOG/*
 
+
+
 position_comparison.png
 velocity_comparison.png
 
 .env
+
+*.tar
+*.zip
 
 .vscode/*

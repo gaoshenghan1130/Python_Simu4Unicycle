@@ -3,7 +3,8 @@ import copy
 import math
 import random
 from typing import List
-from IPython import display  # 必须导入
+from IPython import display
+
 
 class ParamTuner:
     def __init__(self, param_dict, simulation, penaltyFunc):
@@ -16,14 +17,14 @@ class ParamTuner:
         for k in new_params:
             new_params[k] += torch.randn(1).item() * scale * (abs(params[k]) + 1e-6)
 
-        if new_params['m_w'] is not None and new_params['m'] is not None:
-            new_params['m_w'] = - new_params['m'] + 7.3
+        if new_params["m_w"] is not None and new_params["m"] is not None:
+            new_params["m_w"] = -new_params["m"] + 7.3
 
-        
         return new_params
 
     def _installParams(self, p_dict):
         from Parameters import params as global_params
+
         global_params.updateParams(p_dict)
 
     def acceptance(self, old_score, new_score, temperature):
@@ -31,16 +32,26 @@ class ParamTuner:
             return True
         else:
             delta = new_score - old_score
-            if temperature < 1e-10: return False 
+            if temperature < 1e-10:
+                return False
             accept_prob = math.exp(-delta / temperature)
             return random.random() < accept_prob
 
-    def tune(self, resultStorage: List[List[float]], max_iter=200, T=0.0, cooling=0.99, plotter=None):
+    def tune(
+        self,
+        resultStorage: List[List[float]],
+        max_iter=200,
+        T=0.0,
+        cooling=0.99,
+        plotter=None,
+        export_csv=False,
+        csv_filename="tuning_results.csv",
+    ):
         current_params = copy.deepcopy(self.param_dict)
         self._installParams(current_params)
 
         print("initial params:", current_params)
-        
+
         resultStorage.clear()
         self.simulation(resultStorage)
         current_score = self.penaltyFunc(resultStorage)
@@ -60,28 +71,33 @@ class ParamTuner:
             if self.acceptance(current_score, new_score, current_T):
                 current_params = copy.deepcopy(candidate)
                 current_score = new_score
-                
+
                 if current_score < best_score:
                     best_score = current_score
                     best_params = copy.deepcopy(current_params)
 
-                print(f"Iteration {i+1}/{max_iter}, Current Score: {current_score:.6f}, Best Score: {best_score:.6f}")
+                print(
+                    f"Iteration {i+1}/{max_iter}, Current Score: {current_score:.6f}, Best Score: {best_score:.6f}"
+                )
             else:
                 pass
 
-            
-
-                
-
             current_T *= cooling
-        
-        if plotter is not None:
-                    display.clear_output(wait=True)
-                    
-                    print(f"Best Score: {best_score:.6f}")
-                    print(f"Best Parameters: {best_params}")
 
-                    plotter.update(resultStorage)
+
+        if plotter is not None:
+            #run simulation again to update the plot with the best parameters
+            self._installParams(best_params)
+            resultStorage.clear()
+            self.simulation(resultStorage)
+            display.clear_output(wait=True)
+
+            print(f"Best Score: {best_score:.6f}")
+            print(f"Best Parameters: {best_params}")
+
+            plotter.update(resultStorage)
+            if export_csv:
+                plotter.export_data(filename=csv_filename)
 
         self.param_dict = best_params
         self._installParams(best_params)
