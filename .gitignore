@@ -20,5 +20,6 @@ velocity_comparison.png
 
 *.tar
 *.zip
+*.pdf
 
 .vscode/*
