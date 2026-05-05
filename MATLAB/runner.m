@@ -23,6 +23,15 @@ paramset.desired_position = 1.0;
 %% Plot
 plotter(t,Z,paramset);
 
+targetVal = paramset.desired_velocity;
+if strcmp(paramset.control_mode, 'position')
+    targetVal = paramset.desired_position;
+end
+
+current_path = fileparts(mfilename('fullpath'));
 
 
+segments = plot_real_data(fullfile(current_path, 'data'), paramset.control_mode, targetVal, 15);
 
+
+plot_sim_vs_real(t, Z, segments, paramset);
