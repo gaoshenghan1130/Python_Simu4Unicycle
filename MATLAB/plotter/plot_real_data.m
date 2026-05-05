@@ -1,5 +1,5 @@
 function segments = plot_real_data( ...
-    project_log_dir, mode_name, target_value, time_limit)
+    project_log_dir, mode_name, target_value, time_limit, shouldplot)
 
 clc; close all;
 
@@ -41,6 +41,11 @@ segments = read_real_data( ...
 
 fprintf('Loaded %d measured %s segment(s), target %.3g.\n', ...
     numel(segments), mode_name, target_value);
+
+if shouldplot == 0
+    return
+else
+    
 
 % =========================
 % Plot style
