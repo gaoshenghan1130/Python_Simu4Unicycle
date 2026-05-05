@@ -1,8 +1,8 @@
 class Parameters:
     def __init__(self):
         # All in SI units
-        self.m = 0.7 # pendulum mass
-        self.m_w = 3.06 # wheel mass 3.06 for real
+        self.m = 0.7443 # pendulum mass
+        self.m_w = 6.556 # wheel mass 3.06 for real
         self.h = 0.115 # pendulum length(distance between the center of mass of the wheel and the center of mass of the pendulum)
         self.R = 0.2527 # radius of the wheel
         self.I = 0.1045709321 # moment of inertia of the wheel, I_yy
@@ -21,8 +21,8 @@ class Parameters:
 
         ######################## This part is used for damping #######################
         # for motor damping
-        self.B = 0.306 #slop of damping
-        self.B_0 = 0.0 # damping at zero velocity, positive and negative values will be auto adjusted to make always oppose the motion(but is set to 0 now because it will cause occillations that can't be handled by the PD controller)
+        self.B = 0.2953 #slop of damping
+        self.B_0 = 0.0120 # damping at zero velocity, positive and negative values will be auto adjusted to make always oppose the motion(but is set to 0 now because it will cause occillations that can't be handled by the PD controller)
 
         self.K_tandamp = 10.0  # for smoothing the damping torque, only used in motorDamp_Smooth Model
 

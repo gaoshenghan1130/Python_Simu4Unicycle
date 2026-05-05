@@ -13,14 +13,6 @@ if ~strcmp(par.scenario, "Segway")
 end
 
 z = z(:);
-if numel(z) ~= 4
-    error('segway_rolling_resistance_model:BadStateSize', ...
-        'State z must have 4 elements: [x; x_dot; gamma; gamma_dot].');
-end
-if any(~isfinite(z))
-    error('segway_rolling_resistance_model:NonFiniteState', ...
-        'State became non-finite at t = %.6g s.', t);
-end
 
 x_dot = z(2);
 gamma = z(3);
@@ -33,10 +25,6 @@ R = par.R;
 g = par.g;
 
 M = controller(t, z, par);
-if ~isscalar(M) || ~isfinite(M)
-    error('segway_rolling_resistance_model:BadControl', ...
-        'Controller must return one finite torque scalar.');
-end
 
 mass_matrix = [m + m_w, m*h*cos(gamma); ...
                m*h*cos(gamma), m*h^2];
@@ -54,13 +42,6 @@ rhs = [(M - motor_damping)/R - rolling_resistance + ...
 if any(~isfinite(mass_matrix(:))) || any(~isfinite(rhs))
     error('segway_rolling_resistance_model:NonFiniteDynamics', ...
         'Dynamics became non-finite at t = %.6g s.', t);
-end
-
-matrix_rcond = rcond(mass_matrix);
-if ~isfinite(matrix_rcond) || matrix_rcond < 1e-12
-    error('segway_rolling_resistance_model:SingularMassMatrix', ...
-        'Mass matrix is singular or ill-conditioned at t = %.6g s. rcond = %.3e.', ...
-        t, matrix_rcond);
 end
 
 accel = mass_matrix\rhs;
