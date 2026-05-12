@@ -9,3 +9,5 @@ There is two modes of output for angle in BNO085. According to the datasheet, th
 - For Rotation Vector mode, the output is as follows:
 
 ![Rotation Vector mode output](asset/rotationVec.png)
+
+This shows that the two mode doesn't have much difference in the data output, and both of them have the constant value issue.
