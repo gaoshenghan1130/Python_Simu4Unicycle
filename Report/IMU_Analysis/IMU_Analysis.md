@@ -46,4 +46,4 @@ While the BLE visualization issue has been fully resolved via STM32-side timesta
 
 **Action Items:**
 1. Refactor or replace the current BNO085 I2C library with a more robust, interrupt-driven, or DMA-backed official driver implementation.
-2. Review the BNO085 initialization registers, specifically focusing on its internal sensor report rates and power management states.
+2. ~~Try SPI communication for larger bandwidth and reduced latency.~~ *[Unfortunately, both SPI ports are being used on STM32 by the CAN bus.]*
