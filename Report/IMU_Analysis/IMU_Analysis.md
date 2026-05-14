@@ -1,49 +1,44 @@
-# IMU Function Analysis: BNO055 vs. BNO085 Performance Degradation
+# IMU Function Analysis: BNO055 vs. BNO085 Performance Evaluation (Updated)
 
 ## 1. Overview
-The newer generation IMU, **BNO085**, was expected to outperform the legacy **BNO055**. However, during practical experiments, its data output occasionally exhibited worse performance (specifically, periodic data freezes and jagged curves). 
-
-Guided by instructions from Mate, this document analyzes the root causes of this phenomenon by evaluating four potential hardware and software bottlenecks.
+The newer generation IMU, **BNO085**, was expected to outperform the legacy **BNO055**. However, during initial experiments, its data output exhibited periodic data freezes and jagged curves. Following a series of systematic evaluations, we have successfully identified and resolved these bottlenecks.
 
 ---
 
 ## 2. Potential Issues & Experimental Results
 
 ### 2.1 BLE Buffer Overflow & Transmission Congestion
-* **Initial Hypothesis:** The high-frequency telemetry logging (Gamma, $d\phi$, etc.) at 100 Hz bursts the application-level BLE buffer, or Windows enforces a restrictive 30 ms connection interval, causing a 2/3 data loss.
-* **Investigation:** Disabled BLE completely and switched to Serial Wire Viewer (SWV) logging for baseline verification. Later analysis revealed the issue was not data loss, but an **80 ms ~ 100 ms cyclic burst accumulation** on the PC host side.
-* **Resolution / Status:** **Resolved.** 1. Implemented an **STM32-side timestamping mechanism** (recording the midpoint time of the IMU measurement) to allow correct chronological reconstruction on the PC.
-  2. Downsampled the BLE transmission frequency to **25 Hz**, which optimized bandwidth without sacrificing visual resolution for human analysis.
-  * *Detailed Report:* See [IMU analysis - BLE optimization](BLE_Optimization.md) & [BLE buffer overflow analysis](BLE_buffer.md)
+* **Status:** **Resolved.**  
+* **Details:** Implemented an **STM32-side timestamping mechanism** and downsampled telemetry to **25 Hz**. This allows chronological reconstruction on the PC side while preventing application-level buffer bursts.
 
 ### 2.2 I2C Bandwidth & Interface Contention
-* **Initial Hypothesis:** The I2C bus lacks sufficient bandwidth to handle two IMUs simultaneously, leading to periodic data freezes.
-* **Investigation:** Disabled the maximum packet reading safety limit in each loop to log the accumulated packets over time.
-* **Resolution / Status:** **Dismissed.** The STM32 reads data significantly faster than the IMU's native output rate. I2C bandwidth is not the bottleneck.
-  * *Detailed Report:* See [IMU Analysis - I2C bandwidth](I2C_bandwidth.md)
+* **Status:** **Dismissed.**  
+* **Details:** STM32 reads data significantly faster than the IMU's native output rate; bandwidth is not the bottleneck.
 
 ### 2.3 I2C Port Racing (Hardware Interference)
-* **Initial Hypothesis:** Hardware crosstalk or bus contention occurs because the two IMUs operate on different I2C ports.
-* **Investigation:** Isolated the hardware by disabling one IMU at a time (first BNO085, then BNO055) and observed the signal output.
-* **Resolution / Status:** **Dismissed.** The constant value segments (data freezes) persisted identically even when only a single IMU was active.
-  * *Detailed Report:* See [IMU function analysis - I2C ports racing](I2C_ports_racing.md)
+* **Status:** **Dismissed.**  
+* **Details:** Constant value segments persisted even when only a single IMU was active, ruling out bus contention.
 
-### 2.4 Sensor Fusion Modes (Game Rotation Vector vs. Rotation Vector)
-* **Initial Hypothesis:** Magnetometer integration in standard Rotation Vector mode might introduce processing latency or noise compared to the gyro-copter/accelerometer-only Game Rotation Vector mode.
-* **Investigation:** Compared the output waveforms of both modes.
-* **Resolution / Status:** **Inconclusive.** Both modes produced nearly identical data curves and suffered from the same constant value freezing issue.
-  * *Detailed Report:* See [IMU analysis - Rotation Vector mode VS Game Rotation Vector mode](Rotation_Vector_mode.md)
+### 2.4 Sensor Fusion Modes
+* **Status:** **Inconclusive.**  
+* **Details:** Both "Rotation Vector" and "Game Rotation Vector" modes produced identical data curves and suffered from the same freezing issue under the old library.
 
-### 2.5 Chip Initialization Frequency & Library Limitations
-* **Initial Hypothesis:** 1. Clock and sampling frequency configurations specified during chip initialization heavily impact output quality. Current tweaks show both IMUs underperforming compared to the standalone legacy configuration.
-  2. The third-party [STM32 I2C library for BNO08x](https://www.grozeaion.com/electronics/stm32/stm32-i2c-library-for-bno08x-9-axis-imu/) being used lacks professional optimization (e.g., compared to the CAN bus implementation).
-* **Resolution / Status:** **Open / Next Steps.** The data freeze issue is likely linked to the IMU driver's register polling efficiency or internal sensor configuration. 
+### 2.5 Library Optimization & Implementation (Root Cause Identified)
+* **Status:** **Resolved.**  **Details:** The third-party BNO08x library was identified as the root cause of the data freezes and jagged artifacts. By replacing it with the **Official BNO085 SH2 Library**, we achieved a continuous, high-fidelity data stream without interruptions.
+
+### 2.6 Comparative Performance: BNO085 vs. BNO055
+* **Status:** **Validated.**
+* **Observation:** Overall, the data demonstrates that while both sensors follow the same physical trend, the **BNO085 (phi)** exhibits a significantly higher dynamic range and sensitivity, capturing motion peaks that the BNO055 tends to attenuate due to internal over-filtering. 
+* **Findings:** Furthermore, the angular velocity signal (dphi) from the BNO085 is remarkably smoother and cleaner than that of the BNO055, which suffers from severe noise spikes and requires aggressive filtering to be usable.
 
 ---
 
-## 3. Conclusion & Next Steps
-While the BLE visualization issue has been fully resolved via STM32-side timestamping and 25 Hz downsampling, the **periodic constant-value data freeze** is still present and is decoupled from BLE, I2C bandwidth, or port racing.
+## 3. Conclusion & Final Assessment
+The investigation into the BNO085’s performance degradation is now complete. The switch to the official SH-2 library has unlocked the sensor's full potential, providing a more "physics-accurate" representation of the system's dynamics.
 
-**Action Items:**
-1. Refactor or replace the current BNO085 I2C library with a more robust, interrupt-driven, or DMA-backed official driver implementation.
-2. ~~Try SPI communication for larger bandwidth and reduced latency.~~ *[Unfortunately, both SPI ports are being used on STM32 by the CAN bus.]*
+**Key Takeaways:**
+1. **Accuracy:** BNO085 is more sensitive to rapid motion, avoiding the "peak-shaving" effect seen in BNO055.
+2. **Signal Quality:** The internal fusion engine of BNO085 delivers a much cleaner angular velocity signal, essential for precision closed-loop control.
+3. **Primary Sensor:** BNO085 is confirmed as the primary feedback source, while BNO055 remains as a secondary reference.
+
+**Final Status:** High-bandwidth, low-noise feedback achieved. Ready for advanced control algorithm integration.
