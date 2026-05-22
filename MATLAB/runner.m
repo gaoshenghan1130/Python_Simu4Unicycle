@@ -30,5 +30,7 @@ end
 
 current_path = fileparts(mfilename('fullpath'));
 
-segments = plot_real_data(fullfile(current_path, 'data'), paramset.control_mode, targetVal, 15,0);
-plot_sim_vs_real(t, Z, segments, paramset);
+segments = plot_real_data(fullfile(current_path, 'data'), paramset.control_mode, targetVal, 15, [0.9, 0, 0]);
+nsegments = plot_real_data(fullfile(current_path, 'ndata'), paramset.control_mode, targetVal, 15, [0,0.9,0]);
+allseg = [segments, nsegments];
+plot_sim_vs_real(t, Z, allseg, paramset);

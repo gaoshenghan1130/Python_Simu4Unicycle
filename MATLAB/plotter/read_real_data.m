@@ -18,8 +18,7 @@ parser = inputParser;
 parser.addParameter('TimeLimit', [], @(x) isempty(x) || isnumeric(x));
 parser.addParameter('ZeroSignals', true, @(x) islogical(x) || isnumeric(x));
 parser.addParameter('PhiToXcScale', 0.2527, @isnumeric);
-parser.addParameter('MinPositionRange', 0.0, @isnumeric);
-parser.addParameter('MinVelocityPeak', 0.0, @isnumeric);
+parser.addParameter('Color_set', [0 0 1], @isnumeric);
 parser.parse(varargin{:});
 opts = parser.Results;
 
@@ -36,7 +35,8 @@ segments = struct( ...
     'velocity', {}, ...
     'gamma_deg', {}, ...
     'dgamma_degps', {}, ...
-    'duration', {});
+    'duration', {}, ...
+    'Color_set', {});
 
 for file_index = 1:numel(file_paths)
     file_path = char(file_paths{file_index});
@@ -44,7 +44,6 @@ for file_index = 1:numel(file_paths)
     segments = [segments, file_segments]; %#ok<AGROW>
 end
 
-segments = filter_segments(segments, opts.MinPositionRange, opts.MinVelocityPeak);
 end
 
 function segments = parse_one_log(file_path, mode_name, target_value, opts)
@@ -60,7 +59,7 @@ if isempty(lines)
 end
 
 header = split(string(lines(1)), ',').';
-required_columns = ["Timestamp", "Gamma_rad", "Phi_rad", "Dphi_radps"];
+required_columns = ["Timestamp", "Gamma_rad", "Dgamma_radps", "Phi_rad", "Dphi_radps"];
 for name = required_columns
     if ~any(header == name)
         error('read_real_data:MissingColumn', ...
@@ -80,11 +79,11 @@ current_rows = [];
 raw_segments = {};
 
 for line_index = 2:numel(lines)
-    line = char(lines(line_index));
+    line = strtrim(char(char(lines(line_index))));
     if startsWith(line, '"--- SEND COMMAND:')
         if ~isempty(current_rows)
             raw_segments{end + 1} = make_raw_segment( ... %#ok<AGROW>
-                file_path, current_mode, current_target, current_rows);
+                file_path, current_mode, current_target, current_rows, opts.Color_set);
         end
 
         tokens = regexp(line, 'Mode=(\w+),\s*Value=([\d\.-]+)', ...
@@ -104,20 +103,22 @@ for line_index = 2:numel(lines)
 
     values = split_csv_line(line);
     if numel(values) < numel(header)
+        fprintf('Skipping line %d due to insufficient columns: %s\n', line_index, line);
         continue
     end
 
     numeric_row = str2double(values);
     if isnan(numeric_row(idx_time))
+        fprintf('Skipping line %d due to non-numeric timestamp: %s\n', line_index, line);
         continue
     end
 
     current_rows = [current_rows; numeric_row(:).']; %#ok<AGROW>
+    
 end
-
 if ~isempty(current_rows)
     raw_segments{end + 1} = make_raw_segment( ...
-        file_path, current_mode, current_target, current_rows);
+        file_path, current_mode, current_target, current_rows, opts.Color_set);
 end
 
 segments = struct( ...
@@ -129,7 +130,8 @@ segments = struct( ...
     'velocity', {}, ...
     'gamma_deg', {}, ...
     'dgamma_degps', {}, ...
-    'duration', {});
+    'duration', {}, ...
+    'Color_set', {});
 
 for segment_index = 1:numel(raw_segments)
     raw = raw_segments{segment_index};
@@ -175,16 +177,18 @@ for segment_index = 1:numel(raw_segments)
         'velocity', velocity, ...
         'gamma_deg', gamma_deg, ...
         'dgamma_degps', dgamma_degps, ...
-        'duration', time(end));
+        'duration', time(end), ...
+        'Color_set', raw.Color_set);
 end
 end
 
-function raw = make_raw_segment(file_path, mode_name, target_value, rows)
+function raw = make_raw_segment(file_path, mode_name, target_value, rows, color_set)
 raw = struct( ...
     'file_path', file_path, ...
     'mode', mode_name, ...
     'target_value', target_value, ...
-    'rows', rows);
+    'rows', rows, ...
+    'Color_set', color_set);
 end
 
 function values = split_csv_line(line)
