@@ -12,10 +12,10 @@ plotter = @plot_segway;
 % dataset format [X, X_dot, gamma, gamma_dot] for segway model
 
 %% Set target
-paramset.control_mode = 'position'; % must be velocity or position
+paramset.control_mode = 'velocity'; % must be velocity or position
 paramset.desired_gamma = 0.0;
-paramset.desired_velocity = 0.0;
-paramset.desired_position = 1.0;
+paramset.desired_velocity = 0.5;
+paramset.desired_position = 0.0;
 
 %% Simulation runs here
 [t,Z] = simulator(paramset, model, controller);
