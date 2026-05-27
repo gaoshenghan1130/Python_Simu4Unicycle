@@ -4,7 +4,7 @@ targetZ = targetData(:,2:end);
 simT = simData(:,1);
 simZ = simData(:,2:end);
 
-ts = linspace(1, 15, 100);
+ts = linspace(1, 7, 100);
 
 weights = [1, 1/50 * pi/180, 1/0.5, 1/170 * pi/180]; % x, dx, gamma, dgamma
 

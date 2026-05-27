@@ -45,8 +45,8 @@ fields = {
     'mu_rolling',
 };
 
-initParam.B = 0.11;
-initParam.B_0 = 0.02102;
+initParam.B = 0.05;
+initParam.B_0 = 0.01402;
 initParam.mu_rolling = 0.01;
 initParam.m = 0.8;
 
