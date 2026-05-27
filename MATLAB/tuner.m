@@ -40,9 +40,10 @@ for i = 1 : numel(targetSegments)
 end
 
 fields = {
-    'B',
-    'B_0',
-    'mu_rolling',
+    'B',...
+    'B_0',...
+    'mu_rolling',...
+    'm'
 };
 
 initParam.B = 0.05;
