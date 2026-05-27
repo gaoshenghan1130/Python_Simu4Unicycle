@@ -52,7 +52,7 @@ initParam.m = 0.8;
 
 stepSize = 0.1;
 
-bestPar = tuneParam(initParam, @sim,  @dataSetPenalty_SumSquare_Improved, @randomTuneGenerator, targetDataSets, 200, fields, stepSize);
+bestPar = tuneParam(initParam, @sim,  @dataSetPenalty_SumSquare_Improved, @randomTuneGenerator, targetDataSets, 0, fields, stepSize);
 
 for i = 1:numel(fields)
     fprintf("%s value: %f\n", ...
