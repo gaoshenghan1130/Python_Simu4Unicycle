@@ -1,7 +1,7 @@
 function par = SegwayParamset()
     par.scenario = 'Segway'; % use Segway models, the rest of the code will check themselves according to this
-    par.m = 0.7443;          
-    par.m_w = 6.556;       
+    par.m = 1.1443;          
+    par.m_w =  7.3 -  par.m;  %6.256;       
     par.h = 0.115;        
     par.R = 0.2527;       
     par.I = 0.104;          

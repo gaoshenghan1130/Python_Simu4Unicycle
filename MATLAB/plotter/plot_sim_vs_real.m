@@ -6,8 +6,6 @@ function plot_sim_vs_real(t, Z, segments, par)
 % segments : struct array from read_real_data()
 % par      : parameter struct (optional, only for naming)
 
-clc; close all;
-
 % =========================
 % Style
 % =========================

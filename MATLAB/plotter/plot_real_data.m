@@ -1,8 +1,6 @@
 function segments = plot_real_data( ...
     project_log_dir, mode_name, target_value, time_limit, colors)
 
-clc; close all;
-
 % =========================
 % Select logs
 % =========================
