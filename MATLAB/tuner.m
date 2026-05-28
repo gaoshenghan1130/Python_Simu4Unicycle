@@ -27,7 +27,7 @@ end
 targetSegments = read_real_data(file_paths, initParam.control_mode, targetVal4Read);
 targetDataSets = cell(1, numel(targetSegments));
 for i = 1 : numel(targetSegments)
-    % extract target mode 'position' or velocity
+    % extract target mode 'position' or 'velocity'
     thisSeg = targetSegments(i);
     if strcmp(thisSeg.mode, initParam.control_mode)
         t = thisSeg.time;
@@ -38,21 +38,24 @@ for i = 1 : numel(targetSegments)
     end
 end
 
+%% Define params and run
+
 fields = {
     'B',...
     'B_0',...
     'mu_rolling',...
+    'smooth_factor'
 };
 
-initParam.B = 0.00;
-initParam.B_0 = 0.051488;
-initParam.mu_rolling = 0.003358;
+initParam.B = 0.120173;
+initParam.B_0 = 0.00;
+initParam.mu_rolling = 0.015646;
 initParam.m = 1.0;
-initParam.smooth_factor = 191.410234;
+initParam.smooth_factor = 188.098301;
 
-stepSize = 0.03;
+stepSize = 0.1;
 
-bestPar = tuneParam(initParam, @sim,  @dataSetPenalty_SumSquare_Improved, @randomTuneGenerator, targetDataSets, 100, fields, stepSize);
+bestPar = tuneParam(initParam, @sim,  @dataSetPenalty_SumSquare_Improved, @randomTuneGenerator, targetDataSets, 00, fields, stepSize);
 
 for i = 1:numel(fields)
     fprintf("%s value: %f\n", ...
