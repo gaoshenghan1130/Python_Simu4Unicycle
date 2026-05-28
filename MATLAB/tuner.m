@@ -44,15 +44,15 @@ fields = {
     'mu_rolling',...
 };
 
-initParam.B = 0.078403;
-initParam.B_0 = .049164;
-initParam.mu_rolling = 0.004;
+initParam.B = 0.00;
+initParam.B_0 = 0.051488;
+initParam.mu_rolling = 0.003358;
 initParam.m = 1.0;
-initParam.smooth_factor = 100;
+initParam.smooth_factor = 191.410234;
 
 stepSize = 0.03;
 
-bestPar = tuneParam(initParam, @sim,  @dataSetPenalty_SumSquare_Improved, @randomTuneGenerator, targetDataSets, 200, fields, stepSize);
+bestPar = tuneParam(initParam, @sim,  @dataSetPenalty_SumSquare_Improved, @randomTuneGenerator, targetDataSets, 100, fields, stepSize);
 
 for i = 1:numel(fields)
     fprintf("%s value: %f\n", ...
@@ -60,7 +60,28 @@ for i = 1:numel(fields)
         bestPar.(fields{i}));
 end
 
+ res = sim(bestPar);
+t = res(: , 1)+0.2;
+Z = res(:, 2:end);
+ plot_sim_vs_real(t, Z, targetSegments, bestPar);
+
+%% Ploting corresponding velocity mode data
+velSegments = read_real_data(file_paths, 'velocity', 0.5);
+bestPar.control_mode = 'velocity'; % must be velocity or position
+bestPar.desired_gamma = 0.0;
+bestPar.desired_velocity = 0.5;
+bestPar.desired_position = 0.0;
+
 res = sim(bestPar);
 t = res(: , 1)+0.2;
 Z = res(:, 2:end);
-plot_sim_vs_real(t, Z, targetSegments, bestPar);
+for i = 1:numel(velSegments)
+    keep = velSegments(i).time <= 15;
+    velSegments(i).time = velSegments(i).time(keep);
+    velSegments(i).position = velSegments(i).position(keep);
+    velSegments(i).velocity = velSegments(i).velocity(keep);
+    velSegments(i).gamma_deg = velSegments(i).gamma_deg(keep);
+    velSegments(i).dgamma_degps = velSegments(i).dgamma_degps(keep);
+end
+plot_sim_vs_real(t, Z, velSegments, bestPar);
+
