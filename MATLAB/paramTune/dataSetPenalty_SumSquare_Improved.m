@@ -4,9 +4,9 @@ targetZ = targetData(:,2:end);
 simT = simData(:,1);
 simZ = simData(:,2:end);
 
-ts = linspace(1, 7, 100);
+ts = [linspace(1, 7.5, 10), linspace(5, 7.5, 100)];
 
-weights = [1, 1/50 * pi/180, 1/0.5, 1/170 * pi/180]; % x, dx, gamma, dgamma
+weights = [10, 1/0.5 * 10, 1/50 * pi/180,1/170 * pi/180]; % x, dx, gamma, dgamma
 
 delay = 0.2; % 20ms for i2c
 

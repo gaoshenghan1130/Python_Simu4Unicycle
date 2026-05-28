@@ -1,7 +1,7 @@
 function par = SegwayParamset()
     par.scenario = 'Segway'; % use Segway models, the rest of the code will check themselves according to this
     par.m = 1.1443;          
-    par.m_w =  7.3 -  par.m;  %6.256;       
+    par.m_w = 7.3 - par.m;       
     par.h = 0.115;        
     par.R = 0.2527;       
     par.I = 0.104;          
@@ -19,7 +19,7 @@ function par = SegwayParamset()
     par.B = 0.2953;
     par.B_0 = 0.0120;
     par.mu_rolling = 0.01;
-    par.smooth_factor = 1.2;
+    par.smooth_factor = 100;
 
     par.timeStep = 0.001; % used only in time constant simulation
     par.control_mode = 'null'; % must be velocity or position, otherwise throw an error 

@@ -1,5 +1,4 @@
 clc;
-clear;
 close all;
 addpath("controller/","model/","param/","paramTune/","plotter/","simulation/");
 
@@ -40,20 +39,20 @@ for i = 1 : numel(targetSegments)
 end
 
 fields = {
-    'B',...
     'B_0',...
     'mu_rolling',...
-    'm'
+    'smooth_factor',...
 };
 
-initParam.B = 0.05;
-initParam.B_0 = 0.01402;
-initParam.mu_rolling = 0.01;
-initParam.m = 0.8;
+initParam.B = 0.00;
+initParam.B_0 = 0.051488;
+initParam.mu_rolling = 0.003358;
+initParam.m = 1.0;
+initParam.smooth_factor = 191.410234;
 
 stepSize = 0.1;
 
-bestPar = tuneParam(initParam, @sim,  @dataSetPenalty_SumSquare_Improved, @randomTuneGenerator, targetDataSets, 0, fields, stepSize);
+bestPar = tuneParam(initParam, @sim,  @dataSetPenalty_SumSquare_Improved, @randomTuneGenerator, targetDataSets, 100, fields, stepSize);
 
 for i = 1:numel(fields)
     fprintf("%s value: %f\n", ...

@@ -41,10 +41,10 @@ for loopNum = 1:count
             "  -> Accepted New Best %f\n", penalty);
 
         % adaptive step increase
-        stepSize = stepSize * 1.05;
+        stepSize = stepSize;
     else
         % adaptive step decrease
-        stepSize = stepSize * 0.98;
+        stepSize = stepSize;
 
     end
 
