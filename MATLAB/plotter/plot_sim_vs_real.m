@@ -28,7 +28,6 @@ applyStyle = @(ax) set(ax, ...
 % =========================
 % Colors
 % =========================
-realColor = [0.8 0.8 0.8];   % light gray for all experiments
 simColor  = [0 0 0];         % black for simulation
 
 % =========================
@@ -53,7 +52,7 @@ ax1 = subplot(2,2,1); hold on;
 
 for i = 1:numel(segments)
     plot(segments(i).time, segments(i).position, ...
-        'Color', realColor, 'LineWidth', lineWidth_real);
+        'Color', segments(i).Color_set, 'LineWidth', lineWidth_real);
 end
 
 plot(t, X, 'Color', simColor, 'LineWidth', lineWidth_sim);
@@ -69,7 +68,7 @@ ax2 = subplot(2,2,3); hold on;
 
 for i = 1:numel(segments)
     plot(segments(i).time, segments(i).velocity, ...
-        'Color', realColor, 'LineWidth', lineWidth_real);
+        'Color', segments(i).Color_set, 'LineWidth', lineWidth_real);
 end
 
 plot(t, X_dot, 'Color', simColor, 'LineWidth', lineWidth_sim);
@@ -84,7 +83,7 @@ ax3 = subplot(2,2,2); hold on;
 
 for i = 1:numel(segments)
     plot(segments(i).time, segments(i).gamma_deg, ...
-        'Color', realColor, 'LineWidth', lineWidth_real);
+        'Color', segments(i).Color_set, 'LineWidth', lineWidth_real);
 end
 
 plot(t, gamma * 180/pi, 'Color', simColor, 'LineWidth', lineWidth_sim);
@@ -99,7 +98,7 @@ ax4 = subplot(2,2,4); hold on;
 
 for i = 1:numel(segments)
     plot(segments(i).time, segments(i).dgamma_degps, ...
-        'Color', realColor, 'LineWidth', lineWidth_real);
+        'Color', segments(i).Color_set, 'LineWidth', lineWidth_real);
 end
 
 plot(t, gamma_dot * 180/pi, 'Color', simColor, 'LineWidth', lineWidth_sim);
