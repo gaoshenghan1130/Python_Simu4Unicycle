@@ -6,9 +6,9 @@ function par = LatParam()
     par.R = 0.2527;
     par.g = 9.81;
 
-    par.K_theta = 0;
-    par.K_theta_dot = 0;
-    par.K_r = 0;
-    par.K_r_dot = 0;
+    par.K_theta = 2;
+    par.K_theta_dot = 0.5;
+    par.K_r = 2;
+    par.K_r_dot = 0.5;
 
 
