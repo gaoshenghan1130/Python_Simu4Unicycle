@@ -1,0 +1,14 @@
+function par = LatParam()
+    par.m_L = 0.540;
+    par.m_B = 0.700;
+    par.m_W = 3.1;
+    par.h = 0.115;
+    par.R = 0.2527;
+    par.g = 9.81;
+
+    par.K_theta = 0;
+    par.K_theta_dot = 0;
+    par.K_r = 0;
+    par.K_r_dot = 0;
+
+

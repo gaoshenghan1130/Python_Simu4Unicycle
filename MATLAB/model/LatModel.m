@@ -1,0 +1,62 @@
+function dz = LatModel(t, z, par, controller)
+% Latitude Nonlinear Model
+%
+% State:
+% z = [theta; theta_dot; r; r_dot]
+%
+% Input:
+% F = General Force
+
+z = z(:);
+
+if numel(z) ~= 4
+    error('State vector z must have four elements: [theta; theta_dot; r; r_dot]');
+end
+
+% Controller force
+F = controller(t, z, par);
+
+% States
+theta     = z(1);
+theta_dot = z(2);
+r         = z(3);
+r_dot     = z(4);
+
+% Parameters
+m_L = par.m_L;
+m_B = par.m_B;
+m_W = par.m_W;
+h   = par.h;
+g   = par.g;
+R   = par.R;
+
+% Mass matrix
+M_matrix = [2*m_L + R^2 + m_B*(R+h)^2 + m_W*R^2,   2*m_L*R;
+            2*m_L*R,                               2*m_L];
+
+% Right-hand side vector
+M_rightside = [
+    2*m_L*R*sin(theta) + ...
+    2*m_L*g*r*cos(theta) + ...
+    m_B*(R+h)*sin(theta) + ...
+    m_W*g*R*sin(theta) - ...
+    F*R;
+
+    2*m_L*g*sin(theta) + F
+];
+
+% Accelerations
+accel = M_matrix \ M_rightside;
+
+theta_ddot = accel(1);
+r_ddot     = accel(2);
+
+% State derivative
+dz = [
+    theta_dot;
+    theta_ddot;
+    r_dot;
+    r_ddot
+];
+
+end
