@@ -43,19 +43,20 @@ end
 fields = {
     'B',...
     'B_0',...
+    'm',...
     'mu_rolling',...
     'smooth_factor'
 };
 
-initParam.B = 0.120173;
+initParam.B = 0.100173;
 initParam.B_0 = 0.00;
-initParam.mu_rolling = 0.015646;
+initParam.mu_rolling = 0.010646;
 initParam.m = 1.0;
-initParam.smooth_factor = 188.098301;
+initParam.smooth_factor = 88.098301;
 
 stepSize = 0.1;
 
-bestPar = tuneParam(initParam, @sim,  @dataSetPenalty_SumSquare_Improved, @randomTuneGenerator, targetDataSets, 00, fields, stepSize);
+bestPar = tuneParam(initParam, @sim,  @dataSetPenalty_SumSquare_Improved, @randomTuneGenerator, targetDataSets, 100, fields, stepSize);
 
 for i = 1:numel(fields)
     fprintf("%s value: %f\n", ...
