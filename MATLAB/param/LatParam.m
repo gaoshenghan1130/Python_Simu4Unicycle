@@ -1,7 +1,7 @@
 function par = LatParam()
-    par.m_L = 0.540;
-    par.m_B = 0.700;
-    par.m_W = 3.1;
+    par.m_L = 0.27;
+    par.m_B = 3.1;
+    par.m_W = 3.5;
     par.h = 0.115;
     par.R = 0.2527;
     par.g = 9.81;
