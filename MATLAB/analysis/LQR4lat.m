@@ -2,15 +2,16 @@ clear; clc;
 
 addpath("param\", "model\");
 par = LatParam();
-syms theta theta_dot r r_dot F_sym real
+syms theta theta_dot r r_dot F_sym real Friction
 syms m_L m_B m_W h g R real
+syms I_b I_w
 z_sym = [theta; theta_dot; r; r_dot];
 
-M_matrix = [2*m_L + R^2 + m_B*(R+h)^2 + m_W*R^2,   2*m_L*R;
+M_matrix = [2*m_L + R^2 + m_B*(R+h)^2 + m_W*R^2 + Ib + Iw,   2*m_L*R;
             2*m_L*R,                               2*m_L];
 M_rightside = [
-    2*m_L*R*sin(theta) + 2*m_L*g*r*cos(theta) + m_B*(R+h)*sin(theta) + m_W*g*R*sin(theta) - F_sym*R;
-    2*m_L*g*sin(theta) + F_sym
+    2*m_L*R*sin(theta) + 2*m_L*g*r*cos(theta) + m_B*(R+h)*sin(theta) + m_W*g*R*sin(theta) - F_sym*R + Friction;
+    2*m_L*g*sin(theta) + F_sym - Friction
 ];
 accel = M_matrix \ M_rightside;
 dz_sym = [
