@@ -1,13 +1,13 @@
 clear; clc;
 
-addpath("param\", "model\");
+addpath("param/", "model/");
 par = LatParam();
 syms theta theta_dot r r_dot F_sym real
 syms m_L m_B m_W h g R real
-syms Friction I_b I_w real
+syms Friction I_b I_w I_rod real
 z_sym = [theta; theta_dot; r; r_dot];
 
-M_matrix = [2*m_L + R^2 + m_B*(R+h)^2 + m_W*R^2 + I_b + I_w,   2*m_L*R;
+M_matrix = [2*m_L + R^2 + m_B*(R+h)^2 + m_W*R^2 + I_b + I_w + I_rod,   2*m_L*R;
             2*m_L*R,                               2*m_L];
 M_rightside = [
     2*m_L*R*sin(theta) + 2*m_L*g*r*cos(theta) + m_B*(R+h)*sin(theta) + m_W*g*R*sin(theta) - F_sym*R;
@@ -26,8 +26,8 @@ B_sym = jacobian(dz_sym, F_sym);
 A_eq = subs(A_sym, [z_sym; F_sym], [0; 0; 0; 0; 0]);
 B_eq = subs(B_sym, [z_sym; F_sym], [0; 0; 0; 0; 0]);
 
-A_num = double(subs(A_eq, [m_L, m_B, m_W, h, g, R, I_b, I_w], [par.m_L, par.m_B, par.m_W, par.h, par.g, par.R, par.I_b, par.I_w]));
-B_num = double(subs(B_eq, [m_L, m_B, m_W, h, g, R, I_b, I_w], [par.m_L, par.m_B, par.m_W, par.h, par.g, par.R, par.I_b, par.I_w]));
+A_num = double(subs(A_eq, [m_L, m_B, m_W, h, g, R, I_b, I_w, I_rod], [par.m_L, par.m_B, par.m_W, par.h, par.g, par.R, par.I_b, par.I_w, par.I_rod]));
+B_num = double(subs(B_eq, [m_L, m_B, m_W, h, g, R, I_b, I_w, I_rod], [par.m_L, par.m_B, par.m_W, par.h, par.g, par.R, par.I_b, par.I_w, par.I_rod]));
 
 %% 3. Design LQR
 Q = diag([1000, 100, 10, 10]); 

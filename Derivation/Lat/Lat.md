@@ -80,5 +80,5 @@ $$
 In matrix form, the equations of motion can be expressed as:    
 
 $$
-\begin{bmatrix}2 m_L R^2 + m_b (R+h)^2 + m_w R^2 + I_b + I_w & 2 m_L R \\ 2 m_L R & 2 m_L \end{bmatrix} \begin{bmatrix}\ddot{\theta} \\ \ddot{r} \end{bmatrix} = \begin{bmatrix} 2 m_L g R \sin\theta + 2 m_L g r \cos\theta + m_b g (R+h) \sin\theta + m_w g R \sin\theta - FR + F_r \\ 2 m_L g \sin\theta + F -F_r\end{bmatrix}
+\begin{bmatrix}2 m_L R^2 + m_b (R+h)^2 + m_w R^2 + I_b + I_w + I_{rod} & 2 m_L R \\ 2 m_L R & 2 m_L \end{bmatrix} \begin{bmatrix}\ddot{\theta} \\ \ddot{r} \end{bmatrix} = \begin{bmatrix} 2 m_L g R \sin\theta + 2 m_L g r \cos\theta + m_b g (R+h) \sin\theta + m_w g R \sin\theta - FR + F_rR \\ 2 m_L g \sin\theta + F -F_r\end{bmatrix}
 $$
