@@ -30,6 +30,7 @@ V_{mass} = m_L \langle r_L, \hat{j} \rangle g = m_L g (R \cos\theta - r\sin\thet
 $$
 
 Total potential energy on the rod and mass:
+
 $$
 V = 2V_{mass} + V_{rod} = 2 m_L g (R \cos\theta - r\sin\theta) + m_{rod} g (R \cos\theta - r\sin\theta) = (2 m_L + m_{rod}) g (R \cos\theta - r\sin\theta)
 $$
