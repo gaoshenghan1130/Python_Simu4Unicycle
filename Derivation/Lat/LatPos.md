@@ -7,11 +7,13 @@ r_w = R \sin\theta \hat{i} + R \cos\theta \hat{j}
 $$
 
 Center of the rod:
+
 $$
 r_{rod} = (R \sin\theta + r\cos\theta) \hat{i} + (R \cos\theta - r\sin\theta) \hat{j}
 $$
 
 Center of the mass $m_L$:
+
 $$
 r_L = r_{rod} \pm \frac{l}{2} \left( \cos\theta \hat{i} - \sin\theta \hat{j} \right) = \\
 (R \sin\theta + r\cos\theta \pm \frac{l}{2} \cos\theta) \hat{i} + (R \cos\theta - r\sin\theta \mp \frac{l}{2} \sin\theta) \hat{j}
@@ -78,8 +80,13 @@ $$
 
 For the mass $m_L$ located at the ends of the rod, the kinetic and potential energy expressions are:
 
-$$V = (2 m_L + m_{rod}) g (R \cos\theta - r\sin\theta)$$
-$$T = \frac{1}{2} (2m_L + m_{rod}) \left( (\dot{r} + R \dot{\theta})^2 + (r\dot{\theta})^2 \right) + \frac{1}{2}\left(I_{rod} + m_L \frac{l^2}{2}\right)\dot{\theta}^2$$
+$$
+V = (2 m_L + m_{rod}) g (R \cos\theta - r\sin\theta)
+$$
+
+$$
+T = \frac{1}{2} (2m_L + m_{rod}) \left( (\dot{r} + R \dot{\theta})^2 + (r\dot{\theta})^2 \right) + \frac{1}{2}\left(I_{rod} + m_L \frac{l^2}{2}\right)\dot{\theta}^2
+$$
 
 Note that in the `MATLAB` code, we define parameters as:
 ```matlab
@@ -90,8 +97,14 @@ Note that in the `MATLAB` code, we define parameters as:
 ```
 
 This way we can save some parameter in the code, and the kinetic and potential energy expressions can be simplified to:
-$$V = 2 m_L g (R \cos\theta - r\sin\theta)$$
-$$T = m_L \left( (\dot{r} + R \dot{\theta})^2 + (r\dot{\theta})^2 \right) + \frac{1}{2}I_{rod}\dot{\theta}^2$$
+
+$$
+V = 2 m_L g (R \cos\theta - r\sin\theta)
+$$
+
+$$
+T = m_L \left( (\dot{r} + R \dot{\theta})^2 + (r\dot{\theta})^2 \right) + \frac{1}{2}I_{rod}\dot{\theta}^2
+$$
 
 Which is the version we used also in [Lat.md](Lat.md).
 

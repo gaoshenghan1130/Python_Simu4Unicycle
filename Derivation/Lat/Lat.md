@@ -75,7 +75,7 @@ $$
 2 m_L R & 2 m_L 
 \end{bmatrix} 
 \begin{bmatrix}
-\ddot{\theta} 
+\ddot{\theta} \\ 
 \ddot{r} 
 \end{bmatrix} 
 = 
