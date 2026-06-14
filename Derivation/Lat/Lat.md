@@ -18,11 +18,8 @@ $$
 
 ## Lagrangian ($L = T - V$)
 
-As Follow:
-
 $$
-L = m_L \dot{r}^2 + 2m_L R\dot{r}\dot{\theta} + m_L R^2\dot{\theta}^2 + m_Lr^2\dot{\theta}^2 + \frac{1}{2} m_b (R+h)^2 \dot{\theta}^2 + \frac{1}{2} m_w R^2 \dot{\theta}^2 + \frac{1}{2} I_b \dot{\theta}^2 + \frac{1}{2} I_w \dot{\theta}^2 + \frac{1}{2} I_{rod} \dot{\theta}^2
-- 2m_L g R\cos\theta + 2m_L g r\sin\theta - m_b g (R+h)\cos\theta - m_w g R\cos\theta
+L = m_L \dot{r}^2 + 2m_L R\dot{r}\dot{\theta} + m_L R^2\dot{\theta}^2 + m_Lr^2\dot{\theta}^2 + \frac{1}{2} m_b (R+h)^2 \dot{\theta}^2 + \frac{1}{2} m_w R^2 \dot{\theta}^2 + \frac{1}{2} I_b \dot{\theta}^2 + \frac{1}{2} I_w \dot{\theta}^2 + \frac{1}{2} I_{rod} \dot{\theta}^2 - 2m_L g R\cos\theta + 2m_L g r\sin\theta - m_b g (R+h)\cos\theta - m_w g R\cos\theta
 $$
 
 ## Equations of Motion: $\theta$ Dynamics
@@ -71,20 +68,18 @@ $$
 
 ## Matrix Form
 
-As Follow:
-
 $$
 \begin{bmatrix}
-2 m_L R^2 + m_b (R+h)^2 + m_w R^2 + I_b + I_w + I_{rod} + 2 m_L r^2 & 2 m_L R \\ 
-2 m_L R & 2 m_L 
-\end{bmatrix} 
+2m_L R^2 + m_b(R+h)^2 + m_w R^2 + I_b + I_w + I_{\text{rod}} + 2m_L r^2 & 2m_L R \\
+2m_L R & 2m_L
+\end{bmatrix}
 \begin{bmatrix}
-\ddot{\theta} \\ 
-\ddot{r} 
-\end{bmatrix} 
-= 
-\begin{bmatrix} 
-2 m_L g R \sin\theta + 2 m_L g r \cos\theta + m_b g (R+h) \sin\theta + m_w g R \sin\theta - FR + F_rR - 4 m_L r \dot{r} \dot{\theta} \\ 
-2 m_L g \sin\theta + F - F_r + 2 m_L r \dot{\theta}^2
+\ddot{\theta} \\
+\ddot{r}
+\end{bmatrix}
+=
+\begin{bmatrix}
+2m_L gR\sin\theta + 2m_L gr\cos\theta + m_b g(R+h)\sin\theta + m_w gR\sin\theta - FR + F_rR - 4m_L r\dot{r}\dot{\theta} \\
+2m_L g\sin\theta + F - F_r + 2m_L r\dot{\theta}^2
 \end{bmatrix}
 $$
