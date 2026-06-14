@@ -32,26 +32,12 @@ R   = par.R;
 I_b = par.I_b;
 I_w = par.I_w;
 I_rod = par.I_rod;
-% % Mass matrix
-% M_matrix = [2*m_L + R^2 + m_B*(R+h)^2 + m_W*R^2,   2*m_L*R;
-%             2*m_L*R,                               2*m_L];
-% 
-% % Right-hand side vector
-% M_rightside = [
-%     2*m_L*R*sin(theta) + ...
-%     2*m_L*g*r*cos(theta) + ...
-%     m_B*(R+h)*sin(theta) + ...
-%     m_W*g*R*sin(theta) - ...
-%     F*R;
-% 
-%     2*m_L*g*sin(theta) + F
-% ];
 
-M_matrix = [2*m_L + R^2 + m_B*(R+h)^2 + m_W*R^2 + I_b + I_w + I_rod,   2*m_L*R;
+M_matrix = [2*m_L + R^2 + m_B*(R+h)^2 + m_W*R^2 + I_b + I_w + I_rod + 2*m_L*r^2,   2*m_L*R;
             2*m_L*R,                               2*m_L];
 M_rightside = [
-    2*m_L*R*sin(theta) + 2*m_L*g*r*cos(theta) + m_B*(R+h)*sin(theta) + m_W*g*R*sin(theta) - F*R;
-    2*m_L*g*sin(theta) + F
+    2*m_L*R*sin(theta) + 2*m_L*g*r*cos(theta) + m_B*(R+h)*sin(theta) + m_W*g*R*sin(theta) - F*R - 4 * m_L*r*r_dot;
+    2*m_L*g*sin(theta) + F + 2*m_L * r * theta_dot ^2 
 ];
 
 % Accelerations

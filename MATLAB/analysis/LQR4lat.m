@@ -7,11 +7,11 @@ syms m_L m_B m_W h g R real
 syms Friction I_b I_w I_rod real
 z_sym = [theta; theta_dot; r; r_dot];
 
-M_matrix = [2*m_L + R^2 + m_B*(R+h)^2 + m_W*R^2 + I_b + I_w + I_rod,   2*m_L*R;
+M_matrix = [2*m_L + R^2 + m_B*(R+h)^2 + m_W*R^2 + I_b + I_w + I_rod + 2*m_L*r^2,   2*m_L*R;
             2*m_L*R,                               2*m_L];
 M_rightside = [
-    2*m_L*R*sin(theta) + 2*m_L*g*r*cos(theta) + m_B*(R+h)*sin(theta) + m_W*g*R*sin(theta) - F_sym*R;
-    2*m_L*g*sin(theta) + F_sym
+    2*m_L*R*sin(theta) + 2*m_L*g*r*cos(theta) + m_B*(R+h)*sin(theta) + m_W*g*R*sin(theta) - F_sym*R - 4  * m_L*r*r_dot;
+    2*m_L*g*sin(theta) + F_sym + 2*m_L * r * theta_dot ^2 
 ];
 accel = M_matrix \ M_rightside;
 dz_sym = [
@@ -37,7 +37,7 @@ disp('LQR Gain K:');
 disp(K);
 
 lqr_controller = @(t, z, par) -K * z; 
-z0 = [5 * pi/180; 0; 0; 0];
+z0 = [3 * pi/180; 0; 0; 0];
 tspan = [0, 5];
 [t_out, z_out] = ode45(@(t, z) LatModel(t, z, par, lqr_controller), tspan, z0);
 
