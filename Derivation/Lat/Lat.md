@@ -78,7 +78,7 @@ $$
 \ddot r
 \end{bmatrix}
 = \begin{bmatrix}
-2m_L gR\sin\theta + 2m_L gr\cos\theta + m_b g(R+h)\sin\theta + m_w gR\sin\theta - FR + F_rR - 4m_L r\dot r\dot\theta \\
+2m_L gR\sin\theta + 2m_L gr\cos\theta + m_b g(R+h)\sin\theta + m_w gR\sin\theta - 4m_L r\dot r\dot\theta \\
 2m_L g\sin\theta + F - F_r + 2m_L r\dot\theta^2
 \end{bmatrix}
 $$
