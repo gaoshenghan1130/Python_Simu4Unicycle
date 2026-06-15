@@ -1,5 +1,5 @@
 function par = LatParam()
-    par.mass_at_end = 0.5; % mass of the object attached at the end of the rod
+    par.mass_at_end = 0.3; % mass of the object attached at the end of the rod
     par.m_L = 0.15 + par.mass_at_end; % actually half of the rod
     par.m_B = 4.1;
     par.m_W = 3.5;

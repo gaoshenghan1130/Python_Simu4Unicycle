@@ -10,7 +10,7 @@ z_sym = [theta; theta_dot; r; r_dot];
 M_matrix = [2*m_L + R^2 + m_B*(R+h)^2 + m_W*R^2 + I_b + I_w + I_rod + 2*m_L*r^2,   2*m_L*R;
             2*m_L*R,                               2*m_L];
 M_rightside = [
-    2*m_L*R*sin(theta) + 2*m_L*g*r*cos(theta) + m_B*(R+h)*sin(theta) + m_W*g*R*sin(theta) - F_sym*R - 4  * m_L*r*r_dot;
+    2*m_L*R*sin(theta) + 2*m_L*g*r*cos(theta) + m_B*(R+h)*sin(theta) + m_W*g*R*sin(theta)  - 4  * m_L*r*r_dot;
     2*m_L*g*sin(theta) + F_sym + 2*m_L * r * theta_dot ^2 
 ];
 accel = M_matrix \ M_rightside;
@@ -31,10 +31,12 @@ B_num = double(subs(B_eq, [m_L, m_B, m_W, h, g, R, I_b, I_w, I_rod], [par.m_L, p
 
 %% 3. Design LQR
 Q = diag([1000, 100, 10, 10]); 
-R_weight = 10; 
+R_weight = 100; 
 K = lqr(A_num, B_num, Q, R_weight);
 disp('LQR Gain K:');
 disp(K);
+
+K= [ 67.5873   25.2170   46.8353   13.3884];
 
 lqr_controller = @(t, z, par) -K * z; 
 z0 = [3 * pi/180; 0; 0; 0];
