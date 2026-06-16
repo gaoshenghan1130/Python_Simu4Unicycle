@@ -41,7 +41,7 @@ $$
 $$
 
 $$
-Q_{\theta} = (-F+F_r)R
+Q_{\theta} = 0
 $$
 
 ## Equations of Motion: $r$ Dynamics
