@@ -40,11 +40,96 @@ The continuing MATLAB code is in `MATLAB/analysis/PolePlacement.m`.
 The result for the eigenvalues are:
 
 $$
-\lambda^4 + 1.114 k_4 \lambda^3 - 0.04071 k_3 \lambda^3 + 1.114 k_2 \lambda^2 - 0.04071 k_1 \lambda^2 - 15.66 \lambda^2 + 6.254 k_3 \lambda - 18.2 k_4 \lambda + 6.254 k_1 - 18.2 k_2 - 55.21 = 0
+\lambda^4 + 0.5924 k_4 \lambda^3 - 0.06548 k_3 \lambda^3 + 0.5924 k_2 \lambda^2 - 0.06548 k_1 \lambda^2 - 26.2 \lambda^2 + 10.06 k_3 \lambda - 16.7 k_4 \lambda + 10.06 k_1 - 16.7 k_2 - 167.8 = 0
 $$
 
 To make it look better, we can rearrange the terms:
 
 $$
-\lambda^4 + (1.114 k_4 - 0.04071 k_3) \lambda^3 + (1.114 k_2 - 0.04071 k_1 - 15.66) \lambda^2 + (6.254 k_3 - 18.2 k_4) \lambda + (6.254 k_1 - 18.2 k_2 - 55.21) = 0
+\lambda^4 + (0.5924 k_4 - 0.06548 k_3) \lambda^3 + (0.5924 k_2 - 0.06548 k_1 - 26.2) \lambda^2 + (10.06 k_3 - 16.7 k_4) \lambda + (10.06 k_1 - 16.7 k_2 - 167.8) = 0
 $$
+
+## Some analysis on the characteristic equation
+
+**For $k_1$ and $k_2$**
+
+Apparently:
+
+$$
+10.06 k_1 - 16.7 k_2 - 167.8 > 0 \implies k_1 > 1.66 k_2 + 16.68
+$$
+
+From our usual assumptions that the the initial state is given by a small theta, we can get:
+
+$$
+\text{Maximum F of the motor} > k_1 \times \text{initial theta} \\
+\implies k_1 < 27.6 N/ 5 \degree = 316.43 N/rad \\
+\implies k_1 < 316.43 \text{ and } k_2 < (k_1 - 16.68) / 1.66 < 180.57
+$$
+
+**For More about Routh-Hurwitz criteria**
+
+$$
+a_3 = 0.5924 k_4 - 0.06548 k_3 \\
+a_2 = 0.5924 k_2 - 0.06548 k_1 - 26.2 \\
+a_1 = 10.06 k_3 - 16.7 k_4 \\
+a_0 = 10.06 k_1 - 16.7 k_2 - 167.8
+$$
+
+We have used $a_0 > 0$ to get the constraint on $k_1$ and $k_2$. For $a_3 > 0$, we have:
+
+$$
+0.5924 k_4 - 0.06548 k_3 > 0 \implies k_4 > 0.1105 k_3
+$$
+
+For $a_2 > 0$, we have:
+
+$$
+0.5924 k_2 - 0.06548 k_1 - 26.2 > 0 \\
+\implies k_2 > (0.06548 k_1 + 26.2) / 0.5924 \\
+\implies k_2 > 0.1105 k_1 + 44.23
+$$
+
+For $a_1 > 0$, we have:
+
+$$
+10.06 k_3 - 16.7 k_4 > 0 \implies k_3 > 1.66 k_4
+$$
+
+This gives us the constraints on two triangular regions.
+
+For $a_3 a_2 > a_1$, we have:
+
+$$
+(0.5924 k_4 - 0.06548 k_3)(0.5924 k_2 - 0.06548 k_1 - 26.2) > 10.06 k_3 - 16.7 k_4
+$$
+
+For $a_3 a_2 a_1 > a_1^2 + a_3^2 a_0$, we have:
+$$
+(0.5924 k_4 - 0.06548 k_3)(0.5924 k_2 - 0.06548 k_1 - 26.2)(10.06 k_3 - 16.7 k_4) > (10.06 k_3 - 16.7 k_4)^2 + (0.5924 k_4 - 0.06548 k_3)^2 (10.06 k_1 - 16.7 k_2 - 167.8)
+$$
+
+We can't really calculate the exact boundary, so we did a Monte Carlo sampling to find the feasible region that satisfies all the above inequalities. The result is shown below.
+
+![fig](Region4K_3kg_1.png)
+
+
+Given that the all the point inside the region satisfies the Routh-Hurwitz criteria, we can expect that the system is stable for all the points inside the region (after linearized). So now we can plug all this into the nonlinear model to further select the parameters that can stabilize the system in the nonlinear model. The result is shown below (for 0.3kg extra mass):
+
+- Without any restriction on maximum r:
+
+    - With $3\degree$ initial theta, $98.9\%$ points inside the region can stabilize the system in the nonlinear model:
+
+    ![fig](Region4K_0.3kg_2_3deg.png)
+
+    - With $5\degree$ initial theta, $96.6\%$ points inside the region can stabilize the system in the nonlinear model:
+
+    ![fig](Region4K_0.3kg_2_5deg.png)
+
+    - With $10\degree$ initial theta, $92.5\%$ points inside the region can stabilize the system in the nonlinear model:
+    ![fig](Region4K_0.3kg_2_10deg.png)
+
+    - $15\degree$ initial theta, $37.4\%$ points:
+
+    ![fig](Region4K_0.3kg_2_15deg.png)
+

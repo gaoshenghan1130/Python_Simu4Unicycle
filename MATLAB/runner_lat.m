@@ -5,6 +5,7 @@ addpath("model/","controller/","plotter/","simulation/","param/")
 
 %% Choose simulation setting
 paramset = LatParam();
+
 controller = @lat_controller;
 model = @LatModel; 
 simulator = @timeConstantSimu;

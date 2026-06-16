@@ -36,7 +36,7 @@ K = lqr(A_num, B_num, Q, R_weight);
 disp('LQR Gain K:');
 disp(K);
 
-K= [ 67.5873   25.2170   46.8353   13.3884];
+% K= [ 67.5873   25.2170   46.8353   13.3884];
 
 lqr_controller = @(t, z, par) -K * z; 
 z0 = [3 * pi/180; 0; 0; 0];
@@ -67,3 +67,5 @@ plot(t_out, F_out, 'r', 'LineWidth', 1.5);
 xlabel('Time (s)');
 ylabel('Force F (N)');
 grid on;
+
+

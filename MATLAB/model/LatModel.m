@@ -40,6 +40,10 @@ M_rightside = [
     2*m_L*g*sin(theta) + F + 2*m_L * r * theta_dot ^2 
 ];
 
+if rcond(M_matrix) < 1e-12
+    error('LatModel:SingularMatrix', 'M_matrix singular');
+end
+
 % Accelerations
 accel = M_matrix \ M_rightside;
 
