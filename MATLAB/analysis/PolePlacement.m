@@ -36,4 +36,41 @@ A_cl = A - (B*K_sym); % N\K = N^-1 * K = B * K
 lambda = sym('lambda');
 char_poly = det(lambda * eye(4) - A_cl);
 
-char_poly_clean = vpa(expand(char_poly), 4)
+char_poly_clean = vpa(expand(char_poly), 4);
+
+P_desired = [-2+1i, -2-1i, -3, -2];
+
+
+K_numeric = place(A, B, P_desired);
+disp('PolePlacement K = ');
+disp(K_numeric);
+
+controller = @(t, z, par) -K_numeric * z; 
+z0 = [3 * pi/180; 0; 0; 0];
+tspan = [0, 5];
+[t_out, z_out] = ode45(@(t, z) LatModel(t, z, par, controller), tspan, z0);
+
+% Recalculate for F data
+F_out = zeros(length(t_out), 1);
+for i = 1:length(t_out)
+    F_out(i) = controller(t_out(i), z_out(i,:)', par);
+end
+
+%% 5. Plot Results
+figure;
+subplot(3,1,1);
+plot(t_out, z_out(:,1), 'LineWidth', 1.5);
+ylabel('Theta (rad)');
+title('Pole placement Controlled System');
+grid on;
+
+subplot(3,1,2);
+plot(t_out, z_out(:,3), 'LineWidth', 1.5);
+ylabel('Position r (m)');
+grid on;
+
+subplot(3,1,3);
+plot(t_out, F_out, 'r', 'LineWidth', 1.5); 
+xlabel('Time (s)');
+ylabel('Force F (N)');
+grid on;

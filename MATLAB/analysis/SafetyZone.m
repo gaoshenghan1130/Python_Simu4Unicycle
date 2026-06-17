@@ -1,6 +1,6 @@
 clear; clc; close all;
 
-addpath('simulation/');
+addpath('simulation/', 'param/', 'model/');
 
 N = 500000; 
 k1_rand = 316.43 * rand(N, 1);       
