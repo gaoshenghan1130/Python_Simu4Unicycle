@@ -16,6 +16,9 @@ end
 % Controller force
 F = controller(t, z, par);
 
+assert(isscalar(F))
+assert(isfinite(F))
+
 % States
 theta     = z(1);
 theta_dot = z(2);
@@ -33,12 +36,25 @@ I_b = par.I_b;
 I_w = par.I_w;
 I_rod = par.I_rod;
 
-M_matrix = [2*m_L + R^2 + m_B*(R+h)^2 + m_W*R^2 + I_b + I_w + I_rod + 2*m_L*r^2,   2*m_L*R;
-            2*m_L*R,                               2*m_L];
-M_rightside = [
-    2*m_L*R*sin(theta) + 2*m_L*g*r*cos(theta) + m_B*(R+h)*sin(theta) + m_W*g*R*sin(theta) - 4 * m_L*r*r_dot;
-    2*m_L*g*sin(theta) + F + 2*m_L * r * theta_dot ^2 
+M_matrix = [
+    2*m_L*R^2 + m_B*(R+h)^2 + m_W*R^2 + I_b + I_w + I_rod + 2*m_L*r^2,  2*m_L*R;
+    2*m_L*R,                                                              2*m_L
 ];
+
+M_rightside = [
+    2*m_L*g*R*sin(theta) ...
+    + 2*m_L*g*r*cos(theta) ...
+    + m_B*g*(R+h)*sin(theta) ...
+    + m_W*g*R*sin(theta) ...
+    - 4*m_L*r*r_dot*theta_dot;
+    2*m_L*g*sin(theta) ...
+    + F ...
+    + 2*m_L*r*theta_dot^2
+];
+
+if any(~isfinite(M_matrix(:)))
+    error('M_matrix contains NaN or Inf');
+end
 
 if rcond(M_matrix) < 1e-12
     error('LatModel:SingularMatrix', 'M_matrix singular');

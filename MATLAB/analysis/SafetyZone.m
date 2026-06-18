@@ -32,33 +32,33 @@ k1_final = k1_lin(final_valid);
 k2_final = k2_lin(final_valid);
 k3_final = k3_lin(final_valid);
 k4_final = k4_lin(final_valid);
+% 
+% figure('Position', [100, 100, 1000, 400]);
+% 
+% subplot(1, 2, 1); hold on;
 
-figure('Position', [100, 100, 1000, 400]);
+% k1_line = linspace(0, 350, 100);
+% plot(k1_line, (k1_line - 16.68)/1.66, 'k--', 'LineWidth', 1);
+% plot(k1_line, 0.1105*k1_line + 44.23, 'k--', 'LineWidth', 1);
+% xline(316.43, 'k--');
+% 
+% scatter(k1_final, k2_final, 5, 'r', 'filled', 'MarkerFaceAlpha', 0.1);
+% xlim([50, 350]); ylim([40, 180]);
+% xlabel('k_1'); ylabel('k_2');
+% title('Final Feasible Region for k_1, k_2 (Red Points)');
+%grid on; hold off;
 
-subplot(1, 2, 1); hold on;
+% subplot(1, 2, 2); hold on;
 
-k1_line = linspace(0, 350, 100);
-plot(k1_line, (k1_line - 16.68)/1.66, 'k--', 'LineWidth', 1);
-plot(k1_line, 0.1105*k1_line + 44.23, 'k--', 'LineWidth', 1);
-xline(316.43, 'k--');
-
-scatter(k1_final, k2_final, 5, 'r', 'filled', 'MarkerFaceAlpha', 0.1);
-xlim([50, 350]); ylim([40, 180]);
-xlabel('k_1'); ylabel('k_2');
-title('Final Feasible Region for k_1, k_2 (Red Points)');
-grid on; hold off;
-
-subplot(1, 2, 2); hold on;
-
-k3_line = linspace(0, 100, 100);
-plot(k3_line, k3_line/1.66, 'k--', 'LineWidth', 1);
-plot(k3_line, 0.1105*k3_line, 'k--', 'LineWidth', 1);
-
-scatter(k3_final, k4_final, 5, 'b', 'filled', 'MarkerFaceAlpha', 0.1);
-xlim([0, 100]); ylim([0, 50]);
-xlabel('k_3'); ylabel('k_4');
-title('Final Feasible Region for k_3, k_4 (Blue Points)');
-grid on; hold off;
+% k3_line = linspace(0, 100, 100);
+% plot(k3_line, k3_line/1.66, 'k--', 'LineWidth', 1);
+% plot(k3_line, 0.1105*k3_line, 'k--', 'LineWidth', 1);
+% 
+% scatter(k3_final, k4_final, 5, 'b', 'filled', 'MarkerFaceAlpha', 0.1);
+% xlim([0, 100]); ylim([0, 50]);
+% xlabel('k_3'); ylabel('k_4');
+% title('Final Feasible Region for k_3, k_4 (Blue Points)');
+%grid on; hold off;
 
 disp(['num stabilized: ', num2str(length(k1_final))]);
 
@@ -66,7 +66,7 @@ disp(['num stabilized: ', num2str(length(k1_final))]);
 %% Nonlinear model verification
 disp('Start nonlinear model verification...');
 
-num_test = min(1000, length(k1_final)); 
+num_test = min(10000, length(k1_final)); 
 rand_indices = randperm(length(k1_final), num_test);
 
 k1_test = k1_final(rand_indices);% theta
@@ -76,8 +76,8 @@ k4_test = k4_final(rand_indices);% r_dot
 
 nonlinear_stable_idx = false(num_test, 1);
 
-z0 = [3 * pi/180; 0; 0; 0]; % init
-tspan = [0, 15];
+z0 = [0.02 * pi/180; 0; 0; 0]; % init
+tspan = [0, 5];
 par = LatParam();
 
 for i = 1:num_test
@@ -91,18 +91,19 @@ for i = 1:num_test
         
         theta_out = z_out(:, 1);
         r_out = z_out(:,3);
-        
         max_theta = max(abs(theta_out));  
         final_theta = abs(theta_out(end));
-
         max_r = max(abs(r_out));
         
-        if (max_theta < 20 * pi/180) && (final_theta < 5 * pi/180) && max_r < 0.15
+        if (max_theta < 20 * pi/180) && (final_theta < 5 * pi/180) && max_r < 0.14
             nonlinear_stable_idx(i) = true;
         end
         
+    iserror = 0;
     catch E
+        iserror = 1;
         nonlinear_stable_idx(i) = false;
+        disp(E);
         fprintf('Point %d, Error: %s\n', i, E.message);
     end
     

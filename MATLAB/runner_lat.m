@@ -8,7 +8,7 @@ paramset = LatParam();
 
 controller = @lat_controller;
 model = @LatModel; 
-simulator = @timeConstantSimu;
+simulator = @ode45Simu;
 plotter = @plot_lat;
 % dataset format [X, X_dot, gamma, gamma_dot] for segway model
 %% Simulation runs here
