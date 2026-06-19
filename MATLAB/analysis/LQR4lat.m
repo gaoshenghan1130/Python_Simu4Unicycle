@@ -28,20 +28,13 @@ B_eq = subs(B_sym, [z_sym; F_sym], [0; 0; 0; 0; 0]);
 
 A_num = double(subs(A_eq, [m_L, m_B, m_W, h, g, R, I_b, I_w, I_rod], [par.m_L, par.m_B, par.m_W, par.h, par.g, par.R, par.I_b, par.I_w, par.I_rod]));
 B_num = double(subs(B_eq, [m_L, m_B, m_W, h, g, R, I_b, I_w, I_rod], [par.m_L, par.m_B, par.m_W, par.h, par.g, par.R, par.I_b, par.I_w, par.I_rod]));
-B_num
-
-eig(A_num)
-rank(ctrb(A_num,B_num))
-
-
 
 %% 3. Design LQR
 Q = diag([1000, 100, 100, 10]); 
-R_weight = 1; 
+R_weight = 0.001; 
 K = lqr(A_num, B_num, Q, R_weight);
 disp('LQR Gain K:');
 disp(K);
-eig(A_num - B_num*K)
 
 lqr_controller = @(t, z, par) - K * z; 
 z0 = [3 * pi/180; 0; 0; 0];
