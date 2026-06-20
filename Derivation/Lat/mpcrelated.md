@@ -53,25 +53,24 @@ F
 \end{bmatrix}
 $$
 
-Further, let $x = [\theta, r, \dot{\theta}, \dot{r}]$, and $I(x_2) = m_w R^2 + m_{rod} x_2^2$:
+Further, let $x = [\theta, r - R\theta, \dot{\theta}, \dot{r} - R\dot{\theta}]$, and $I(x_2) = m_w R^2 + m_{rod} (x_2+Rx_1)^2$:
 
-$$
-\begin{aligned}
+$$\begin{aligned}
 \dot{x}_1 &= x_3 \\
-\dot{x}_2 &= x_4 + R x_3 \\
-\dot{x}_3 &= \frac{1}{I(x_2)} \Big[ m_{rod} g x_2 \cos x_1 - m_w g R \sin x_1 - m_{rod} x_2 (2 x_4 x_3 + R x_3^2) + F R \Big] \\
-\dot{x}_4 &= \frac{1}{m_{rod}} \Big[ m_{rod} g \sin x_1 + m_{rod} x_2 x_3^2 + F \Big]
+\dot{x}_2 &= x_4 \\
+\dot{x}_3 &= \frac{1}{I(x_1, x_2)} \Big[ m_{rod} g (x_2 + R x_1) \cos x_1 - m_w g R \sin x_1 - m_{rod} (x_2 + R x_1) (2 x_4 x_3 + R x_3^2) + F R \Big] \\
+\dot{x}_4 &= \frac{1}{m_{rod}} \Big[ m_{rod} g \sin x_1 + m_{rod} (x_2 + R x_1) x_3^2 + F \Big]
 \end{aligned}
 $$
 
-Define $\mathcal{N} = m_{rod} g x_2 \cos x_1 - m_w g R \sin x_1 - m_{rod} x_2 (2 x_4 x_3 + R x_3^2)$
+Define $\mathcal{N} = m_{rod} g (x_2 + Rx_1) \cos x_1 - m_w g R \sin x_1 - m_{rod} (x_2 + R x_1) (2 x_4 x_3 + R x_3^2)$
 
 $$
 \begin{aligned}
 \dot{x}_1 &= x_3 \\
-\dot{x}_2 &= x_4 + R x_3 \\
+\dot{x}_2 &= x_4 \\
 \dot{x}_3 &= \dfrac{\mathcal{N}}{I(x_2)} + \dfrac{R}{I(x_2)} F \\
-\dot{x}_4 &= \frac{1}{m_{rod}} \Big[ m_{rod} g \sin x_1 + m_{rod} x_2 x_3^2 + F \Big]
+\dot{x}_4 &= \frac{1}{m_{rod}} \Big[ m_{rod} g \sin x_1 + m_{rod} (x_2 + Rx_1) x_3^2 + F \Big]
 \end{aligned}
 $$
 
@@ -84,7 +83,7 @@ $$
 $$
 \mathbf{A}_c = \frac{\partial \dot{\mathbf{x}}}{\partial \mathbf{x}} = \begin{bmatrix} 
 0 & 0 & 1 & 0 \\ 
-0 & 0 & R & 1 \\ 
+0 & 0 & 0 & 1 \\ 
 \dfrac{\partial \dot{x}_3}{\partial x_1} & \dfrac{\partial \dot{x}_3}{\partial x_2} & \dfrac{\partial \dot{x}_3}{\partial x_3} & \dfrac{\partial \dot{x}_3}{\partial x_4} \\ 
 \dfrac{\partial \dot{x}_4}{\partial x_1} & \dfrac{\partial \dot{x}_4}{\partial x_2} & \dfrac{\partial \dot{x}_4}{\partial x_3} & 0 
 \end{bmatrix}
@@ -93,7 +92,7 @@ $$
 We can solve $A_c$ with MATLAB
 
 $$
-\left(\begin{bmatrix} 0 & 0 & 1 & 0\\ 0 & 0 & R & 1\\ -\frac{g\,\left(m_{\mathrm{rod}}\,x_{2}\,\sin\left(x_{1}\right)+R\,m_{w}\,\cos\left(x_{1}\right)\right)}{m_{w}\,R^2+m_{\mathrm{rod}}\,{x_{2}}^2} & -\frac{m_{\mathrm{rod}}\,\left(R^3\,m_{w}\,{x_{3}}^2+2\,F\,R\,x_{2}+2\,R^2\,m_{w}\,x_{3}\,x_{4}-2\,m_{\mathrm{rod}}\,{x_{2}}^2\,x_{3}\,x_{4}-R^2\,g\,m_{w}\,\cos\left(x_{1}\right)-R\,m_{\mathrm{rod}}\,{x_{2}}^2\,{x_{3}}^2+g\,m_{\mathrm{rod}}\,{x_{2}}^2\,\cos\left(x_{1}\right)-2\,R\,g\,m_{w}\,x_{2}\,\sin\left(x_{1}\right)\right)}{{\left(m_{w}\,R^2+m_{\mathrm{rod}}\,{x_{2}}^2\right)}^2} & -\frac{m_{\mathrm{rod}}\,x_{2}\,\left(2\,x_{4}+2\,R\,x_{3}\right)}{m_{w}\,R^2+m_{\mathrm{rod}}\,{x_{2}}^2} & -\frac{2\,m_{\mathrm{rod}}\,x_{2}\,x_{3}}{m_{w}\,R^2+m_{\mathrm{rod}}\,{x_{2}}^2}\\ g\,\cos\left(x_{1}\right) & {x_{3}}^2 & 2\,x_{2}\,x_{3} & 0 \end{bmatrix}\right)
+\left(\begin{bmatrix}{cccc} 0 & 0 & 1 & 0\\ 0 & 0 & 0 & 1\\ -\frac{R\,m_{\mathrm{rod}}\,\left(R\,{x_{3}}^2+2\,x_{4}\,x_{3}\right)+g\,m_{\mathrm{rod}}\,\sin\left(x_{1}\right)\,\left(x_{2}+R\,x_{1}\right)-R\,g\,m_{\mathrm{rod}}\,\cos\left(x_{1}\right)+R\,g\,m_{w}\,\cos\left(x_{1}\right)}{m_{\mathrm{rod}}\,{\left(x_{2}+R\,x_{1}\right)}^2+R^2\,m_{w}}-\frac{2\,R\,m_{\mathrm{rod}}\,\left(x_{2}+R\,x_{1}\right)\,\left(F\,R-m_{\mathrm{rod}}\,\left(x_{2}+R\,x_{1}\right)\,\left(R\,{x_{3}}^2+2\,x_{4}\,x_{3}\right)+g\,m_{\mathrm{rod}}\,\cos\left(x_{1}\right)\,\left(x_{2}+R\,x_{1}\right)-R\,g\,m_{w}\,\sin\left(x_{1}\right)\right)}{{\left(m_{\mathrm{rod}}\,{\left(x_{2}+R\,x_{1}\right)}^2+R^2\,m_{w}\right)}^2} & -\frac{m_{\mathrm{rod}}\,\left(R\,{x_{3}}^2+2\,x_{4}\,x_{3}\right)-g\,m_{\mathrm{rod}}\,\cos\left(x_{1}\right)}{m_{\mathrm{rod}}\,{\left(x_{2}+R\,x_{1}\right)}^2+R^2\,m_{w}}-\frac{m_{\mathrm{rod}}\,\left(2\,x_{2}+2\,R\,x_{1}\right)\,\left(F\,R-m_{\mathrm{rod}}\,\left(x_{2}+R\,x_{1}\right)\,\left(R\,{x_{3}}^2+2\,x_{4}\,x_{3}\right)+g\,m_{\mathrm{rod}}\,\cos\left(x_{1}\right)\,\left(x_{2}+R\,x_{1}\right)-R\,g\,m_{w}\,\sin\left(x_{1}\right)\right)}{{\left(m_{\mathrm{rod}}\,{\left(x_{2}+R\,x_{1}\right)}^2+R^2\,m_{w}\right)}^2} & -\frac{m_{\mathrm{rod}}\,\left(x_{2}+R\,x_{1}\right)\,\left(2\,x_{4}+2\,R\,x_{3}\right)}{m_{\mathrm{rod}}\,{\left(x_{2}+R\,x_{1}\right)}^2+R^2\,m_{w}} & -\frac{2\,m_{\mathrm{rod}}\,x_{3}\,\left(x_{2}+R\,x_{1}\right)}{m_{\mathrm{rod}}\,{\left(x_{2}+R\,x_{1}\right)}^2+R^2\,m_{w}}\\ R\,{x_{3}}^2+g\,\cos\left(x_{1}\right) & {x_{3}}^2 & 2\,x_{3}\,\left(x_{2}+R\,x_{1}\right) & 0 \end{bmatrix}\right)
 $$
 
 To eliminate the 0 order error, calculate current state vector 
@@ -110,7 +109,7 @@ $$
 
 Where $\mathbf{A} = \mathbf{I}_{4 \times 4} + \mathbf{A}_c \cdot \Delta t$, $\mathbf{B} = \mathbf{B}_c \cdot \Delta t$, $\mathbf{d} = \mathbf{d}_c \cdot \Delta t$
 
-**Extend along time rod**
+## Methods of entending along Time rod
 
 Given
 
