@@ -70,7 +70,7 @@ is_old_region_test = is_old_region_final(rand_indices); % Record whether the tes
 
 nonlinear_stable_idx = false(num_test, 1);
 z0 = [0.02 * pi/180; 0; 0; 0]; % Initial state
-tspan = [0, 5];
+tspan = [0, 15];
 par = LatParam();
 
 for i = 1:num_test
