@@ -9,9 +9,9 @@ function par = LatParam()
     par.I_b = 0;% 0.012904182130007; %x axis battery inertia
     par.I_w = 0;%0.0459142776779452; %x axis  wheel inertia
     par.I_rod = 0; %1/12 * (0.3 ) * (0.314^2) + 2 * par.mass_at_end * 0.157^2;
-    par.K_theta = 290.4767;
-    par.K_theta_dot = 93.5540;
-    par.K_r = 164.6841;
-    par.K_r_dot = 32.1929;
+    par.K_theta = -116.0499;
+    par.K_theta_dot = -62.5219;
+    par.K_r = 853.7799;
+    par.K_r_dot = 171.8782;
 
 

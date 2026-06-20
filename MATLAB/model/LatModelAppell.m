@@ -26,7 +26,7 @@ r_dot     = z(4);
 % Parameters (Mapped identically to the MPC implementation)
 R     = par.R;
 g     = par.g;
-m_w   = (par.m_W * par.R + par.m_B * par.h) / par.R;
+m_w   = (par.m_W * par.R^2 + par.m_B * (par.R + par.h)^2) / par.R;
 m_rod = 2 * par.m_L; 
 
 % Appell quasi-velocities
@@ -41,8 +41,8 @@ M_matrix = [
 
 % Appell Right Side (Forces/Coriolis/Gravity)
 M_rightside = [
-    F * R + m_rod * g * r * cos(theta) - m_w * g * R * sin(theta) - m_rod * r * (2 * u2 * u1 + R * u1^2);
-    F + m_rod * g * sin(theta) + m_rod * r * u1^2
+    F * R - m_rod * g * r * cos(theta) + m_w * g * R * sin(theta) - m_rod * r * (2 * u2 * u1 + R * u1^2);
+    F - m_rod * g * sin(theta) + m_rod * r * u1^2
 ];
 
 if any(~isfinite(M_matrix(:)))

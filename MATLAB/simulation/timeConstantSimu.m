@@ -4,7 +4,7 @@ function [t, Z] = timeConstantSimu(par, model, controller)
 
     % Simulation settings
     dt = 0.001; 
-    T  = 100;           
+    T  = 15;           
     t  = 0:dt:T;
 
     Z = zeros(length(t), length(z0));
