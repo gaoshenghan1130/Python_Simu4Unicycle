@@ -6,7 +6,7 @@ par = LatParam();
 %% Symbolic Linearization of Appell Model
 
 syms theta theta_dot r r_dot F_sym real
-syms m_w m_rod g R real
+syms m_w m_rod m_b g R h real
 
 z_sym = [theta; theta_dot; r; r_dot];
 
@@ -17,7 +17,7 @@ u2 = r_dot - R*theta_dot;
 %% Appell dynamics
 
 M_matrix = [
-    m_w*R^2 + m_rod*r^2, 0;
+    m_w*R^2 + m_rod*r^2 + m_b * (R+h)^2, 0;
     0,                   m_rod
 ];
 
@@ -25,6 +25,7 @@ M_rightside = [
     F_sym*R ...
     - m_rod*g*r*cos(theta) ...
     + m_w*g*R*sin(theta) ...
+    + m_b*g*(R+h)*sin(theta) ...
     - m_rod*r*(2*u2*u1 + R*u1^2);
 
     F_sym ...
@@ -62,16 +63,16 @@ B_eq = subs(B_sym,...
 
 %% Parameter substitution
 
-m_w_num   = (par.m_W*par.R^2 + par.m_B*(par.R + par.h)^2)/par.R^2;
+m_w_num   = par.m_W;
 m_rod_num = 2*par.m_L;
 
 A_num = double(subs(A_eq,...
-    [m_w m_rod g R],...
-    [m_w_num m_rod_num par.g par.R]));
+    [m_w m_rod m_b g R h],...
+    [m_w_num m_rod_num par.m_B par.g par.R par.h]));
 
 B_num = double(subs(B_eq,...
-    [m_w m_rod g R],...
-    [m_w_num m_rod_num par.g par.R]));
+    [m_w m_rod m_b g R h],...
+    [m_w_num m_rod_num par.m_B par.g par.R par.h]));
 
 
 %% Controllability
@@ -84,9 +85,9 @@ fprintf('rank(C) = %d\n',rank(Co));
 
 Q = diag([
     1000 ... theta
-    500  ... theta_dot
+    100  ... theta_dot
     100  ... r
-    50  ... r_dot
+    10  ... r_dot
 ]);
 
 R_weight = 1;

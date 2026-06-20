@@ -103,34 +103,9 @@ $$
 \end{bmatrix}
 $$
 
+The two models will equivalent when $\theta$ direction is reverted.
 
-Diagram of the system:
-
-$$
-\begin{bmatrix} 2m_L r^2 + m_w R^2 + m_p (R + h)^2 & 0 \\ 0 & 2m_L \end{bmatrix} \begin{bmatrix} \ddot{\theta} \\ \ddot{x} \end{bmatrix} = \begin{bmatrix} RF - 2m_L r \dot{\theta}(\dot{r} + \dot{x}) + m_w R g \sin\theta + m_p (R + h) g \sin\theta - 2m_L g r \cos\theta \\ F + 2m_L r \dot{\theta}^2 - 2m_L g \sin\theta \end{bmatrix}
-$$
-
-
-Compare to appell form
-
-$$
-\begin{bmatrix} 
-m_w R^2 + m_{rod} r^2 & 0 \\ 
-0 & m_{rod} 
-\end{bmatrix}
-\begin{bmatrix} 
-\dot{u}_1 \\ 
-\dot{u}_2 
-\end{bmatrix}
-=
-\begin{bmatrix} 
-F R - m_{rod} g r \cos\theta + m_w g R \sin\theta - m_{rod} r (2 u_2 u_1 + R u_1^2) \\ 
-F - m_{rod} g \sin\theta + m_{rod} r u_1^2 
-\end{bmatrix}
-$$
-
-After flipping $\theta$ direction:
-
+And the model derived in this file is also consistent with the Appells derived in the previous file.
 
 
 
