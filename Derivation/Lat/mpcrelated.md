@@ -87,7 +87,7 @@ $$
 \end{bmatrix}
 $$
 
-We can solve $A_c$ with MATLAB (`analysis/MPC.m`), and get:
+We can solve $A_c$ with MATLAB (`analysis/MPC.m`), and get (The matrix is too large so online platform may not be able to render it, please check the MATLAB code for details):
 
 $$
 \left(\begin{bmatrix}{cccc} 0 & 0 & 1 & 0\\
@@ -142,7 +142,11 @@ Define a cost function:
 $$J = (\mathbf{X}_k - \mathbf{\mathcal{X}}_{ref})^T \mathbf{\bar{Q}} (\mathbf{X}_k - \mathbf{\mathcal{X}}_{ref}) + \mathbf{U}_k^T \mathbf{\bar{R}} \mathbf{U}_k
 $$
 
-Where $\mathbf{\bar{Q}} = \text{diag}(\mathbf{Q}, \dots, \mathbf{Q}_f)$，$\mathbf{\bar{R}} = \text{diag}(R_u, \dots, R_u)$，$\mathbf{\mathcal{X}}_{ref} = [\mathbf{x}_{ref}^T, \dots, \mathbf{x}_{ref}^T]^T$
+Where 
+
+$$
+\mathbf{\bar{Q}} = \text{diag}(\mathbf{Q}, \dots, \mathbf{Q}_f)，\mathbf{\bar{R}} = \text{diag}(R_u, \dots, R_u)，\mathbf{\mathcal{X}}_{ref} = [\mathbf{x}_{ref}^T, \dots, \mathbf{x}_{ref}^T]^T
+$$
 
 Plugging $J$ into $\mathbf{X}_k = \mathbf{M} \mathbf{x}_k + \mathbf{C} \mathbf{U}_k + \mathbf{D}$, we can get the regressed form with constants eliminated
 
