@@ -79,8 +79,7 @@ $$
 \ddot{\theta} \\ 
 \ddot{r} 
 \end{bmatrix} 
-= 
-\begin{bmatrix} 
+= \begin{bmatrix} 
 -4m_L r \dot{r} \dot{\theta} + \left( 2m_L R + m_w R + m_p (R + h) \right) g \sin\theta - 2m_L g r \cos\theta \\ 
 F + 2m_L r \dot{\theta}^2 - 2m_L g \sin\theta 
 \end{bmatrix}
