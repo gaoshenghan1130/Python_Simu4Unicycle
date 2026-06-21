@@ -13,18 +13,23 @@ theta_dot_ref = 0;
 r_dot_ref = 0;
 x_ref = [theta_ref; r_ref - par.R * theta_ref; theta_dot_ref; r_dot_ref - par.R * theta_dot_ref];
 
-m_w   = (par.m_W * par.R + par.m_B * (par.R+par.h))/par.R;
+m_w   = par.m_W;
 m_rod = 2 * par.m_L;
-R     = par.R;
+m_b = par.m_B;
+R = par.R;
+h = par.h;
 g     = par.g;
 dt    = 0.02; % 100Hz
-N     = 20;   % 
+N     = 20;   
+I_w = par.I_w;
+I_b = par.I_b;
+I_rod = par.I_rod;
 
 persistent F_prev 
 if isempty(F_prev)
     F_prev = 0; 
 end
-I_x2 = m_w*R^2 + m_rod*(x2 + R * x1)^2;
+I_x2 = m_w*R^2 + m_b * (R+h)^2 + m_rod*(x2 + R * x1)^2 + I_w + I_b + I_rod;
 
 
 F = F_prev;
@@ -32,18 +37,19 @@ F = F_prev;
 A_c = [ ...
     0, 0, 1, 0; ...
     0, 0, 0, 1; ...
-    - (R*m_rod*(2*x3*x4 + R*x3^2) - g*m_rod*sin(x1)*(x2 + R*x1) + R*g*m_rod*cos(x1) - R*g*m_w*cos(x1))/(m_rod*(x2 + R*x1)^2 + R^2*m_w) - (2*R*m_rod*(x2 + R*x1)*(F*R - m_rod*(x2 + R*x1)*(2*x3*x4 + R*x3^2) - g*m_rod*cos(x1)*(x2 + R*x1) + R*g*m_w*sin(x1)))/(m_rod*(x2 + R*x1)^2 + R^2*m_w)^2, - (m_rod*(2*x3*x4 + R*x3^2) + g*m_rod*cos(x1))/(m_rod*(x2 + R*x1)^2 + R^2*m_w) - (m_rod*(2*x2 + 2*R*x1)*(F*R - m_rod*(x2 + R*x1)*(2*x3*x4 + R*x3^2) - g*m_rod*cos(x1)*(x2 + R*x1) + R*g*m_w*sin(x1)))/(m_rod*(x2 + R*x1)^2 + R^2*m_w)^2, -(m_rod*(x2 + R*x1)*(2*x4 + 2*R*x3))/(m_rod*(x2 + R*x1)^2 + R^2*m_w), -(2*m_rod*x3*(x2 + R*x1))/(m_rod*(x2 + R*x1)^2 + R^2*m_w); ...
-    R*x3^2 + g*cos(x1), x3^2, 2*x3*(x2 + R*x1), 0 ...
+    (g*m_rod*sin(x1)*(x2 + R*x1) + g*m_b*cos(x1)*(R + h) - R*g*m_rod*cos(x1) + R*g*m_w*cos(x1) - R*m_rod*x3*(2*x4 + R*x3))/(I_b + I_rod + I_w + m_rod*(x2 + R*x1)^2 + m_b*(R + h)^2 + R^2*m_w) - (2*R*m_rod*(x2 + R*x1)*(F*R - g*m_rod*cos(x1)*(x2 + R*x1) + g*m_b*sin(x1)*(R + h) + R*g*m_w*sin(x1) - m_rod*x3*(x2 + R*x1)*(2*x4 + R*x3)))/(I_b + I_rod + I_w + m_rod*(x2 + R*x1)^2 + m_b*(R + h)^2 + R^2*m_w)^2, - (m_rod*(2*x3*x4 + R*x3^2 + g*cos(x1)))/(I_b + I_rod + I_w + m_rod*(x2 + R*x1)^2 + m_b*(R + h)^2 + R^2*m_w) - (m_rod*(2*x2 + 2*R*x1)*(F*R - g*m_rod*cos(x1)*(x2 + R*x1) + g*m_b*sin(x1)*(R + h) + R*g*m_w*sin(x1) - m_rod*x3*(x2 + R*x1)*(2*x4 + R*x3)))/(I_b + I_rod + I_w + m_rod*(x2 + R*x1)^2 + m_b*(R + h)^2 + R^2*m_w)^2, -(m_rod*(x2 + R*x1)*(2*x4 + 2*R*x3))/(I_b + I_rod + I_w + m_rod*(x2 + R*x1)^2 + m_b*(R + h)^2 + R^2*m_w), -(2*m_rod*x3*(x2 + R*x1))/(I_b + I_rod + I_w + m_rod*(x2 + R*x1)^2 + m_b*(R + h)^2 + R^2*m_w); ...
+    R*x3^2 - g*cos(x1), x3^2, 2*x3*(x2 + R*x1), 0 ...
 ];
 B_c = [0; 0; R/I_x2; 1/m_rod];
 
+
 %% Get 0 order compensation term d_c
-N_val = - m_rod*g*(x2 + R*x1)*cos(x1) + m_w*g*R*sin(x1) - m_rod*(x2 + R * x1)*(2*x4*x3 + R*x3^2);
+N_val = - m_rod*g*(x2 + R*x1)*cos(x1) + m_w*g*R*sin(x1) + m_b*g*(R+h)*sin(x1) - m_rod*(x2 + R * x1)*(2*x4*x3 + R*x3^2);
 x_dot_real = [ ...
     x3; ...
     x4; ...
     N_val/I_x2 + (R/I_x2)*F_prev; ...
-    g*sin(x1) + (x2+ R * x1)*x3^2 + (1/m_rod)*F_prev ...
+    - g*sin(x1) + (x2+ R * x1)*x3^2 + (1/m_rod)*F_prev ...
 ];
 d_c = x_dot_real - A_c*x_k - B_c*F_prev;
 
@@ -69,11 +75,11 @@ for i = 1:N
 end
 
 %% Solve QP
-R_u = 100; 
+R_u = 1; 
 
 % [theta, r, theta_dot, r_dot]
-Q_diagonal   = diag([800, 900, 800, 500]); 
-Q_f_diagonal = diag([1500, 1600, 1000, 1000]);
+Q_diagonal   = diag([800, 900, 80, 50]); 
+Q_f_diagonal = diag([1000, 1600, 100, 100]);
 
 Q_bar = zeros(4*N, 4*N);
 R_bar = eye(N) * R_u;
@@ -89,14 +95,16 @@ H = 2 * (C_mpc' * Q_bar * C_mpc + R_bar);
 G = 2 * C_mpc' * Q_bar * (M_mpc * x_k + D_mpc - X_ref_vector);
 H = (H + H') / 2; 
 
-lb = ones(N, 1) * -27.6; 
-ub = ones(N, 1) * 27.6; 
+maxForce = 1000;
+
+lb = ones(N, 1) * -maxForce; 
+ub = ones(N, 1) * maxForce; 
 
 options = optimoptions('quadprog', 'Display', 'off');
 [U_optimal, ~, exitflag] = quadprog(H, G, [], [], [], [], lb, ub, [], options);
 if exitflag >= 0 && ~isempty(U_optimal)
     M = U_optimal(1);
-    disp(M);
+    %disp(M);
 else
     M = F_prev; 
     

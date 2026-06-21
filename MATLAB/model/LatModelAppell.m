@@ -37,7 +37,7 @@ u2 = r_dot - R * theta_dot;
 
 % Appell Mass Matrix
 M_matrix = [
-    m_w * R^2 + m_rod * r^2 + m_b * (R+h)^2, 0;
+    m_w * R^2 + m_rod * r^2 + m_b * (R+h)^2 + par.I_w + par.I_rod + par.I_b, 0;
     0,                       m_rod
 ];
 

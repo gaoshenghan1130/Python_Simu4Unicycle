@@ -38,7 +38,7 @@ char_poly = det(lambda * eye(4) - A_cl);
 
 char_poly_clean = vpa(expand(char_poly), 4);
 
-P_desired = [-2+1i, -2-1i, -3, -2];
+P_desired = [-1.3, -1.1, -1.2, -0.9];
 
 
 K_numeric = place(A, B, P_desired);
@@ -46,8 +46,8 @@ disp('PolePlacement K = ');
 disp(K_numeric);
 
 controller = @(t, z, par) -K_numeric * z; 
-z0 = [3 * pi/180; 0; 0; 0];
-tspan = [0, 5];
+z0 = [0.3 * pi/180; 0; 0; 0];
+tspan = [0, 15];
 [t_out, z_out] = ode45(@(t, z) LatModel(t, z, par, controller), tspan, z0);
 
 % Recalculate for F data

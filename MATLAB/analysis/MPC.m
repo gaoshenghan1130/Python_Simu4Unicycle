@@ -1,20 +1,20 @@
 clear; clc;
 syms x1 x2 x3 x4 F real
-syms m_w m_rod R g real
+syms m_w m_rod m_b I_w I_rod I_b R h g real
 
 % x1 = theta, x2 = r - R*theta
 r_phys = x2 + R * x1; 
 
-I_term = m_w * R^2 + m_rod * r_phys^2;
+I_term = m_w * R^2 + m_b * (R+h)^2 + m_rod * r_phys^2 + I_w + I_rod + I_b;
 
 x1_dot = x3;
 x2_dot = x4;
 
-N_term = - m_rod*g*r_phys*cos(x1) + m_w*g*R*sin(x1) - m_rod*r_phys*(2*x4*x3 + R*x3^2);
+N_term = - m_rod*g*r_phys*cos(x1) + m_w*g*R*sin(x1) + m_b*g*(R+h)*sin(x1) - m_rod*r_phys*(2*x4*x3 + R*x3^2);
 
 x3_dot = (N_term + F*R) / I_term;
 
-x4_dot = (m_rod*g*sin(x1) + m_rod*r_phys*x3^2 + F) / m_rod;
+x4_dot = (- m_rod*g*sin(x1) + m_rod*r_phys*x3^2 + F) / m_rod;
 
 x_dot = [x1_dot; x2_dot; x3_dot; x4_dot];
 x = [x1; x2; x3; x4];

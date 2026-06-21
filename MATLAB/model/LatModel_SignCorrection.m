@@ -35,7 +35,7 @@ h   = par.h;
 
 % Mass Matrix (M)
 M_matrix = [
-    2 * m_L * (R^2 + r^2) + m_w * R^2 + m_p * (R + h)^2,  -2 * m_L * R;
+    2 * m_L * (R^2 + r^2) + m_w * R^2 + m_p * (R + h)^2 + + par.I_b + par.I_w + par.I_rod,  -2 * m_L * R;
     -2 * m_L * R,                                          2 * m_L
 ];
 

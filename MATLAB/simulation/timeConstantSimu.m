@@ -1,10 +1,10 @@
 function [t, Z] = timeConstantSimu(par, model, controller)
     % init
-    z0 = [5 * pi/180; 0; 0; 0.0];
+    z0 = [0.001 * pi/180; 0; 0; 0.0];
 
     % Simulation settings
     dt = 0.001; 
-    T  = 15;           
+    T  = 3;           
     t  = 0:dt:T;
 
     Z = zeros(length(t), length(z0));

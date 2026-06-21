@@ -84,13 +84,13 @@ fprintf('rank(C) = %d\n',rank(Co));
 %% LQR
 
 Q = diag([
-    1000 ... theta
-    100  ... theta_dot
-    100  ... r
-    10  ... r_dot
+    100000 ... theta
+    10000  ... theta_dot
+    1000  ... r
+    100  ... r_dot
 ]);
 
-R_weight = 1;
+R_weight = 10;
 
 K = lqr(A_num,B_num,Q,R_weight);
 
@@ -102,7 +102,7 @@ disp(K);
 lqr_controller = @(t,z,par) -K*z;
 
 z0 = [
-    3*pi/180;
+    0.03*pi/180;
     0;
     0;
     0
