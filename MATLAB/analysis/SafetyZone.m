@@ -50,6 +50,58 @@ is_old_region_final = old_linear_mask(final_valid); % Mark which points are with
 disp(['Num linearly stable points found globally: ', num2str(length(k1_final))]);
 disp(['Num of those within the old constraint region: ', num2str(sum(is_old_region_final))]);
 
+figure('Position',[100 100 1200 500]);
+
+%% k1-k2
+subplot(1,2,1)
+hold on
+
+scatter(k1_final,k2_final,3,'filled',...
+    'MarkerFaceAlpha',0.2)
+
+k1_line = linspace(k1_min,k1_max,1000);
+
+plot(k1_line,...
+    (0.06548*k1_line+26.2)/0.5924,...
+    'r','LineWidth',2)
+
+plot(k1_line,...
+    (10.06*k1_line-167.8)/16.7,...
+    'b','LineWidth',2)
+
+xlabel('k_1')
+ylabel('k_2')
+title('RH Stable Region')
+legend('RH samples','a_2=0','a_0=0')
+grid on
+hold off
+
+%% k3-k4
+subplot(1,2,2)
+hold on
+
+scatter(k3_final,k4_final,3,'filled',...
+    'MarkerFaceAlpha',0.2)
+
+k3_line = linspace(k3_min,k3_max,1000);
+
+plot(k3_line,...
+    (0.06548/0.5924)*k3_line,...
+    'r','LineWidth',2)
+
+plot(k3_line,...
+    (10.06/16.7)*k3_line,...
+    'b','LineWidth',2)
+
+xlabel('k_3')
+ylabel('k_4')
+title('RH Stable Region')
+legend('RH samples','a_3=0','a_1=0')
+grid on
+hold off
+
+return 
+
 % =========================================================================
 % 4. Nonlinear model verification (sample from globally stable points)
 % =========================================================================

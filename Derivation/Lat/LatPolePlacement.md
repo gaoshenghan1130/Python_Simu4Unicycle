@@ -111,39 +111,10 @@ $$
 
 We can't really calculate the exact boundary, so we did a Monte Carlo sampling to find the feasible region that satisfies all the above inequalities. The result is shown below.
 
-![fig](Region4K_0.3kg_1.png)
+![fig](Region4K_0.24kg_1.png)
 
 
-Given that the all the point inside the region satisfies the Routh-Hurwitz criteria, we can expect that the system is stable for all the points inside the region (after linearized). So now we can plug all this into the nonlinear model to further select the parameters that can stabilize the system in the nonlinear model. The result is shown below (for 0.3kg extra mass):
+Given that the all the point inside the region satisfies the Routh-Hurwitz criteria, we can expect that the system is stable for all the points inside the region (after linearized). So now we can plug all this into the nonlinear model to further select the parameters that can stabilize the system in the nonlinear model. 
 
-- Without any restriction on maximum r:
-
-    - With $3\degree$ initial theta, $98.9\%$ points inside the region can stabilize the system in the nonlinear model:
-
-    ![fig](Region4K_0.3kg_2_3deg.png)
-
-    - With $5\degree$ initial theta, $96.6\%$ points inside the region can stabilize the system in the nonlinear model:
-
-    ![fig](Region4K_0.3kg_2_5deg.png)
-
-    - With $10\degree$ initial theta, $92.5\%$ points inside the region can stabilize the system in the nonlinear model:
-    ![fig](Region4K_0.3kg_2_10deg.png)
-
-    - $15\degree$ initial theta, $37.4\%$ points:
-
-    ![fig](Region4K_0.3kg_2_15deg.png)
-
-- With maximum r restricted to 0.15m:
-
-    - With $3\degree$ initial theta, $80.3\%$ points inside the region can stabilize the system in the nonlinear model:
-
-    ![fig](Region4K_0.3kg_2_3deg_rod.png)
-
-    - With $3.5\degree$ initial theta, $11.4\%$ points inside the region can stabilize the system in the nonlinear model:
-
-    ![fig](Region4K_0.3kg_2_3.5deg_rod.png)
-
-    - With $3.65\degree$ initial theta, $0.1\%$ points inside the region can stabilize the system in the nonlinear model, which should be the boundary for the initial theta under this paramset:
-    ![fig](Region4K_0.3kg_2_3.65deg_rod.png)
 
 
