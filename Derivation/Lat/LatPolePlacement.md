@@ -1,7 +1,10 @@
 # Latitude Model Pole Placement analysis
 
 The system moment of inertia $J_0$ is defined as follows:
-$$J_0 = 2m_L R^2 + m_b (R+h)^2 + m_w R^2 + I_b + I_w + I_{rod}$$
+
+$$
+J_0 = 2m_L R^2 + m_b (R+h)^2 + m_w R^2 + I_b + I_w + I_{rod}
+$$
 
 Gravity coupling coefficients:
 * $G_{\theta 1} = 2m_g R + m_g(R+h) + m_g R$
@@ -28,11 +31,13 @@ $$
 $$
 
 Where:
+
 $$
 A = N^{-1} \begin{bmatrix} 0 & 0 & 1 & 0 \\ 0 & 0 & 0 & 1 \\ G_{\theta 1} & G_{r 1} & 0 & 0 \\ G_{\theta 2} & 0 & 0 & 0 \end{bmatrix}, \quad B = N^{-1} \begin{bmatrix} 0 \\ 0 \\ 0 \\ 1 \end{bmatrix}
 $$
 
 Through closed-loop feedback control $u = -Kz$, we place the closed-loop poles to satisfy the desired characteristic equation:
+
 $$\det(\lambda I - (A - BK)) = 0$$
 
 The continuing MATLAB code is in `MATLAB/analysis/PolePlacement.m`.
@@ -105,6 +110,7 @@ $$
 $$
 
 For $a_3 a_2 a_1 > a_1^2 + a_3^2 a_0$, we have:
+
 $$
 (0.5924 k_4 - 0.06548 k_3)(0.5924 k_2 - 0.06548 k_1 - 26.2)(10.06 k_3 - 16.7 k_4) > (10.06 k_3 - 16.7 k_4)^2 + (0.5924 k_4 - 0.06548 k_3)^2 (10.06 k_1 - 16.7 k_2 - 167.8)
 $$

@@ -1,4 +1,4 @@
-# Try using simplified Mpc
+# Try using Mpc
 
 Use the model derived with Appell:
 
@@ -31,8 +31,7 @@ $$
 m_w R^2 + m_{rod} r^2 + m_p (R + h)^2 & 0 \\
 0 & m_{rod}
 \end{bmatrix}^{-1}
-=
-\begin{bmatrix}
+= \begin{bmatrix}
 \dfrac{1}{m_w R^2 + m_{rod} r^2 + m_p (R + h)^2} & 0 \\
 0 & \dfrac{1}{m_{rod}}
 \end{bmatrix} \\
@@ -91,7 +90,10 @@ $$
 We can solve $A_c$ with MATLAB (`analysis/MPC.m`), and get:
 
 $$
-\left(\begin{bmatrix}{cccc} 0 & 0 & 1 & 0\\ 0 & 0 & 0 & 1\\ \frac{g\,m_{\mathrm{rod}}\,\sin\left(x_{1}\right)\,\left(x_{2}+R\,x_{1}\right)+g\,m_{b}\,\cos\left(x_{1}\right)\,\left(R+h\right)-R\,g\,m_{\mathrm{rod}}\,\cos\left(x_{1}\right)+R\,g\,m_{w}\,\cos\left(x_{1}\right)-R\,m_{\mathrm{rod}}\,x_{3}\,\left(2\,x_{4}+R\,x_{3}\right)}{I_{b}+I_{\mathrm{rod}}+I_{w}+m_{\mathrm{rod}}\,{\left(x_{2}+R\,x_{1}\right)}^2+m_{b}\,{\left(R+h\right)}^2+R^2\,m_{w}}-\frac{2\,R\,m_{\mathrm{rod}}\,\left(x_{2}+R\,x_{1}\right)\,\left(F\,R-g\,m_{\mathrm{rod}}\,\cos\left(x_{1}\right)\,\left(x_{2}+R\,x_{1}\right)+g\,m_{b}\,\sin\left(x_{1}\right)\,\left(R+h\right)+R\,g\,m_{w}\,\sin\left(x_{1}\right)-m_{\mathrm{rod}}\,x_{3}\,\left(x_{2}+R\,x_{1}\right)\,\left(2\,x_{4}+R\,x_{3}\right)\right)}{{\left(I_{b}+I_{\mathrm{rod}}+I_{w}+m_{\mathrm{rod}}\,{\left(x_{2}+R\,x_{1}\right)}^2+m_{b}\,{\left(R+h\right)}^2+R^2\,m_{w}\right)}^2} & -\frac{m_{\mathrm{rod}}\,\left(R\,{x_{3}}^2+2\,x_{4}\,x_{3}+g\,\cos\left(x_{1}\right)\right)}{I_{b}+I_{\mathrm{rod}}+I_{w}+m_{\mathrm{rod}}\,{\left(x_{2}+R\,x_{1}\right)}^2+m_{b}\,{\left(R+h\right)}^2+R^2\,m_{w}}-\frac{m_{\mathrm{rod}}\,\left(2\,x_{2}+2\,R\,x_{1}\right)\,\left(F\,R-g\,m_{\mathrm{rod}}\,\cos\left(x_{1}\right)\,\left(x_{2}+R\,x_{1}\right)+g\,m_{b}\,\sin\left(x_{1}\right)\,\left(R+h\right)+R\,g\,m_{w}\,\sin\left(x_{1}\right)-m_{\mathrm{rod}}\,x_{3}\,\left(x_{2}+R\,x_{1}\right)\,\left(2\,x_{4}+R\,x_{3}\right)\right)}{{\left(I_{b}+I_{\mathrm{rod}}+I_{w}+m_{\mathrm{rod}}\,{\left(x_{2}+R\,x_{1}\right)}^2+m_{b}\,{\left(R+h\right)}^2+R^2\,m_{w}\right)}^2} & -\frac{m_{\mathrm{rod}}\,\left(x_{2}+R\,x_{1}\right)\,\left(2\,x_{4}+2\,R\,x_{3}\right)}{I_{b}+I_{\mathrm{rod}}+I_{w}+m_{\mathrm{rod}}\,{\left(x_{2}+R\,x_{1}\right)}^2+m_{b}\,{\left(R+h\right)}^2+R^2\,m_{w}} & -\frac{2\,m_{\mathrm{rod}}\,x_{3}\,\left(x_{2}+R\,x_{1}\right)}{I_{b}+I_{\mathrm{rod}}+I_{w}+m_{\mathrm{rod}}\,{\left(x_{2}+R\,x_{1}\right)}^2+m_{b}\,{\left(R+h\right)}^2+R^2\,m_{w}}\\ R\,{x_{3}}^2-g\,\cos\left(x_{1}\right) & {x_{3}}^2 & 2\,x_{3}\,\left(x_{2}+R\,x_{1}\right) & 0 \end{bmatrix}\right)
+\left(\begin{bmatrix}{cccc} 0 & 0 & 1 & 0\\
+ 0 & 0 & 0 & 1\\ 
+ \frac{g\,m_{\mathrm{rod}}\,\sin\left(x_{1}\right)\,\left(x_{2}+R\,x_{1}\right)+g\,m_{b}\,\cos\left(x_{1}\right)\,\left(R+h\right)-R\,g\,m_{\mathrm{rod}}\,\cos\left(x_{1}\right)+R\,g\,m_{w}\,\cos\left(x_{1}\right)-R\,m_{\mathrm{rod}}\,x_{3}\,\left(2\,x_{4}+R\,x_{3}\right)}{I_{b}+I_{\mathrm{rod}}+I_{w}+m_{\mathrm{rod}}\,{\left(x_{2}+R\,x_{1}\right)}^2+m_{b}\,{\left(R+h\right)}^2+R^2\,m_{w}}-\frac{2\,R\,m_{\mathrm{rod}}\,\left(x_{2}+R\,x_{1}\right)\,\left(F\,R-g\,m_{\mathrm{rod}}\,\cos\left(x_{1}\right)\,\left(x_{2}+R\,x_{1}\right)+g\,m_{b}\,\sin\left(x_{1}\right)\,\left(R+h\right)+R\,g\,m_{w}\,\sin\left(x_{1}\right)-m_{\mathrm{rod}}\,x_{3}\,\left(x_{2}+R\,x_{1}\right)\,\left(2\,x_{4}+R\,x_{3}\right)\right)}{{\left(I_{b}+I_{\mathrm{rod}}+I_{w}+m_{\mathrm{rod}}\,{\left(x_{2}+R\,x_{1}\right)}^2+m_{b}\,{\left(R+h\right)}^2+R^2\,m_{w}\right)}^2} & -\frac{m_{\mathrm{rod}}\,\left(R\,{x_{3}}^2+2\,x_{4}\,x_{3}+g\,\cos\left(x_{1}\right)\right)}{I_{b}+I_{\mathrm{rod}}+I_{w}+m_{\mathrm{rod}}\,{\left(x_{2}+R\,x_{1}\right)}^2+m_{b}\,{\left(R+h\right)}^2+R^2\,m_{w}}-\frac{m_{\mathrm{rod}}\,\left(2\,x_{2}+2\,R\,x_{1}\right)\,\left(F\,R-g\,m_{\mathrm{rod}}\,\cos\left(x_{1}\right)\,\left(x_{2}+R\,x_{1}\right)+g\,m_{b}\,\sin\left(x_{1}\right)\,\left(R+h\right)+R\,g\,m_{w}\,\sin\left(x_{1}\right)-m_{\mathrm{rod}}\,x_{3}\,\left(x_{2}+R\,x_{1}\right)\,\left(2\,x_{4}+R\,x_{3}\right)\right)}{{\left(I_{b}+I_{\mathrm{rod}}+I_{w}+m_{\mathrm{rod}}\,{\left(x_{2}+R\,x_{1}\right)}^2+m_{b}\,{\left(R+h\right)}^2+R^2\,m_{w}\right)}^2} & -\frac{m_{\mathrm{rod}}\,\left(x_{2}+R\,x_{1}\right)\,\left(2\,x_{4}+2\,R\,x_{3}\right)}{I_{b}+I_{\mathrm{rod}}+I_{w}+m_{\mathrm{rod}}\,{\left(x_{2}+R\,x_{1}\right)}^2+m_{b}\,{\left(R+h\right)}^2+R^2\,m_{w}} & -\frac{2\,m_{\mathrm{rod}}\,x_{3}\,\left(x_{2}+R\,x_{1}\right)}{I_{b}+I_{\mathrm{rod}}+I_{w}+m_{\mathrm{rod}}\,{\left(x_{2}+R\,x_{1}\right)}^2+m_{b}\,{\left(R+h\right)}^2+R^2\,m_{w}}\\
+  R\,{x_{3}}^2-g\,\cos\left(x_{1}\right) & {x_{3}}^2 & 2\,x_{3}\,\left(x_{2}+R\,x_{1}\right) & 0 \end{bmatrix}\right)
 $$
 
 To eliminate the 0 order error, calculate current state vector 
@@ -140,13 +142,9 @@ Define a cost function:
 $$J = (\mathbf{X}_k - \mathbf{\mathcal{X}}_{ref})^T \mathbf{\bar{Q}} (\mathbf{X}_k - \mathbf{\mathcal{X}}_{ref}) + \mathbf{U}_k^T \mathbf{\bar{R}} \mathbf{U}_k
 $$
 
-Where:
+Where $\mathbf{\bar{Q}} = \text{diag}(\mathbf{Q}, \dots, \mathbf{Q}_f)$，$\mathbf{\bar{R}} = \text{diag}(R_u, \dots, R_u)$，$\mathbf{\mathcal{X}}_{ref} = [\mathbf{x}_{ref}^T, \dots, \mathbf{x}_{ref}^T]^T$
 
-$\mathbf{\bar{Q}} = \text{diag}(\mathbf{Q}, \dots, \mathbf{Q}_f)$，$\mathbf{\bar{R}} = \text{diag}(R_u, \dots, R_u)$，$\mathbf{\mathcal{X}}_{ref} = [\mathbf{x}_{ref}^T, \dots, \mathbf{x}_{ref}^T]^T$
-
-Plugging $J$ into $
-\mathbf{X}_k = \mathbf{M} \mathbf{x}_k + \mathbf{C} \mathbf{U}_k + \mathbf{D}
-$, we can get the regressed form with constants eliminated
+Plugging $J$ into $\mathbf{X}_k = \mathbf{M} \mathbf{x}_k + \mathbf{C} \mathbf{U}_k + \mathbf{D}$, we can get the regressed form with constants eliminated
 
 $$
 \begin{aligned}
