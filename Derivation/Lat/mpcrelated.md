@@ -29,9 +29,7 @@ To simplify a bit:
 $$
 \begin{bmatrix}
 m_w R^2 + m_{rod} r^2 + m_p (R + h)^2 & 0 \\
-0 & m_{rod}
-\end{bmatrix}^{-1}
-= \begin{bmatrix}
+0 & m_{rod} \end{bmatrix}^{-1} = \begin{bmatrix}
 \dfrac{1}{m_w R^2 + m_{rod} r^2 + m_p (R + h)^2} & 0 \\
 0 & \dfrac{1}{m_{rod}}
 \end{bmatrix} \\
@@ -43,9 +41,7 @@ m_w R^2 + m_{rod} r^2 + m_p (R + h)^2 & 0 \\
 = \begin{bmatrix}
 \dfrac{1}{m_w R^2 + m_{rod} r^2 + m_p (R + h)^2} & 0 \\
 0 & \dfrac{1}{m_{rod}}
-\end{bmatrix} \begin{bmatrix} 
-- m_{rod} g r \cos\theta + m_w g R \sin\theta + m_p g (R + h) \sin\theta - m_{rod} r (2 u_2 u_1 + R u_1^2) \\ 
-- m_{rod} g \sin\theta + m_{rod} r u_1^2 
+\end{bmatrix} \begin{bmatrix} - m_{rod} g r \cos\theta + m_w g R \sin\theta + m_p g (R + h) \sin\theta - m_{rod} r (2 u_2 u_1 + R u_1^2) \\ - m_{rod} g \sin\theta + m_{rod} r u_1^2 
 \end{bmatrix} + \begin{bmatrix} FR \\
 F
 \end{bmatrix}
