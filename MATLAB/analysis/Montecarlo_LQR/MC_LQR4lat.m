@@ -29,73 +29,77 @@ B_eq = subs(B_sym, [z_sym; F_sym], [0; 0; 0; 0; 0]);
 A_num = double(subs(A_eq, [m_L, m_B, m_W, h, g, R, I_b, I_w, I_rod], [par.m_L, par.m_B, par.m_W, par.h, par.g, par.R, par.I_b, par.I_w, par.I_rod]));
 B_num = double(subs(B_eq, [m_L, m_B, m_W, h, g, R, I_b, I_w, I_rod], [par.m_L, par.m_B, par.m_W, par.h, par.g, par.R, par.I_b, par.I_w, par.I_rod]));
 
-%% 2. Monte Carlo Simulation Setup
-% Define test range for Q/R
-% q_theta_vals: Test from 1 to 1,000,000
-q_theta_vals = logspace(0, 6, 15); 
-% R_weights: Test from 1 to 100
-R_weights = logspace(0, 2, 15);    
+%% Monte Carlo Simulation Setup
+disp('Step 2: Starting Monte Carlo simulation...');
+
+% Define test range for Q_theta
+q_theta_vals = logspace(0, 6, 20); %From 1 to 1000000
+
+% Define 3 specific test cases for the angular velocity penalty
+% 1 = Relaxed, 100 = Moderate, 10000 = Aggressive
+q_theta_dot_vals = [1, 100, 10000]; 
 
 % Initialization
-Max_Force_Matrix = zeros(length(q_theta_vals), length(R_weights));
+Max_Force_Matrix = zeros(length(q_theta_vals), length(q_theta_dot_vals));
 z0 = [3*pi/180; 0; 0; 0];     % Initial State (3 degrees)
 tspan = [0 10];               % Simulation Time
+R_fixed = 1;                  % R is normalized to 1 to avoid ratio ambiguity
 
-% 3. Monte Carlo iteration
+% Monte Carlo iteration (Sweeping Q_theta vs Q_theta_dot)
 for i = 1:length(q_theta_vals)
-    for j = 1:length(R_weights)
+    for j = 1:length(q_theta_dot_vals)
         
-        % Defining Q matrix (Keeping theta_dot, r, and r_dot tolerant)
-        Q_iter = diag([q_theta_vals(i), 10, 10, 1]); 
-        R_iter = R_weights(j);
+        % Q matrix: Iterating Theta and Theta_dot. Position/velocity of cart kept fixed.
+        Q_iter = diag([q_theta_vals(i), q_theta_dot_vals(j), 10, 1]); 
         
-        % LQR gains
-        K_iter = lqr(A_num, B_num, Q_iter, R_iter);
+        % LQR gains with fixed R
+        K_iter = lqr(A_num, B_num, Q_iter, R_fixed);
         lqr_controller = @(t, z, par) -K_iter * z; 
         
-        % Simulating model with specific gains
+        % Simulating model
         [t_out, z_out] = ode45(@(t, z) LatModel_SignCorrection(t, z, par, lqr_controller), tspan, z0);
         
-        % Force used in every iteration
+        % Force reconstruction
         F_current_run = zeros(length(t_out), 1);
         for k = 1:length(t_out)
             F_current_run(k) = -K_iter * z_out(k,:)';  
         end
         
-        % Save the max force applied during the run
+        % Save max force
         Max_Force_Matrix(i, j) = max(abs(F_current_run));
     end
 end
 
-%% 4. Plot (Hardware Limits)
-figure('Name', 'Montecarlo LQR');
+disp('Simulation complete. Generating plots...');
+
+%% Plot (Hardware Limits)
+figure('Name', 'LQR Cross-Sections - Velocity Coupling');
 hold on;
 
-% Select 3 values from the R matrix (start, middle, and end of the array)
-idx_1 = 1;                              % Lowest R (No actuator limits)
-idx_2 = round(length(R_weights)/2);     % Intermediate R
-idx_3 = length(R_weights);              % Highest R (No actuator limited)
-
-% Plot the lines for R values
-plot(q_theta_vals, Max_Force_Matrix(:, idx_1), 'b-', 'LineWidth', 2);
-plot(q_theta_vals, Max_Force_Matrix(:, idx_2), 'g--', 'LineWidth', 2);
-plot(q_theta_vals, Max_Force_Matrix(:, idx_3), 'm:', 'LineWidth', 2);
+% Plot the lines and save their handles (p1, p2, p3) for the legend
+p1 = plot(q_theta_vals, Max_Force_Matrix(:, 1), 'b-', 'LineWidth', 2);
+p2 = plot(q_theta_vals, Max_Force_Matrix(:, 2), 'g--', 'LineWidth', 2);
+p3 = plot(q_theta_vals, Max_Force_Matrix(:, 3), 'm:', 'LineWidth', 2);
 
 % MOTOR PHYSICAL LIMITS
 continuous_limit = 9.2;
 peak_limit = 27.6;
 
-% Draw the hardware limit lines
-y1 = yline(continuous_limit, 'k--', 'LineWidth', 2);
+% Draw the limit lines
+y1 = yline(continuous_limit, 'Color', [0.8500 0.3250 0.0980], 'LineStyle', '--', 'LineWidth', 2);
 y2 = yline(peak_limit, 'r-', 'LineWidth', 2);
 
-set(gca, 'XScale', 'log'); % Logarithmic X-axis because Q_theta grows exponentially
+% Academic formatting
+set(gca, 'XScale', 'log'); 
 xlabel('Angle Penalty (Q_{\theta})');
 ylabel('Maximum Motor Force (N)');
-title('LQR Force Demand vs Physical Hardware Limits');
-legend(['R = ', num2str(R_weights(idx_1))], ...
-       ['R = ', num2str(R_weights(idx_2))], ...
-       ['R = ', num2str(R_weights(idx_3))], ...
+title('Force Demand vs Hardware Limits (R = 1)');
+
+% Build the legend dynamically
+legend([p1, p2, p3, y1, y2], ...
+       ['Q_{\theta dot} = ', num2str(q_theta_dot_vals(1)), ' (Relaxed)'], ...
+       ['Q_{\theta dot} = ', num2str(q_theta_dot_vals(2)), ' (Moderate)'], ...
+       ['Q_{\theta dot} = ', num2str(q_theta_dot_vals(3)), ' (Aggressive)'], ...
        'Thermal Limit (9.2 N)', ...
        'Saturation Limit (27.6 N)', ...
        'Location', 'northwest');
