@@ -19,7 +19,7 @@
 This report presents the analytical modeling, system linearization, and control law synthesis for the lateral stabilization of an autonomous unicycle. 
 
 <p align="center">
-  <img src="notation.png" alt="Description" width="40%">
+  <img src="Evidence\notation.png" alt="Description" width="40%">
   <br>
   <em>Figure 1: Unicycle Notation</em>
 </p>
@@ -321,19 +321,19 @@ $Q_1$ vs $Q_2$: This projection shows the relationship between the angle penalty
 $Q_3$ vs $Q_4$: This plots the position ($Q_3 \rightarrow r $) versus linear velocity ($Q_4 \rightarrow \dot{r} $) penalties. 
 
 <p align="center">
-  <img src="LQR Plot 0.03 degree.png" alt="Description" width="100%">
+  <img src="Evidence\LQR Plot 0.03 degree.png" alt="Description" width="100%">
   <br>
   <em>Figure 2: LQR Monte Carlo theta_0 = 0.03 degree </em>
 </p>
 
 <p align="center">
-  <img src="LQR Plot 0.5 degree.png" alt="Description" width="100%">
+  <img src="Evidence\LQR Plot 0.5 degree.png" alt="Description" width="100%">
   <br>
   <em>Figure 3: LQR Monte Carlo theta_0 = 0.5 degree</em>
 </p>
 
 <p align="center">
-  <img src="LQR Plot 1 degree.png" alt="Description" width="100%">
+  <img src="Evidence\LQR Plot 1 degree.png" alt="Description" width="100%">
   <br>
   <em>Figure 4: LQR Monte Carlo theta_0 = 1 degree</em>
 </p>
@@ -347,20 +347,24 @@ $p_1$ vs $p_2$ (Dominant Poles): Pushing these poles further into the left half-
 $p_3$ vs $p_4$ (Secondary Poles): These dictate the cart's stabilization speed.
 The Monte Carlo data here confirms that achieving a settling time fast enough to "catch" the unicycle before it crosses the nonlinear point of no return inherently requires control signals that exceed the $27.6\text{ N}$ saturation threshold. It proves that the saturation is not a "tuning error" from LQR weights, but a fundamental dynamic restriction of the required system speed.
 
+_Note: This tests were executed using random poles using this notation. This can be changed inside MC_PP_lat_4P_
+
+ $p_{rand} = -0.1 - 20 * rand(N, 1); $ 
+
 <p align="center">
-  <img src="PP Plot 0.03 degree.png" alt="Description" width="100%">
+  <img src="Evidence\PP Plot 0.03 degree.png" alt="Description" width="100%">
   <br>
   <em>Figure 5: Pole Placement Monte Carlo theta_0 = 0.03 degree</em>
 </p>
 
 <p align="center">
-  <img src="PP Plot 0.5 degree.png" alt="Description" width="100%">
+  <img src="Evidence\PP Plot 0.5 degree.png" alt="Description" width="100%">
   <br>
   <em>Figure 6: Pole Placement Monte Carlo theta_0 = 0.5 degree</em>
 </p>
 
 <p align="center">
-  <img src="PP Plot 1 degree.png" alt="Description" width="100%">
+  <img src="Evidence\PP Plot 1 degree.png" alt="Description" width="100%">
   <br>
   <em>Figure 7: Pole Placement Monte Carlo theta_0 = 1 degree</em>
 </p>
@@ -375,19 +379,19 @@ When the realistic initial condition $\theta_0$ perturbation is introduced, the 
 $k_3$ (Proportional Position) vs $k_4$ (Derivative Position): This confirms the structural underactuation problem.
 
 <p align="center">
-  <img src="Region4K_0.24kg_1.png" alt="Description" width="100%">
+  <img src="Evidence\Region4K_0.24kg_1.png" alt="Description" width="100%">
   <br>
   <em>Figure 8: Ks Monte Carlo RH Stable Region</em>
 </p>
 
 <p align="center">
-  <img src="Ks Plot 0.03 degree.png" alt="Description" width="100%">
+  <img src="Evidence\Nonlinear boundary 0.03 degree.png" alt="Description" width="100%">
   <br>
   <em>Figure 9: Ks Monte Carlo theta_0 = 0.03 degree</em>
 </p>
 
 <p align="center">
-  <img src="Nonlinear boundary 0.5 degree 2.png" alt="Description" width="100%">
+  <img src="Evidence\Nonlinear boundary 0.5 degree.png" alt="Description" width="100%">
   <br>
   <em>Figure 10: Ks Monte Carlo theta_0 = 0.5 degree</em>
 </p>
