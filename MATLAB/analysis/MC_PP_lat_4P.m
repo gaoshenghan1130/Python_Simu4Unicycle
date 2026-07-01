@@ -2,28 +2,49 @@ clear; clc; close all;
 addpath('param/', 'model/');
 par = LatParam();
 
-%% 1. Symbolic Linearization of Appell (Identical to LQR)
-disp('Step 1: Linearizing model...');
+%% 1. Symbolic Linearization of Lagrangian Model (Interleaved States)
+disp('Step 1: Linearizing Lagrangian model...');
 syms theta theta_dot r r_dot F_sym real
-syms m_w m_rod m_b g R h real
-z_sym = [theta; theta_dot; r; r_dot];
-u1 = theta_dot;
-u2 = r_dot - R*theta_dot;
+syms m_W m_L m_B g R h I_w I_rod I_b real
 
-M_matrix = [m_w*R^2 + m_rod*r^2 + m_b*(R+h)^2, 0; 0, m_rod];
-M_rightside = [
-    F_sym*R - m_rod*g*r*cos(theta) + m_w*g*R*sin(theta) + m_b*g*(R+h)*sin(theta) - m_rod*r*(2*u2*u1 + R*u1^2);
-    F_sym - m_rod*g*sin(theta) + m_rod*r*u1^2
+% 1. Definimos el vector de estados intercalando posiciones y velocidades
+z_sym = [theta; theta_dot; r; r_dot]; 
+
+% 2. Matriz de Inercia (M) exacta del modelo Lagrangiano
+M_matrix = [
+    2*m_L*(R^2 + r^2) + m_W*R^2 + m_B*(R+h)^2 + I_b + I_w + I_rod,  -2*m_L*R;
+    -2*m_L*R,                                                       2*m_L
 ];
-accel_u = simplify(M_matrix \ M_rightside);
-dz_sym = [theta_dot; accel_u(1); r_dot; accel_u(2) + R*accel_u(1)];
 
-A_sym = jacobian(dz_sym, z_sym); B_sym = jacobian(dz_sym, F_sym);
+% 3. Lado derecho de la ecuación (Q - C - G)
+M_rightside = [
+    -4*m_L*r*r_dot*theta_dot + (2*m_L*R + m_W*R + m_B*(R+h))*g*sin(theta) - 2*m_L*g*r*cos(theta);
+    F_sym + 2*m_L*r*theta_dot^2 - 2*m_L*g*sin(theta)
+];
+
+% 4. Despejar aceleraciones
+accel_sym = simplify(M_matrix \ M_rightside);
+
+% 5. Formar derivada del vector de estados (dz) acorde al orden de z_sym
+% dz = [derivada de theta; aceleración theta; derivada de r; aceleración r]
+dz_sym = [theta_dot; accel_sym(1); r_dot; accel_sym(2)];
+
+% 6. Jacobian para linealización
+A_sym = jacobian(dz_sym, z_sym); 
+B_sym = jacobian(dz_sym, F_sym);
+
+% 7. Evaluar en el punto de equilibrio (0,0,0,0)
 A_eq = subs(A_sym, [theta theta_dot r r_dot F_sym], [0 0 0 0 0]);
 B_eq = subs(B_sym, [theta theta_dot r r_dot F_sym], [0 0 0 0 0]);
-A_num = double(subs(A_eq, [m_w m_rod m_b g R h], [par.m_W 2*par.m_L par.m_B par.g par.R par.h]));
-B_num = double(subs(B_eq, [m_w m_rod m_b g R h], [par.m_W 2*par.m_L par.m_B par.g par.R par.h]));
 
+% 8. Sustituir parámetros numéricos
+A_num = double(subs(A_eq, [m_W m_L m_B g R h I_w I_rod I_b], ...
+    [par.m_W par.m_L par.m_B par.g par.R par.h par.I_w par.I_rod par.I_b]));
+B_num = double(subs(B_eq, [m_W m_L m_B g R h I_w I_rod I_b], ...
+    [par.m_W par.m_L par.m_B par.g par.R par.h par.I_w par.I_rod par.I_b]));
+
+disp(A_num);
+disp(B_num);
 %% 2. Monte Carlo Setup (Pole Placement - 4D Random Poles)
 N = 2000;
 disp(['Step 2: Starting Pole Placement Monte Carlo with N = ', num2str(N)]);
@@ -31,15 +52,15 @@ disp(['Step 2: Starting Pole Placement Monte Carlo with N = ', num2str(N)]);
 % Randomize Poles (Always negative for linear stability)
 % P1 and P2 will be used as "Dominant" (Pendulum) poles
 % P3 and P4 will be used as "Secondary" (Cart) poles
-p1_rand = -0.1 - 20 * rand(N, 1);
-p2_rand = -0.1 - 20 * rand(N, 1);
-p3_rand = -0.1 - 20 * rand(N, 1);
-p4_rand = -0.1 - 20 * rand(N, 1);
+p1_rand = -0.1 - 2 * rand(N, 1);
+p2_rand = -0.1 - 2 * rand(N, 1);
+p3_rand = -0.1 - 2 * rand(N, 1);
+p4_rand = -0.1 - 2 * rand(N, 1);
 
 nonlinear_stable_idx = false(N, 1);
 hardware_valid_idx   = false(N, 1); 
 
-z0 = [1 * pi/180; 0; 0; 0]; 
+z0 = [0.03 * pi/180; 0; 0; 0]; % Initial condition
 tspan = [0, 15]; % Now you can safely use 10, 15, or even 100 seconds
 
 % Configuration to abort the simulation if the robot falls
@@ -48,7 +69,7 @@ options = odeset('Events', @fallDetector);
 % 3. Nonlinear Physics and Hardware Verification
 for i = 1:N
     P = [p1_rand(i), p2_rand(i), p3_rand(i), p4_rand(i)];
-    
+        
     try
         K = place(A_num, B_num, P);
         controller = @(t, z, par) -K * z;
@@ -62,12 +83,16 @@ for i = 1:N
         F_out = -K * z_out'; 
         max_force = max(abs(F_out));
         
+
         if (max_theta < 20 * pi/180) && (final_theta < 5 * pi/180) 
             nonlinear_stable_idx(i) = true;
             if max_force <= 27.6
+                disp(K);
+                disp(P);
                 hardware_valid_idx(i) = true;
             end
         end
+        
     catch
         % Pole placement failure or unstable integration
     end

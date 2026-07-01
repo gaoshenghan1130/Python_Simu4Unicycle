@@ -11,14 +11,14 @@ g = par.g;
 
 J_theta = 2 * m_L * R^2 + m_B * (R+h)^2 + m_W * R^2 + par.I_b + par.I_rod + par.I_w;
 G_theta1 = 2*m_L * g * R + m_B * g * (R+h) + m_W * g * R; 
-G_theta2 = 2 * m_L * g;
-G_r1  = 2*m_L*g;
+G_theta2 = -2 * m_L * g;
+G_r1  = -2*m_L*g;
 
 
 N = [1, 0, 0, 0;
      0, 1, 0,       0;
-     0, 0, J_theta, 2*m_L*R^2; 
-     0, 0, 2*m_L*R^2, 2*m_L];
+     0, 0, J_theta, -2*m_L*R; 
+     0, 0, -2*m_L*R, 2*m_L];
 
 A_tilde = [0,        0,      1, 0;
            0,        0,      0, 1;
@@ -38,17 +38,18 @@ char_poly = det(lambda * eye(4) - A_cl);
 
 char_poly_clean = vpa(expand(char_poly), 4);
 
-P_desired = [-1.3, -1.1, -1.2, -0.9];
+P_desired = [-1.6233, -1.8633, -1.9467, -2.0489]; %Poles obtained from MC_PP_lat_4P.m
 
 
 K_numeric = place(A, B, P_desired);
 disp('PolePlacement K = ');
 disp(K_numeric);
+K_numeric_new_order = [K_numeric(1), K_numeric(3), K_numeric(2), K_numeric(4)]
 
-controller = @(t, z, par) -K_numeric * z; 
-z0 = [0.3 * pi/180; 0; 0; 0];
+controller = @(t, z, par) -K_numeric_new_order * z; 
+z0 = [0.16 * pi/180; 0; 0; 0];
 tspan = [0, 15];
-[t_out, z_out] = ode45(@(t, z) LatModel(t, z, par, controller), tspan, z0);
+[t_out, z_out] = ode45(@(t, z) LatModel_SignCorrection(t, z, par, controller), tspan, z0);
 
 % Recalculate for F data
 F_out = zeros(length(t_out), 1);

@@ -10,7 +10,10 @@ z_sym = [theta; theta_dot; r; r_dot];
 u1 = theta_dot;
 u2 = r_dot - R*theta_dot;
 
-M_matrix = [m_w*R^2 + m_rod*r^2 + m_b*(R+h)^2, 0; 0, m_rod];
+M_matrix = [
+    m_w * R^2 + m_rod * r^2 + m_b * (R+h)^2 + par.I_w + par.I_rod + par.I_b, 0;
+    0,                       m_rod
+];
 M_rightside = [
     F_sym*R - m_rod*g*r*cos(theta) + m_w*g*R*sin(theta) + m_b*g*(R+h)*sin(theta) - m_rod*r*(2*u2*u1 + R*u1^2);
     F_sym - m_rod*g*sin(theta) + m_rod*r*u1^2
@@ -42,8 +45,8 @@ R_fixed = 1;
 nonlinear_stable_idx = false(N, 1);
 hardware_valid_idx   = false(N, 1); 
 
-z0 = [1 * pi/180; 0; 0; 0]; % Realistic 3-degree perturbation
-tspan = [0, 15]; % Now you can safely use 10, 15, or even 100 seconds
+z0 = [01 * pi/180; 0; 0; 0]; % Initial conditon theta, theta dot, r, r dot
+tspan = [0, 15]; 
 
 % Configuration to abort the simulation if the robot falls
 options = odeset('Events', @fallDetector);
@@ -69,6 +72,8 @@ for i = 1:N
         % Criterion 1: Nonlinear Stability
         if (max_theta < 20 * pi/180) && (final_theta < 5 * pi/180) 
             nonlinear_stable_idx(i) = true;
+
+            %disp(K);
             % Criterion 2: Hardware Feasible (Peak limit 27.6 N)
             if max_force <= 27.6
                 hardware_valid_idx(i) = true;
@@ -101,7 +106,7 @@ if any(hardware_valid_idx)
     scatter(q1_rand(hardware_valid_idx), q2_rand(hardware_valid_idx), 35, 'g', 'filled', 'DisplayName', 'Hardware Valid (< 27.6N)');
 end
 set(gca, 'XScale', 'log', 'YScale', 'log'); % Log scale is crucial for Q values
-xlabel('Q_1 (Theta Penalty)'); ylabel('Q_2 (Theta_dot Penalty)');
+xlabel('Q_1 (\theta Penalty)'); ylabel('Q_2 (\dot{\theta} Penalty)');
 title('LQR Design Space: Angle vs Angular Velocity');
 legend('Location', 'best'); grid on; hold off;
 
@@ -113,7 +118,7 @@ if any(hardware_valid_idx)
     scatter(q3_rand(hardware_valid_idx), q4_rand(hardware_valid_idx), 35, 'g', 'filled', 'DisplayName', 'Hardware Valid (< 27.6N)');
 end
 set(gca, 'XScale', 'log', 'YScale', 'log');
-xlabel('Q_3 (Cart Position Penalty)'); ylabel('Q_4 (Cart Velocity Penalty)');
+xlabel('Q_3 (r Penalty)'); ylabel('Q_4 (\dot{r} Penalty)');
 title('LQR Design Space: Position vs Linear Velocity');
 legend('Location', 'best'); grid on; hold off;
 
