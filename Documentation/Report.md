@@ -426,7 +426,7 @@ And increasing the initial theta a bit (to $2 \degree$), we can thus prove that 
 
 ![alt text](Evidence/mcbounadry.png)
 
-If we take $r < 0.15m$ into consideration, the boundary for LQR will be $0.18 \degree$, and with the $\theta^3$ term, we can increase it to $0.2 \degree$.
+If we take $r < 0.15m$ into consideration, the boundary for LQR will be $0.18 \degree$, and with the $\theta^3$ term, we can increase it to $0.23 \degree$.
 
 ![alt text](Evidence/mc_boundr.png)
 

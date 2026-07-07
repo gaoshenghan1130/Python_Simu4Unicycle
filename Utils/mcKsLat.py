@@ -2,11 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-# 【新增】忽略仿真探索过程中预期的溢出警告，保持控制台整洁
 np.seterr(over='ignore', invalid='ignore', under='ignore')
 
 # ==========================================
-# 1. 物理参数与基准 LQR
+# 1. LQR and params
 # ==========================================
 mass_at_end = 0.24
 m_L = 0.15 + mass_at_end
@@ -22,16 +21,14 @@ I_rod = (1/12) * 0.3 * (0.314**2) + 2 * mass_at_end * (0.157**2)
 
 K_linear = np.array([-781.4476, -146.7735, 229.6972, 41.4447])
 
-theta0_deg = 0.20
+theta0_deg = 0.23
 x0 = np.array([theta0_deg * np.pi / 180, 0.0, 0.0, 0.0])
 
 dt = 0.01 
 T_total = 6.0
 num_steps = int(T_total / dt)
 
-# ==========================================
-# 2. RK4 积分器
-# ==========================================
+# RK4
 def rk4_step(dynamics_func, t, x, dt_step):
     k1 = np.array(dynamics_func(t, x))
     k2 = np.array(dynamics_func(t + 0.5 * dt_step, x + 0.5 * dt_step * k1))
@@ -39,9 +36,6 @@ def rk4_step(dynamics_func, t, x, dt_step):
     k4 = np.array(dynamics_func(t + dt_step, x + dt_step * k3))
     return x + (dt_step / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
 
-# ==========================================
-# 3. 蒙特卡洛遍历 (分级区间)
-# ==========================================
 N_samples = 1000
 FORCE_LIMIT = 27.6 
 
@@ -51,9 +45,8 @@ valid_n1, valid_n2, valid_n3, valid_n4 = [], [], [], []
 results_max_theta, results_max_r, results_max_force = [], [], []
 
 for k in tqdm(range(N_samples), desc="Simulating Gains", unit="iter"):
-    # 【核心修正】根据状态变量的数量级差异，分配不同的搜索区间
     n1 = np.random.uniform(-3000, 3000) # theta^3 
-    n2 = np.random.uniform(-200, 200)     # dtheta^3 
+    n2 = np.random.uniform(-1500, 1500)     # dtheta^3 
     n3 = np.random.uniform(-10, 30) # r^3 
     n4 = np.random.uniform(-0.25, 1.5)   # dr^3 
     n_params = [n1, n2, n3, n4]
@@ -61,7 +54,6 @@ for k in tqdm(range(N_samples), desc="Simulating Gains", unit="iter"):
     def dynamics(t, x):
         theta, dtheta, r, dr = x
         
-        # 【新增安全锁】如果积分器内部已经跑到离谱的值，直接切断力矩防止 NaN 扩散
         if abs(theta) > 1.5 or abs(r) > 10.0 or abs(dtheta) > 50.0:
             return [0.0, 0.0, 0.0, 0.0]
             
@@ -157,4 +149,4 @@ if len(valid_n1) > 0:
     plt.tight_layout()
     plt.show()
 else:
-    print("未能找到有效增益。请尝试缩小阻尼增益 (n2, n4) 的范围。")
+    print("No gain ranges found for (n2, n4).")
