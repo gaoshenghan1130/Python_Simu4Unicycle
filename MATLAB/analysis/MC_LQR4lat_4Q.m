@@ -45,7 +45,7 @@ R_fixed = 1;
 nonlinear_stable_idx = false(N, 1);
 hardware_valid_idx   = false(N, 1); 
 
-z0 = [01 * pi/180; 0; 0; 0]; % Initial conditon theta, theta dot, r, r dot
+z0 = [1 * pi/180; 0; 0; 0]; % Initial conditon theta, theta dot, r, r dot
 tspan = [0, 15]; 
 
 % Configuration to abort the simulation if the robot falls

@@ -137,7 +137,7 @@ m_w R^2 + m_{rod} r^2 + m_p (R + h)^2 + (I_w + I_b  + I_{rod}) & 0 \\
 \dot{u}_2 
 \end{bmatrix}
 = \begin{bmatrix} 
-F R - m_{rod} g r \cos\theta + m_w g R \sin\theta + m_p g (R + h) \sin\theta - m_{rod} r (2 u_2 u_1 + R u_1^2) \dot{u}_1 \\ 
+F R - m_{rod} g r \cos\theta + m_w g R \sin\theta + m_p g (R + h) \sin\theta - m_{rod} r (2 u_2 u_1 + R u_1^2) \\ 
 F - m_{rod} g \sin\theta + m_{rod} r u_1^2 
 \end{bmatrix}
 $$
