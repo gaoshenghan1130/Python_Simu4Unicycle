@@ -22,7 +22,7 @@ I_rod = (1/12) * 0.3 * (0.314**2) + 2 * mass_at_end * (0.157**2)
 
 K_linear = np.array([-781.4476, -146.7735, 229.6972, 41.4447])
 
-theta0_deg = 2
+theta0_deg = 0.20
 x0 = np.array([theta0_deg * np.pi / 180, 0.0, 0.0, 0.0])
 
 dt = 0.01 
