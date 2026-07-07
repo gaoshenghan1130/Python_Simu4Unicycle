@@ -404,7 +404,7 @@ $$
 F = -k_1 \theta - k_2 \dot{\theta} - k_3 r - k_4 \dot{r} - n_1 \theta^3 - n_2 \dot{\theta}^3 - n_3 r^3 - n_4 \dot{r}^3
 $$
 
-Firstly as a verification, with initial condition $theta_0 = 0.1 \degree$, and MC the k gains (235/10000 are stable and 210 are within the force limit)::
+Firstly as a verification, with initial condition ${\theta}_0 = 0.1 \degree$, and MC the k gains (235/10000 are stable and 210 are within the force limit)::
 
 ![alt text](Evidence/mc_verify.png)
 
@@ -422,7 +422,7 @@ From this plot, we can see that we could increase the range of $\theta^3$ gains,
 
 ![alt text](Evidence/mc_zoomin.png)
 
-And increasing the initial theta a bit (to $2 \degree$), we can thus prove that the $theta^3$ term is helping to increase the stability range. At $2 \degree$, 2/1000 are valid, which should be the boundary condition:
+And increasing the initial theta a bit (to $2 \degree$), we can thus prove that the $\theta^3$ term is helping to increase the stability range. At $2 \degree$, 2/1000 are valid, which should be the boundary condition:
 
 ![alt text](Evidence/mcbounadry.png)
 
