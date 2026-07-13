@@ -53,7 +53,7 @@ p4_rand = -0.1 - 2 * rand(N, 1);
 nonlinear_stable_idx = false(N, 1);
 hardware_valid_idx   = false(N, 1); 
 
-z0 = [0.15 * pi/180; 0; 0; 0]; % Initial condition
+z0 = [0.1 * pi/180; 0; 0; 0]; % Initial condition
 tspan = [0, 15];
 
 % Configuration to abort the simulation if the robot falls

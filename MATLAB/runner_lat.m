@@ -6,7 +6,7 @@ addpath("model/","controller/","plotter/","simulation/","param/")
 %% Choose simulation setting
 paramset = LatParam();
 
-controller = @lat_controller_cp;
+controller = @lat_controller;
 model = @LatModelAppell; 
 simulator = @timeConstantSimu;
 % dataset format [X, X_dot, gamma, gamma_dot] for segway model

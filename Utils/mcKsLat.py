@@ -53,9 +53,6 @@ for k in tqdm(range(N_samples), desc="Simulating Gains", unit="iter"):
     
     def dynamics(t, x):
         theta, dtheta, r, dr = x
-        
-        if abs(theta) > 1.5 or abs(r) > 10.0 or abs(dtheta) > 50.0:
-            return [0.0, 0.0, 0.0, 0.0]
             
         F_linear = -(K_linear[0]*theta + K_linear[1]*dtheta + K_linear[2]*r + K_linear[3]*dr)
         F_nonlinear = n_params[0]*(theta**3) + n_params[1]*(dtheta**3) + n_params[2]*(r**3) + n_params[3]*(dr**3)
@@ -74,7 +71,7 @@ for k in tqdm(range(N_samples), desc="Simulating Gains", unit="iter"):
         try:
             accel = np.linalg.solve(M, RHS)
         except np.linalg.LinAlgError:
-            return [0.0, 0.0, 0.0, 0.0]
+            return [np.nan, np.nan, np.nan, np.nan]
         
         return [dtheta, accel[0], dr, accel[1]]
 
@@ -122,8 +119,6 @@ for k in tqdm(range(N_samples), desc="Simulating Gains", unit="iter"):
 
 print(f"\nExploration complete. Found {len(valid_n1)} valid nonlinear gain combinations under large perturbations satisfying the 27.6N constraint.")
 
-# ==========================================
-# 4. 可视化分析
 # ==========================================
 if len(valid_n1) > 0:
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))

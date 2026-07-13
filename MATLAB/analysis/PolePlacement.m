@@ -42,12 +42,20 @@ P_desired = [-1.6233, -1.8633, -1.9467, -2.0489]; %Poles obtained from MC_PP_lat
 
 
 K_numeric = place(A, B, P_desired);
+
 disp('PolePlacement K = ');
 disp(K_numeric);
-K_numeric_new_order = [K_numeric(1), K_numeric(3), K_numeric(2), K_numeric(4)]
+
+A_cl_numeric = A - B * K_numeric;
+[eigenvectors, eigenvalue_matrix] = eig(A_cl_numeric);
+eigenvalues = diag(eigenvalue_matrix);
+disp(eigenvalues)
+disp(eigenvectors)
+
+K_numeric_new_order = [K_numeric(1), K_numeric(3), K_numeric(2), K_numeric(4)];
 
 controller = @(t, z, par) -K_numeric_new_order * z; 
-z0 = [0.16 * pi/180; 0; 0; 0];
+z0 = [0.1 * pi/180; 0; 0; 0];
 tspan = [0, 15];
 [t_out, z_out] = ode45(@(t, z) LatModel_SignCorrection(t, z, par, controller), tspan, z0);
 
