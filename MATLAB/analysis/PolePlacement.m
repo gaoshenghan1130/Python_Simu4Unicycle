@@ -38,7 +38,7 @@ char_poly = det(lambda * eye(4) - A_cl);
 
 char_poly_clean = vpa(expand(char_poly), 4);
 
-P_desired = [-1.6233, -1.8633, -1.9467, -2.0489]; %Poles obtained from MC_PP_lat_4P.m
+P_desired = [-2.25, -1.25, -2.00, -1.50]; %Poles obtained from MC_PP_lat_4P.m
 
 
 K_numeric = place(A, B, P_desired);
@@ -55,7 +55,7 @@ disp(eigenvectors)
 K_numeric_new_order = [K_numeric(1), K_numeric(3), K_numeric(2), K_numeric(4)];
 
 controller = @(t, z, par) -K_numeric_new_order * z; 
-z0 = [0.1 * pi/180; 0; 0; 0];
+z0 = [0.118 * pi/180; 0; 0; 0];
 tspan = [0, 15];
 [t_out, z_out] = ode45(@(t, z) LatModel_SignCorrection(t, z, par, controller), tspan, z0);
 
