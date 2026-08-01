@@ -1,6 +1,6 @@
 # Eigenvector Analysis
 
-According to the previous Monte Carlo pole-placement analysis, the feasible pole locations satisfying the force and displacement constraints at an initial lean angle of (\theta_0=0.1^\circ) approximately lie within the following region:
+According to the previous Monte Carlo pole-placement analysis, the feasible pole locations satisfying the force and displacement constraints at an initial lean angle of $\theta_0=0.1^\circ$ approximately lie within the following region:
 
 $$
 \begin{aligned}
@@ -11,7 +11,7 @@ $$
 \end{aligned}
 $$
 
-Here, (\lambda_i) denotes a closed-loop eigenvalue. Near the midpoint of this feasible boundary, the following desired poles are selected:
+Here, $\lambda_i$ denotes a closed-loop eigenvalue. Near the midpoint of this feasible boundary, the following desired poles are selected:
 
 $$
 \lambda_1=-1.73,\qquad

@@ -38,7 +38,7 @@ char_poly = det(lambda * eye(4) - A_cl);
 
 char_poly_clean = vpa(expand(char_poly), 4);
 
-P_desired = [-2.25, -1.25, -2.00, -1.50]; %Poles obtained from MC_PP_lat_4P.m
+P_desired = 0.2 * [-2.25, -1.25, -2.00, -1.50]; %Poles obtained from MC_PP_lat_4P.m
 
 
 K_numeric = place(A, B, P_desired);
