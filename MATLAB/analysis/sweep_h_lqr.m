@@ -1,35 +1,40 @@
-% Sweep rod mass and redesign the LQR controller for every mass case.
+% Sweep the body-center height h from its current value h0 to -h0 and
+% redesign the LQR controller for every height case.
 clear; clc; close all;
 
 addpath("param/", "model/");
 
-%% 1. LQR settings and mass sweep settings
+%% 1. LQR settings and h sweep settings
 
 % State ordering:
 % z = [theta; theta_dot; r; r_dot]
 %
-% For every m_L value:
+% For every h value:
 %   1. Re-linearize the system
 %   2. Redesign the LQR controller
 %   3. Run the nonlinear simulation
 Q = diag([100, 1000, 10, 100]);
 R_weight = 10;
 
-% Current definition in LatParam:
+% Only h is changed. All masses, inertias, and other geometric parameters
+% remain fixed. The sweep starts from the current value h0, passes through
+% h = 0, and ends at h = -h0.
 %
-%   par.mass_at_end = 0.24;
-%   par.m_L = 0.15 + par.mass_at_end;
-%
-% Nine cases are used. The first case is the current model.
-base_rod_component_mass = 0.15;
+% h_scale =  1: current configuration
+% h_scale =  0: body center lies at the wheel-center height
+% h_scale = -1: body center is reflected below the wheel center
+baseline_par = LatParam();
 
-mass_at_end_values = 0.20:0.30:6.0;
-m_L_values = base_rod_component_mass + mass_at_end_values;
+baseline_h = baseline_par.h;
+
+h_scale_values = linspace(1.0, -1.0, 21);
+
+h_values = baseline_h*h_scale_values;
 
 % Initial condition:
 % z0 = [theta; theta_dot; r; r_dot]
 z0 = [
-    1.5*pi/180;
+    0.5*pi/180;
     0;
     0;
     0
@@ -42,12 +47,12 @@ ode_options = odeset( ...
     'AbsTol', 1e-10, ...
     'Events', @stop_if_out_of_range);
 
-number_of_cases = length(m_L_values);
+number_of_cases = length(h_values);
 
 %% 2. Generate colors from light blue to dark blue
 
-% Smaller m_L: light blue
-% Larger  m_L: dark blue
+% Current h = h0: light blue
+% Final   h = -h0: dark blue
 light_color = [0.68, 0.86, 0.98];
 dark_color  = [0.02, 0.16, 0.48];
 
@@ -65,7 +70,6 @@ end
 t_all = cell(number_of_cases, 1);
 z_all = cell(number_of_cases, 1);
 F_all = cell(number_of_cases, 1);
-par_all = cell(number_of_cases, 1);
 
 K_all = zeros(number_of_cases, 4);
 closed_loop_poles_all = zeros(number_of_cases, 4);
@@ -83,19 +87,18 @@ peak_force_N = zeros(number_of_cases, 1);
 final_theta_deg = zeros(number_of_cases, 1);
 final_r_cm = zeros(number_of_cases, 1);
 
-%% 4. Run all rod-mass cases
+%% 4. Run all h cases
 
 for i = 1:number_of_cases
     par_i = LatParam();
 
-    % Keep both mass parameter fields consistent.
-    par_i.mass_at_end = mass_at_end_values(i);
-    par_i.m_L = m_L_values(i);
+    % Change only the body-center height.
+    par_i.h = h_values(i);
 
-    % Re-linearize the system for the current rod mass.
+    % Re-linearize the system for the current h.
     [A_i, B_i] = linearize_lat_model_at_origin(par_i);
 
-    % Redesign the LQR controller for the current rod mass.
+    % Redesign the LQR controller for the current h.
     K_i = lqr(A_i, B_i, Q, R_weight);
 
     % Control law:
@@ -124,7 +127,6 @@ for i = 1:number_of_cases
     t_all{i} = t_i;
     z_all{i} = z_i;
     F_all{i} = F_i;
-    par_all{i} = par_i;
 
     % Simulation completion information.
     final_time(i) = t_i(end);
@@ -160,7 +162,7 @@ end
 
 figure( ...
     'Color', 'w', ...
-    'Name', 'Rod-mass sweep with redesigned LQR', ...
+    'Name', 'Body-center height sweep with redesigned LQR', ...
     'Position', [100, 80, 1250, 850]);
 
 layout = tiledlayout(3, 2, ...
@@ -282,13 +284,12 @@ title(ax_phase, { ...
     'solid: simulation, dashed: static equilibrium'}, ...
     'Interpreter', 'latex');
 
-%% Plot every mass case
+%% Plot every h case
 
 for i = 1:number_of_cases
     t_i = t_all{i};
     z_i = z_all{i};
     F_i = F_all{i};
-    par_i = par_all{i};
 
     % Make the current physical model slightly thicker.
     if i == 1
@@ -298,9 +299,9 @@ for i = 1:number_of_cases
     end
 
     case_name = sprintf( ...
-        '$m_L=%.2f$ kg, $m_{end}=%.2f$ kg', ...
-        m_L_values(i), ...
-        mass_at_end_values(i));
+        '$h=%.4f\\,\\mathrm{m}$ ($%.1f h_0$)', ...
+        h_values(i), ...
+        h_scale_values(i));
 
     % Lean angle
     plot(ax_theta, ...
@@ -350,29 +351,24 @@ for i = 1:number_of_cases
         'LineWidth', line_width, ...
         'DisplayName', case_name);
 
-    %% Static equilibrium curve for the current m_L
+    %% Static equilibrium curve for the current h
 
-    % Static equilibrium:
+    % Unlike a pure-inertia change, h changes the gravitational moment and
+    % therefore changes the static equilibrium curve:
     %
     % r_eq = equilibrium_coefficient*tan(theta)
-    %
-    % where:
-    %
-    % equilibrium_coefficient
-    %     = R + G/(m*g)
-    %
-    % moving_rod_mass = 2*m_L
 
     G_i = ...
-        par_i.m_B*par_i.g*(par_i.R + par_i.h) ...
-        + par_i.m_W*par_i.g*par_i.R;
+        baseline_par.m_B*baseline_par.g* ...
+            (baseline_par.R+h_values(i)) ...
+        + baseline_par.m_W*baseline_par.g*baseline_par.R;
 
-    moving_rod_mass_i = 2*m_L_values(i);
+    moving_rod_mass = 2*baseline_par.m_L;
 
     equilibrium_coefficient_i = ...
         (G_i ...
-        + moving_rod_mass_i*par_i.g*par_i.R) ...
-        /(moving_rod_mass_i*par_i.g);
+        + moving_rod_mass*baseline_par.g*baseline_par.R) ...
+        /(moving_rod_mass*baseline_par.g);
 
     theta_eq_min = min(z_i(:,1));
     theta_eq_max = max(z_i(:,1));
@@ -406,9 +402,10 @@ legend(ax_theta, ...
     'FontSize', 8);
 
 title(layout, { ...
-    'Rod-mass sweep with LQR redesigned for every mass', ...
+    'Body-center height sweep with LQR redesigned for every case', ...
     sprintf( ...
-        '$Q=\\mathrm{diag}(1000,100,100,10),\\quad R=%g$', ...
+        '$h_0=%.4f\\,\\mathrm{m},\\quad h:h_0\\rightarrow-h_0,\\quad Q=\\mathrm{diag}(100,1000,10,100),\\quad R=%g$', ...
+        baseline_h, ...
         R_weight)}, ...
     'Interpreter', 'latex');
 
@@ -420,9 +417,9 @@ xlim(ax_theta, tspan);
 
 %% 6. Print numerical trend table
 
-mass_sweep_summary = table( ...
-    mass_at_end_values(:), ...
-    m_L_values(:), ...
+h_sweep_summary = table( ...
+    h_scale_values(:), ...
+    h_values(:), ...
     final_time, ...
     completed_full_simulation, ...
     peak_theta_deg, ...
@@ -438,8 +435,8 @@ mass_sweep_summary = table( ...
     K_all(:,4), ...
     max_real_closed_loop_pole, ...
     'VariableNames', { ...
-        'mass_at_end_kg', ...
-        'm_L_kg', ...
+        'h_scale', ...
+        'h_m', ...
         'final_time_s', ...
         'completed', ...
         'peak_abs_theta_deg', ...
@@ -456,19 +453,19 @@ mass_sweep_summary = table( ...
         'max_real_closed_loop_pole'});
 
 disp(' ');
-disp('Rod-mass sweep summary:');
-disp(mass_sweep_summary);
+disp('Body-center height sweep summary:');
+disp(h_sweep_summary);
 
 %% 7. Print closed-loop poles
 
 disp(' ');
-disp('Closed-loop poles for every rod-mass case:');
+disp('Closed-loop poles for every h case:');
 
 for i = 1:number_of_cases
     fprintf( ...
-        '\nm_end = %.2f kg, m_L = %.2f kg\n', ...
-        mass_at_end_values(i), ...
-        m_L_values(i));
+        '\nh = %.6f m (%.1f h0)\n', ...
+        h_values(i), ...
+        h_scale_values(i));
 
     disp(closed_loop_poles_all(i,:).');
 end
