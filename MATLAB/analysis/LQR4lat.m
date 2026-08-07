@@ -26,19 +26,25 @@ B_sym = jacobian(dz_sym, F_sym);
 A_eq = subs(A_sym, [z_sym; F_sym], [0; 0; 0; 0; 0]);
 B_eq = subs(B_sym, [z_sym; F_sym], [0; 0; 0; 0; 0]);
 
+par.m_L = 5;
+par.m_B = 10;
+par.m_W = 4;
+par.h= 0.3;
+par.R = 0.3;
+
 A_num = double(subs(A_eq, [m_L, m_B, m_W, h, g, R, I_b, I_w, I_rod], [par.m_L, par.m_B, par.m_W, par.h, par.g, par.R, par.I_b, par.I_w, par.I_rod]));
 B_num = double(subs(B_eq, [m_L, m_B, m_W, h, g, R, I_b, I_w, I_rod], [par.m_L, par.m_B, par.m_W, par.h, par.g, par.R, par.I_b, par.I_w, par.I_rod]));
 
 %% 3. Design LQR
 
 Q = diag([1000, 100, 100, 10]); 
-R_weight = 30; 
+R_weight = 10; 
 K = lqr(A_num, B_num, Q, R_weight);
 disp('LQR Gain K:');
 disp(K);
 
 lqr_controller = @(t, z, par) - K * z; 
-z0 = [0.18* pi/180; 0; 0; 0];
+z0 = [3* pi/180; 0; 0; 0];
 tspan = [0, 15];
 [t_out, z_out] = ode45(@(t, z) LatModel_SignCorrection(t, z, par, lqr_controller), tspan, z0);
 
