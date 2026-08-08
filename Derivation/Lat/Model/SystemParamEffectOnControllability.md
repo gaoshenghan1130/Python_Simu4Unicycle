@@ -42,6 +42,10 @@ If pendulum is in the lower position, we suspect that the system could be more c
 
 But in fact, the system is less controllable when pendulum is in the lower position.
 
+Also pendulum mass:
+
+![alt text](sweepp.png)
+
 
 ## 3. Weight of the mass, according to the essay
 

@@ -40,11 +40,13 @@ char_poly_clean = vpa(expand(char_poly), 4);
 
 P_desired = 0.2 * [-2.25, -1.25, -2.00, -1.50]; %Poles obtained from MC_PP_lat_4P.m
 
+%K_numeric =place(A, B, P_desired);
 
-K_numeric = place(A, B, P_desired);
+K_numeric =[0,0,0,0]; %place(A, B, P_desired);
 
 disp('PolePlacement K = ');
 disp(K_numeric);
+
 
 A_cl_numeric = A - B * K_numeric;
 [eigenvectors, eigenvalue_matrix] = eig(A_cl_numeric);
@@ -53,14 +55,24 @@ disp(eigenvalues)
 disp(eigenvectors)
 
 K_numeric_new_order = [K_numeric(1), K_numeric(3), K_numeric(2), K_numeric(4)];
+theta = 0.1;
 
-controller = @(t, z, par) -K_numeric_new_order * z; 
-z0 = [0.118 * pi/180; 0; 0; 0];
+
+controller =@(t, z, par)  2 * m_L * g * sin(theta); %@(t, z, par) -K_numeric_new_order * z; 
+
+
+G = par.m_W * par.g * par.R + par.m_B * par.g * (par.R + par.h);
+
+r = (G + 2 * par.m_L * par.g * par.R) / (2 * m_L * par.g ) * tan(theta);
+
+z0 = [theta, 0, r , 0];
+
+%z0 = [0.000 * pi/180; 0; 0; 0];
 tspan = [0, 15];
 [t_out, z_out] = ode45(@(t, z) LatModel_SignCorrection(t, z, par, controller), tspan, z0);
 
 % Recalculate for F data
-F_out = zeros(length(t_out), 1);
+F_out =  -2 * m_L * g * sin(theta);%zeros(length(t_out), 1);
 for i = 1:length(t_out)
     F_out(i) = controller(t_out(i), z_out(i,:)', par);
 end
