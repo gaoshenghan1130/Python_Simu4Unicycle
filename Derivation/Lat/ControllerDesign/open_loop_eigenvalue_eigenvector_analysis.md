@@ -34,7 +34,9 @@ Also define
 $$
 J_0=m_wR^2+m_p(R+h)^2+I_w+I_b+I_{rod},
 \qquad
-J(r)=J_0+mr^2.
+J(r)=J_0+mr^2. \\
+\qquad
+G = m_w g R + m_p g (R + h) \\
 $$
 
 ## Equilibria
