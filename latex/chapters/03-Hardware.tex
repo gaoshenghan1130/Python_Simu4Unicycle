@@ -1,0 +1,651 @@
+\chapter{Hardware and Embedded Systems}
+\label{chap:hardware}
+
+% Prevent page stretching that can cause overfull vbox warnings
+\raggedbottom
+
+This chapter describes the hardware architecture and embedded control system of the unicycle robot. The capabilities and limitations of the mechanical components, actuators, sensors, communication interfaces, and embedded processor directly constrain the simulations and controller designs presented in the following chapters.
+
+\section{System Overview}
+\label{sec:hardware-overview}
+
+The unicycle robot contains two primary actuation systems. The wheel motor controls the longitudinal motion and fore--aft balance of the robot, while the linear motor moves a mass along the lateral rod to regulate the lateral lean angle. Together, these two actuators allow the robot to balance in both directions and move forward or backward.
+
+The main body of the robot, including the battery and electronic components, is located above the wheel and behaves approximately as an inverted pendulum. The FAULHABER LM2070 linear motor moves the lateral balancing mass relative to the body. This motion shifts the center of mass and generates a gravitational moment about the wheel--ground contact point. The HO10025 brushless DC motor applies torque directly to the wheel and controls its rotational motion.
+
+The orientation and angular velocity of the robot are measured using a BNO085 inertial measurement unit. Additional position and velocity feedback is obtained from the motor-control systems. These measurements are collected by an STM32WB55RG microcontroller and converted into the state variables required by the controller.
+
+During operation, the microcontroller repeatedly reads the sensor measurements, updates the estimated system state, evaluates the selected control law, applies the required safety limits, and transmits force and torque commands to the motor controllers. Communication with the motor-control system is performed through CAN FD using an MCP2518FD controller. Bluetooth Low Energy is used to exchange commands, controller parameters, and experimental data with a computer.
+
+The overall information flow can be summarized as follows:
+
+\begin{equation}
+\text{Sensors}
+\longrightarrow
+\text{State estimation}
+\longrightarrow
+\text{Controller}
+\longrightarrow
+\text{Motor commands}
+\longrightarrow
+\text{Robot motion}.
+\label{eq:hardware-information-flow}
+\end{equation}
+
+A computer-side graphical interface is used to select operating modes, adjust experimental parameters, start and stop the robot, and record the measured states. However, the balancing controller itself runs on the microcontroller so that the system does not depend on the wireless connection during real-time operation.
+
+% Add an overall photograph or hardware block diagram here.
+%
+% \begin{figure}[htbp]
+%   \centering
+%   \includegraphics[width=0.85\textwidth]{03/system_overview.png}
+%   \caption{Overview of the unicycle robot hardware architecture.}
+%   \label{fig:hardware-overview}
+% \end{figure}
+
+\subsection{Major Hardware Components}
+
+The principal hardware components of the unicycle robot are summarized in Table~\ref{tab:hardware-components}. More detailed descriptions of the sensors, embedded processor, and communication system are provided in the following sections.
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.3}
+  \caption{Major hardware components of the unicycle robot.}
+  \label{tab:hardware-components}
+  \begin{tabular}{
+    p{0.24\textwidth}
+    p{0.25\textwidth}
+    p{0.41\textwidth}
+  }
+    \hline
+    \textbf{Subsystem}
+    &
+    \textbf{Component}
+    &
+    \textbf{Primary function}
+    \\
+    \hline
+
+    Main processor
+    &
+    STM32WB55RG
+    &
+    Sensor acquisition, state estimation, real-time control, safety monitoring, and communication
+    \\
+
+    Inertial sensing
+    &
+    BNO085 IMU
+    &
+    Measurement of the three-dimensional orientation and angular velocity of the robot
+    \\
+
+    Lateral actuator
+    &
+    FAULHABER LM2070
+    &
+    Movement of the lateral balancing mass and generation of the commanded lateral force
+    \\
+
+    Wheel actuator
+    &
+    HO10025 BLDC motor
+    &
+    Generation of wheel torque for longitudinal balance and translational motion
+    \\
+
+    Motor communication
+    &
+    MCP2515 and MCP2518
+    &
+    CAN and CAN FD communication between the microcontroller and motor-control system
+    \\
+
+    Wireless
+    &
+    Bluetooth Low Energy
+    &
+    Transmission of commands, controller parameters, measurements, and experimental data
+    \\
+
+    Experimental interface
+    &
+    Computer-side GUI
+    &
+    Operating-mode selection, parameter adjustment, system monitoring, and data logging
+    \\
+
+    Power system
+    &
+    Battery and voltage converters
+    &
+    Electrical power for the motors, microcontroller, sensors, and communication electronics
+    \\
+
+    \hline
+  \end{tabular}
+\end{table}
+
+The hardware components are strongly interconnected. The accuracy and update rate of the sensors determine the quality of the state estimate, while the actuator force, speed, travel, and thermal limits determine which control commands can be physically realized. Communication and computation delays further affect the time between measuring the system state and applying the corresponding control input. These effects are examined in the later sections of this chapter.
+
+
+\section{Sensing System}
+\label{sec:sensing-system}
+
+The lateral controller requires measurements of the robot orientation, angular velocity, wheel motion, and lateral rod motion. These measurements are obtained from the BNO085 inertial measurement unit and the position-feedback systems integrated into the two motor systems.
+
+Among these measurements, the orientation obtained from the IMU is the most significant source of uncertainty. The wheel and linear-motor position measurements were found to be sufficiently accurate during experiments, whereas the IMU error is comparable to the small lean-angle range within which the robot must remain balanced.
+
+\subsection{Inertial Measurement Unit}
+
+The robot orientation and angular velocity are measured using a BNO085 inertial measurement unit. The BNO085 contains a three-axis accelerometer, gyroscope, and magnetometer, together with an internal processor that performs sensor fusion. The resulting orientation is transmitted to the STM32 microcontroller as a quaternion, while the calibrated angular-velocity components are provided separately.
+
+The IMU reports were configured at approximately $500~\mathrm{Hz}$ to match the main control-loop frequency. The quaternion output was converted to Euler angles using the Z--X--Y rotation sequence
+
+\begin{equation}
+\mathbf{R}
+=
+\mathbf{R}_z(\psi)
+\mathbf{R}_x(\theta)
+\mathbf{R}_y(\gamma),
+\label{eq:zxy-orientation}
+\end{equation}
+
+where $\psi$ is the heading angle, $\theta$ is the lateral lean angle, and $\gamma$ is the longitudinal lean angle.
+
+According to the manufacturer, the nominal performance of the Rotation Vector output includes a dynamic rotation error of $3.5^\circ$ and a static rotation error of $2.0^\circ$. The datasheet also states that its practical accuracy is typically approximately $5^\circ$. The nominal dynamic accuracy of the gyroscope output is $3.1^\circ/\mathrm{s}$. At an output rate of $500~\mathrm{Hz}$, the typical latency of the Rotation Vector output is approximately $6.6~\mathrm{ms}$ \cite{bno08x_datasheet}.
+
+These specifications are summarized in Table~\ref{tab:bno085-performance}.
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.3}
+  \caption{Selected BNO085 performance specifications \cite{bno08x_datasheet}.}
+  \label{tab:bno085-performance}
+  \begin{tabular}{
+    p{0.36\textwidth}
+    p{0.25\textwidth}
+    p{0.25\textwidth}
+  }
+    \hline
+    \textbf{Output}
+    &
+    \textbf{Performance metric}
+    &
+    \textbf{Nominal value}
+    \\
+    \hline
+
+    Rotation Vector
+    &
+    Dynamic rotation error
+    &
+    $3.5^\circ$
+    \\
+
+    Rotation Vector
+    &
+    Static rotation error
+    &
+    $2.0^\circ$
+    \\
+
+    Rotation Vector
+    &
+    Typical accuracy
+    &
+    Approximately $5^\circ$
+    \\
+
+    Gaming Rotation Vector
+    &
+    Dynamic non-heading error
+    &
+    $2.5^\circ$
+    \\
+
+    Gaming Rotation Vector
+    &
+    Static non-heading error
+    &
+    $1.5^\circ$
+    \\
+
+    Gyroscope
+    &
+    Dynamic accuracy
+    &
+    $3.1^\circ/\mathrm{s}$
+    \\
+
+    Rotation Vector at $500~\mathrm{Hz}$
+    &
+    Typical latency
+    &
+    $6.6~\mathrm{ms}$
+    \\
+
+    \hline
+  \end{tabular}
+\end{table}
+
+
+An error of this magnitude is significant for the unicycle robot because the acceptable lateral lean angle is only a few degrees. These will be shown later in the next chapter.
+
+The orientation measurement also contains delay. A typical latency will be around $10~\mathrm{ms}$, which accounts for one control-loop period.
+
+\subsection{Position and Velocity Measurements}
+
+The wheel motor and linear motor provide the remaining position and velocity measurements required by the controller. These measurements are used to determine the wheel rotation and the lateral position of the moving mass.
+
+The HO10025 wheel motor contains an encoder that provides wheel-position and wheel-velocity feedback through its motor controller. The exact encoder resolution and absolute measurement accuracy were not available. However, bench experiments showed that the feedback was sufficiently smooth and repeatable for the longitudinal control system. No significant control limitation caused by wheel-position quantization was observed. Therefore, the wheel encoder was treated as sufficiently accurate for the present experiments.
+
+The FAULHABER LM2070 provides position feedback for the lateral moving mass. Its position measurement was compared against known physical displacements during calibration. The observed position error was less than approximately $1~\mathrm{mm}$ over the tested operating range.
+
+This error is small compared with the total available rod travel and the lateral displacements commanded by the controller. Therefore, the LM2070 position measurement was also considered sufficiently accurate for the current system.
+
+The experimentally observed accuracy of the principal measurements is summarized in Table~\ref{tab:sensor-accuracy-summary}.
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.3}
+  \caption{Summary of the sensor accuracy relevant to the control system.}
+  \label{tab:sensor-accuracy-summary}
+  \begin{tabular}{
+    p{0.24\textwidth}
+    p{0.20\textwidth}
+    p{0.25\textwidth}
+    p{0.18\textwidth}
+  }
+    \hline
+    \textbf{Measurement}
+    &
+    \textbf{Source}
+    &
+    \textbf{Accuracy}
+    &
+    \textbf{Assessment}
+    \\
+    \hline
+
+    Robot orientation
+    &
+    BNO085
+    &
+    $3^\circ$ deviation observed in some tests
+    &
+    Significant
+    \\
+
+    Angular velocity
+    &
+    BNO085 gyroscope
+    &
+    Nominal dynamic accuracy of $3.1^\circ/\mathrm{s}$
+    &
+    Significant
+    \\
+
+    Wheel position and velocity
+    &
+    HO10025 encoder
+    &
+    Unknown; adequate in experiments
+    &
+    Sufficient
+    \\
+
+    Rod position
+    &
+    LM2070 feedback
+    &
+    Less than $1~\mathrm{mm}$ error in experiments
+    &
+    Sufficient
+    \\
+
+    \hline
+  \end{tabular}
+\end{table}
+
+\subsection{Sensor Coordinate Transformation}
+
+The coordinate frame of the BNO085 does not coincide with the pendulum frame used in the mathematical model. Therefore, measurements in the IMU frame are transformed into the pendulum frame using
+
+\begin{equation}
+\mathbf{R}_{P\leftarrow I}
+=
+\begin{bmatrix}
+-1 & 0 & 0 \\
+0 & 0 & -1 \\
+0 & -1 & 0
+\end{bmatrix}.
+\label{eq:imu-pendulum-transformation}
+\end{equation}
+
+The complete transformation from the IMU frame to the global frame is
+
+\begin{equation}
+\mathbf{R}_{G\leftarrow I}
+=
+\mathbf{R}_{G\leftarrow P}
+\mathbf{R}_{P\leftarrow I}.
+\end{equation}
+
+The orientation quaternion is first normalized and converted into a rotation matrix. The lean, longitudinal, and heading angles are then extracted using the Z--X--Y convention. The same fixed transformation is applied to the gyroscope vector:
+
+\begin{equation}
+\boldsymbol{\omega}_{P}
+=
+\mathbf{R}_{P\leftarrow I}
+\boldsymbol{\omega}_{I}.
+\end{equation}
+
+This software transformation aligns both the orientation and angular-velocity measurements with the robot model, removing the need to use the BNO085 reorientation function separately.
+
+
+\section{Embedded Control System}
+\label{sec:embedded-control-system}
+
+The embedded control system is implemented on the STM32WB55RG microcontroller. The firmware is divided into modules for sensor acquisition, state estimation, control calculation, motor communication, Bluetooth communication, and safety monitoring. This modular structure allows the control strategy to be modified without changing the main execution loop or state-machine logic.
+
+\subsection{Real-Time Control Loop}
+
+The main control loop operates at
+
+\begin{equation}
+f_c=100~\mathrm{Hz},
+\qquad
+\Delta t=0.01~\mathrm{s}.
+\end{equation}
+
+The BNO085 service function is called approximately every $2~\mathrm{ms}$ to process incoming IMU reports. This service rate is higher than the main control frequency, although the controller itself is evaluated only once every $10~\mathrm{ms}$.
+
+During each control cycle, the firmware performs the following operations:
+
+\begin{enumerate}
+    \item Read the IMU and motor-feedback measurements.
+    \item Update the estimated system state.
+    \item Process Bluetooth commands and transmit experimental data.
+    \item Evaluate the safety limits.
+    \item Calculate the control outputs for the current operating state.
+    \item Transmit the torque and force commands to the wheel and linear motors.
+\end{enumerate}
+
+The controller implementation is contained in a separate module. The specific control laws are presented in the following chapter.
+
+\subsection{Operating Modes and State Machine}
+
+A state machine is used to ensure that the actuators are enabled only after the robot has been placed in a safe initial configuration. The operating states are summarized in Table~\ref{tab:embedded-states}.
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.3}
+  \caption{Operating states of the embedded control system.}
+  \label{tab:embedded-states}
+  \begin{tabular}{
+    p{0.25\textwidth}
+    p{0.31\textwidth}
+    p{0.34\textwidth}
+  }
+    \hline
+    \textbf{State}
+    &
+    \textbf{Purpose}
+    &
+    \textbf{Transition condition}
+    \\
+    \hline
+
+    \texttt{START}
+    &
+    Initialize all desired states to zero.
+    &
+    The lateral lean angle satisfies the static safety limit.
+    \\
+
+    \texttt{BALANCE\_PENDULUM}
+    &
+    Wait for the pendulum to be placed manually near the upright configuration.
+    &
+    Both longitudinal and lateral lean angles satisfy their static safety limits.
+    \\
+
+    \texttt{BALANCE\_R}
+    &
+    Enable the motors and automatically move the lateral rod toward its center.
+    &
+    Both lean angles are safe and $|r|<0.02~\mathrm{m}$.
+    \\
+
+    \texttt{WAIT4ACCELERATION}
+    &
+    Reserved as an intermediate acceleration state.
+    &
+    This state is currently skipped immediately.
+    \\
+
+    \texttt{WAIT4BEGINLAUNCH}
+    &
+    Wait for the manually assisted launch to reach the required distance and speed.
+    &
+    The robot travels more than $0.9~\mathrm{m}$ and reaches $1.1~\mathrm{m/s}$.
+    \\
+
+    \texttt{VELOCITY}
+    &
+    Execute the active balancing and velocity-control strategy.
+    &
+    Continue until a stop command, safety violation, or fault occurs.
+    \\
+
+    \texttt{STOP}
+    &
+    Set the control outputs to zero and disable both motors.
+    &
+    A new initialization sequence is required before restarting.
+    \\
+
+    \texttt{ERROR\_STATE}
+    &
+    Handle an unrecoverable hardware or communication failure.
+    &
+    The system must be inspected and reset.
+    \\
+
+    \hline
+  \end{tabular}
+\end{table}
+
+The normal startup sequence is
+
+\begin{equation}
+\begin{aligned}
+\texttt{START}
+&\longrightarrow
+\texttt{BALANCE\_PENDULUM}
+\longrightarrow
+\texttt{BALANCE\_R}
+\\
+&\longrightarrow
+\texttt{WAIT4BEGINLAUNCH}
+\longrightarrow
+\texttt{VELOCITY}.
+\end{aligned}
+\label{eq:state-machine-sequence}
+\end{equation}
+
+The motors remain disabled during \texttt{START} and \texttt{BALANCE\_PENDULUM}. They are first enabled in \texttt{BALANCE\_R}, after the robot has been manually placed near the upright configuration. From this point onward, the initialization process is automatic.
+
+During \texttt{WAIT4BEGINLAUNCH}, the firmware records the initial wheel position and detects whether the robot has traveled more than $0.9~\mathrm{m}$. If the required speed has also been reached, the measured direction of motion is used to set the desired velocity, the lateral lean-angle reference is reset, and the system enters \texttt{VELOCITY}. If the required distance is reached without sufficient speed, the launch is considered unsuccessful and the system enters \texttt{STOP}.
+
+\subsection{Safety and Fault Handling}
+
+Each of the principal configuration variables is assigned one of three safety levels:
+
+\begin{itemize}
+    \item \texttt{STATIC\_SAFE}: sufficiently close to the nominal configuration for initialization;
+    \item \texttt{DYNAMIC\_SAFE}: outside the initialization range but still acceptable during motion;
+    \item \texttt{UNSAFE}: outside the allowable operating range.
+\end{itemize}
+
+The safety thresholds implemented in the firmware are summarized in Table~\ref{tab:embedded-safety-limits}.
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.3}
+  \caption{Static and dynamic safety limits used by the firmware.}
+  \label{tab:embedded-safety-limits}
+  \begin{tabular}{
+    p{0.31\textwidth}
+    p{0.27\textwidth}
+    p{0.27\textwidth}
+  }
+    \hline
+    \textbf{State variable}
+    &
+    \textbf{Static limit}
+    &
+    \textbf{Dynamic limit}
+    \\
+    \hline
+
+    Longitudinal lean angle $\gamma$
+    &
+    $|\gamma|<10^\circ$
+    &
+    $|\gamma|<90^\circ$
+    \\
+
+    Lateral lean angle $\theta$
+    &
+    $|\theta|<10^\circ$
+    &
+    $|\theta|<15^\circ$
+    \\
+
+    Lateral rod position $r$
+    &
+    $|r|<0.02~\mathrm{m}$
+    &
+    $|r|<0.15~\mathrm{m}$
+    \\
+
+    \hline
+  \end{tabular}
+\end{table}
+
+The static limits determine whether the system may proceed through the initialization sequence. The dynamic limits define the maximum allowable deviations during operation. If the lateral lean angle or rod position exceeds its dynamic limit, the system immediately enters \texttt{STOP}. During the active velocity-control state, exceeding the longitudinal lean-angle limit also causes a stop.
+
+The execution time of the control loop is monitored independently. The nominal cycle time is $10~\mathrm{ms}$, and the safety margin is set to $110\%$ of this value. Therefore, if the interval between two control cycles exceeds approximately
+
+\begin{equation}
+1.1\Delta t=11~\mathrm{ms},
+\end{equation}
+
+the firmware enters \texttt{STOP}. One overrun may be temporarily ignored while the motors are being enabled because motor initialization can require additional execution time.
+
+In the \texttt{STOP} state, both motors are disabled and the commanded torque and force are set to zero. The separate \texttt{ERROR\_STATE} is reserved for failures that require the system to be inspected and reset rather than restarted directly.
+
+\subsection{Status Indication and Communication}
+
+The firmware uses the onboard LEDs to indicate whether the system is waiting for manual adjustment, performing automatic initialization, running normally, stopped, or in an error state. State changes and safety warnings are also recorded through the logging system.
+
+Bluetooth Low Energy communication is processed continuously alongside the real-time control loop. It is used to receive experimental commands and transmit measured states to the computer. When the launch is successfully detected, the firmware sends a launch notification to the computer so that the recorded data can be synchronized with the beginning of the active experiment.
+
+\section{Hardware Limitations}
+\label{sec:hardware-limitations}
+
+The principal hardware limitations affecting the lateral balancing system are summarized in Table~\ref{tab:lateral-hardware-limitations}. These limitations constrain both the available control input and the accuracy of the measured system state.
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.35}
+  \caption{Principal hardware limitations of the lateral balancing system.}
+  \label{tab:lateral-hardware-limitations}
+  \begin{tabular}{
+    p{0.25\textwidth}
+    p{0.27\textwidth}
+    p{0.38\textwidth}
+  }
+    \hline
+    \textbf{Limitation}
+    &
+    \textbf{Value}
+    &
+    \textbf{Effect on lateral control}
+    \\
+    \hline
+
+    LM2070 stroke length
+    &
+    $220~\mathrm{mm}$ total, corresponding to approximately $\pm110~\mathrm{mm}$ from the center
+    &
+    The moving mass cannot continue producing corrective motion after reaching an end stop. The firmware begins limiting outward force when $|r|>0.10~\mathrm{m}$.
+    \\
+
+    LM2070 continuous force
+    &
+    $9.2~\mathrm{N}$
+    &
+    Forces above this value cannot be maintained continuously without increasing the motor temperature.
+    \\
+
+    LM2070 peak force
+    &
+    $27.6~\mathrm{N}$; limited to $27.5~\mathrm{N}$ in the firmware
+    &
+    The controller output must be saturated. The peak force is available only for short-duration motion and cannot be treated as a continuous input.
+    \\
+
+    BNO085 orientation accuracy
+    &
+    $2.0^\circ$ nominal static error and $3.5^\circ$ nominal dynamic error; approximately $5^\circ$--$10^\circ$ deviation observed experimentally
+    &
+    The orientation error is comparable to the allowable lean-angle range and can cause an incorrect control response.
+    \\
+
+    BNO085 angular-velocity accuracy
+    &
+    $3.1^\circ/\mathrm{s}$ nominal dynamic accuracy
+    &
+    Angular-velocity error directly affects the damping component of the lateral controller.
+    \\
+
+    BNO085 latency
+    &
+    Approximately $6.6~\mathrm{ms}$ at $100~\mathrm{Hz}$
+    &
+    The measured state represents an earlier configuration of the robot, introducing additional phase lag into the feedback loop.
+    \\
+
+    Control update period
+    &
+    $10~\mathrm{ms}$
+    &
+    The control input is updated discretely rather than continuously, further increasing the effective feedback delay.
+    \\
+
+    \hline
+  \end{tabular}
+\end{table}
+
+The LM2070 therefore imposes both a state constraint and an input constraint:
+
+\begin{equation}
+|r|\lesssim 0.11~\mathrm{m},
+\qquad
+|F|\leq 27.5~\mathrm{N}.
+\end{equation}
+
+In practice, the allowable continuous force is substantially lower than the peak-force limit. Repeatedly requesting forces near $27.5~\mathrm{N}$ can cause thermal protection to stop the experiment.
+
+The IMU limitations are particularly important because successful lateral balancing requires the robot to remain within a small angular range. An orientation error of several degrees may therefore be too large to treat as insignificant measurement noise. The combination of orientation error, angular-velocity error, sensor latency, and the discrete control period reduces the robustness that can be achieved on the physical system.
+
+Consequently, the controller simulations should include rod-position saturation, force saturation, thermal restrictions, IMU measurement error, and feedback delay. Simulations based only on the ideal continuous model may significantly overestimate the achievable balancing performance.

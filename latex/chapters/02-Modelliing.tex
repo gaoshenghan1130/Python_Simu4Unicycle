@@ -1,0 +1,466 @@
+\chapter{Modelling}
+\label{chap:modelling}
+
+This chapter presents the modelling of the lateral dynamics of the unicycle robot.
+
+\section{Reduced Lateral-Dynamics Model}
+
+The complete unicycle robot contains strongly coupled longitudinal and lateral motions, as illustrated in Figure~\ref{fig:fullnotation}. Developing and analyzing a full model that includes all of these motions is complicated. Therefore, in this chapter, the longitudinal and lateral dynamics are assumed to be approximately decoupled, allowing the lateral motion to be studied independently.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.75\textwidth]{02/fullnotation.png}
+  \caption{Full mechanical model and notation of the unicycle robot.}
+  \label{fig:fullnotation}
+\end{figure}
+
+The resulting reduced model of the lateral dynamics is shown in Figure~\ref{fig:partialmodel}. The reduced model is described using the generalized coordinates
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.75\textwidth]{02/lat.png}
+  \caption{Reduced model of the lateral dynamics.}
+  \label{fig:partialmodel}
+\end{figure}
+
+\begin{equation}
+q_1=\theta,
+\qquad
+q_2=r-R\theta,
+\label{eq:generalized-coordinates}
+\end{equation}
+
+where $q_1$ is the lateral lean angle and $q_2$ is the rod position relative to the lateral motion of the wheel center. The corresponding generalized velocities are
+
+\begin{equation}
+u_1=\dot{q}_1=\dot{\theta},
+\qquad
+u_2=\dot{q}_2=\dot{r}-R\dot{\theta}.
+\label{eq:generalized-velocities}
+\end{equation}
+
+Therefore, the physical rod position and velocity can be recovered from
+
+\begin{equation}
+r=q_2+Rq_1,
+\qquad
+\dot{r}=u_2+Ru_1.
+\label{eq:rod-position-recovery}
+\end{equation}
+
+To simplify the notation, the constant rotational inertia is defined as
+
+\begin{equation}
+J
+=
+m_wR^2
++
+m_b(R+h)^2
++
+I_w
++
+I_b
++
+I_{\mathrm{rod}},
+\label{eq:constant-J}
+\end{equation}
+
+and the combined gravitational coefficient is defined as
+
+\begin{equation}
+G
+=
+m_wgR
++
+m_bg(R+h).
+\label{eq:constant-G}
+\end{equation}
+
+Here, $m_b$ is the battery mass, which is modeled as the primary pendulum mass of the robot. The parameter $G$ combines the gravitational moments produced by the wheel and the battery assembly.
+
+Using these definitions, the nonlinear lateral dynamics can be written compactly as
+
+\begin{equation}
+\begin{bmatrix}
+J+m_{\mathrm{rod}}r^2 & 0 \\
+0 & m_{\mathrm{rod}}
+\end{bmatrix}
+\begin{bmatrix}
+\dot{u}_1 \\
+\dot{u}_2
+\end{bmatrix}
+=
+\begin{bmatrix}
+FR
+-m_{\mathrm{rod}}gr\cos\theta
++G\sin\theta
+-m_{\mathrm{rod}}r
+\left(
+2u_1u_2+Ru_1^2
+\right)
+\\[6pt]
+F
+-m_{\mathrm{rod}}g\sin\theta
++m_{\mathrm{rod}}ru_1^2
+\end{bmatrix}.
+\label{eq:simplified-lateral-model}
+\end{equation}
+
+The four-dimensional state vector is defined as
+
+\begin{equation}
+\mathbf{x}
+=
+\begin{bmatrix}
+x_1 \\
+x_2 \\
+x_3 \\
+x_4
+\end{bmatrix}
+=
+\begin{bmatrix}
+q_1 \\
+q_2 \\
+u_1 \\
+u_2
+\end{bmatrix}
+=
+\begin{bmatrix}
+\theta \\
+r-R\theta \\
+\dot{\theta} \\
+\dot{r}-R\dot{\theta}
+\end{bmatrix}.
+\label{eq:lateral-state-vector}
+\end{equation}
+
+In terms of the state variables, the physical rod position is
+
+\begin{equation}
+r=x_2+Rx_1.
+\label{eq:rod-position-state}
+\end{equation}
+
+The complete four-dimensional model can then be written in the following compact implicit first-order form:
+
+\begin{equation}
+\begin{bmatrix}
+1 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & J+m_{\mathrm{rod}}(x_2+Rx_1)^2 & 0 \\
+0 & 0 & 0 & m_{\mathrm{rod}}
+\end{bmatrix}
+\begin{bmatrix}
+\dot{x}_1 \\
+\dot{x}_2 \\
+\dot{x}_3 \\
+\dot{x}_4
+\end{bmatrix}
+=
+\begin{bmatrix}
+x_3
+\\[4pt]
+x_4
+\\[4pt]
+FR
+-m_{\mathrm{rod}}g(x_2+Rx_1)\cos x_1
++G\sin x_1 \\
+-m_{\mathrm{rod}}(x_2+Rx_1)
+\left(
+2x_3x_4+Rx_3^2
+\right)
+\\[6pt]
+F
+-m_{\mathrm{rod}}g\sin x_1
++m_{\mathrm{rod}}(x_2+Rx_1)x_3^2
+\end{bmatrix}.
+\label{eq:four-dimensional-lateral-model}
+\end{equation}
+
+Equation~\eqref{eq:four-dimensional-lateral-model} is used as the nonlinear plant model for the controller design and numerical simulations presented in the following sections.
+
+\section{Limitations of the reduced model}
+
+Although the reduced model should function as a good approximation of the physical system since the system will be fully decoupled after linearization, some of the nonlinear effects present in the full three-dimensional model are not captured. The following subsections discuss two of these effects that may be significant during certain operating conditions.
+
+\subsection{Gyroscopic Response During Rolling}
+
+The reduced lateral model assumes that the longitudinal and lateral dynamics are decoupled. Consequently, it does not include the gyroscopic response produced by the rotating wheel in the full three-dimensional model.
+
+Let $\phi$ denote the wheel rotation angle and $\psi$ denote the yaw angle. For an axisymmetric wheel, Euler's equation about the lateral lean axis gives
+
+\begin{equation}
+\tau_{\theta}
+=
+I_{w,d}\ddot{\theta}
+-
+I_{w,a}\dot{\phi}\dot{\psi},
+\label{eq:wheel-euler-equation}
+\end{equation}
+
+where $I_{w,a}$ and $I_{w,d}$ are the axial and diametral moments of inertia of the wheel, respectively. The term
+
+\begin{equation}
+\tau_{\mathrm{gyro}}
+=
+I_{w,a}\dot{\phi}\dot{\psi}
+\label{eq:gyroscopic-torque}
+\end{equation}
+
+is the gyroscopic torque generated by the combined wheel rotation and yaw motion. Depending on the signs of $\dot{\phi}$ and $\dot{\psi}$, this torque may oppose the lateral lean motion and therefore provide a restoring effect.
+
+Including this term, the lateral dynamics become
+
+\begin{equation}
+\begin{bmatrix}
+J+m_{\mathrm{rod}}r^2 & 0 \\
+0 & m_{\mathrm{rod}}
+\end{bmatrix}
+\begin{bmatrix}
+\dot{u}_1 \\
+\dot{u}_2
+\end{bmatrix}
+=
+\begin{bmatrix}
+\begin{aligned}
+&FR
+-m_{\mathrm{rod}}gr\cos\theta
++G\sin\theta \\
+&\quad
+-m_{\mathrm{rod}}r
+\left(
+2u_1u_2+Ru_1^2
+\right)
++I_{w,a}\dot{\phi}\dot{\psi}
+\end{aligned}
+\\[8pt]
+F
+-m_{\mathrm{rod}}g\sin\theta
++m_{\mathrm{rod}}ru_1^2
+\end{bmatrix}.
+\label{eq:lateral-model-with-gyroscopic-torque}
+\end{equation}
+
+This effect is absent when the robot is stationary or moving without yaw, because $\dot{\phi}\dot{\psi}=0$. However, during three-dimensional rolling motion, the reduced model may underestimate the restoring response of the physical system by neglecting this coupling.
+
+\subsection{Collision at the Rod Travel Limits}
+
+The reduced model also treats the rod position $r$ as a continuous and unconstrained coordinate. In the physical system, however, the linear motor has a finite travel range,
+
+\begin{equation}
+-r_{\max}\leq r\leq r_{\max}.
+\label{eq:rod-travel-limit}
+\end{equation}
+
+When the rod reaches one of its mechanical end stops, a collision occurs. This produces an instantaneous change in velocity that cannot be represented by the continuous differential equations in Equation~\eqref{eq:simplified-lateral-model}.
+
+Let the superscripts $-$ and $+$ represent the states immediately before and after the collision, respectively. Define
+
+\begin{equation}
+A_{\max}
+=
+J
++
+m_{\mathrm{rod}}
+\left(
+R^2+r_{\max}^2
+\right).
+\label{eq:collision-inertia}
+\end{equation}
+
+For a perfectly inelastic collision at either end stop, the position variables remain continuous and the rod velocity becomes zero:
+
+\begin{equation}
+\theta^+=\theta^-,
+\qquad
+r^+=s r_{\max},
+\qquad
+\dot{r}^{+}=0,
+\label{eq:collision-position-reset}
+\end{equation}
+
+where
+
+\begin{equation}
+s=\operatorname{sgn}(r^-)
+\end{equation}
+
+identifies the end stop involved in the collision.
+
+Conservation of angular momentum during the collision gives
+
+\begin{equation}
+A_{\max}\dot{\theta}^{+}
+-
+m_{\mathrm{rod}}R\dot{r}^{+}
+=
+A_{\max}\dot{\theta}^{-}
+-
+m_{\mathrm{rod}}R\dot{r}^{-}.
+\label{eq:collision-angular-momentum}
+\end{equation}
+
+Because $\dot{r}^{+}=0$, the post-collision lean rate is
+
+\begin{equation}
+\dot{\theta}^{+}
+=
+\dot{\theta}^{-}
+-
+\frac{m_{\mathrm{rod}}R}{A_{\max}}
+\dot{r}^{-}.
+\label{eq:collision-lean-rate-reset}
+\end{equation}
+
+In terms of the transformed state vector
+
+\begin{equation}
+\mathbf{x}
+=
+\begin{bmatrix}
+\theta &
+r-R\theta &
+\dot{\theta} &
+\dot{r}-R\dot{\theta}
+\end{bmatrix}^{T},
+\end{equation}
+
+the post-collision state is
+
+\begin{equation}
+\mathbf{x}^{+}
+=
+\begin{bmatrix}
+\theta^{-}
+\\
+s r_{\max}-R\theta^{-}
+\\
+\dot{\theta}^{+}
+\\
+-R\dot{\theta}^{+}
+\end{bmatrix}.
+\label{eq:collision-state-reset}
+\end{equation}
+
+After the collision, the system enters a constrained-contact mode in which
+
+\begin{equation}
+r=s r_{\max},
+\qquad
+\dot{r}=0.
+\end{equation}
+
+This constraint remains active until the acceleration of the rod points away from the end stop and back toward the allowable travel region. The release condition can be expressed as
+
+\begin{equation}
+s\ddot{r}<0.
+\label{eq:end-stop-release-condition}
+\end{equation}
+
+The current reduced model does not include either the instantaneous state reset or the constrained-contact dynamics. It is therefore valid only while the rod remains strictly within its travel limits. Simulations that allow $|r|>r_{\max}$ do not accurately represent the behavior of the physical system after an end-stop collision.
+
+\section{Attempted Modeling of the End-Stop Collision}
+\label{sec:collision-model-attempt}
+
+An attempt was made to include the collision between the moving rod and its mechanical end stops in the numerical simulation. The implementation used the physical-coordinate state vector
+
+\begin{equation}
+\mathbf{z}
+=
+\begin{bmatrix}
+\theta &
+\dot{\theta} &
+r &
+\dot{r}
+\end{bmatrix}^{T}.
+\end{equation}
+
+During normal motion, the state was propagated using the continuous nonlinear model. A collision was predicted when
+
+\begin{equation}
+\left|r+\dot{r}\Delta t\right|>r_{\max},
+\label{eq:predicted-collision-condition}
+\end{equation}
+
+where $\Delta t=0.01~\mathrm{s}$ was the simulation time step. Once this condition was satisfied, the rod position was limited to
+
+\begin{equation}
+r^{+}
+=
+\operatorname{sgn}(r^{-})r_{\max},
+\end{equation}
+
+and the collision was assumed to be perfectly inelastic. The post-collision state was calculated as
+
+\begin{equation}
+\mathbf{z}^{+}
+=
+\begin{bmatrix}
+\theta^{-}
+\\[2pt]
+\displaystyle
+\dot{\theta}^{-}
+-
+\frac{m_{\mathrm{rod}}R}{A_{\max}}
+\dot{r}^{-}
+\\[8pt]
+\operatorname{sgn}(r^{-})r_{\max}
+\\[2pt]
+0
+\end{bmatrix},
+\label{eq:implemented-collision-reset}
+\end{equation}
+
+where
+
+\begin{equation}
+A_{\max}
+=
+J
++
+m_{\mathrm{rod}}
+\left(
+R^2+r_{\max}^2
+\right).
+\end{equation}
+
+After the collision, the rod was held at the end stop by imposing
+
+\begin{equation}
+\dot{r}=0,
+\qquad
+\ddot{r}=0.
+\end{equation}
+
+The contact constraint was released when the unconstrained rod acceleration pointed back toward the allowable travel region:
+
+\begin{equation}
+r\ddot{r}<0.
+\label{eq:implemented-release-condition}
+\end{equation}
+
+This approach captured the basic idea that the rod cannot move beyond its physical travel limit. However, it was not sufficiently reliable for representing the dynamics at the instant of collision.
+
+The main difficulty was the incompatibility between the discontinuous collision event and the fourth-order Runge--Kutta method used in the simulation. RK4 assumes that the state derivative is continuous over each integration step. It evaluates the model four times at intermediate states and combines the resulting derivatives to advance the state. In contrast, the collision introduces an instantaneous state reset:
+
+\begin{equation}
+\mathbf{z}^{-}
+\longrightarrow
+\mathbf{z}^{+}.
+\end{equation}
+
+In the attempted implementation, the collision mode and the global state were modified from inside the state-derivative function. Consequently, different RK4 evaluations within the same time step could use different contact modes. The final RK4 update could also combine derivatives calculated both before and after the collision, even though these derivatives belong to different dynamic regimes.
+
+Furthermore, Equation~\eqref{eq:predicted-collision-condition} only predicts whether a collision will occur during the next time step. It does not determine the exact collision time. Therefore, the state may be reset either before or after the actual impact, and the computed post-collision velocity becomes dependent on the selected time step.
+
+The collision itself is caused by a short-duration impulsive contact force. This force cannot be accurately represented by the finite continuous accelerations of the reduced model. The perfectly inelastic assumption also neglects the stiffness, damping, deformation, and possible rebound of the physical end stop. As a result, the implementation could impose the position limit but could not reproduce the rapid transient dynamics observed at impact.
+
+A more appropriate approach would treat the system as a hybrid dynamical system. The simulation would first locate the exact time at which
+
+\begin{equation}
+|r|-r_{\max}=0,
+\end{equation}
+
+apply the collision reset map at that instant, and then restart the numerical integrator using the post-collision state. The constrained-contact dynamics would subsequently remain active until the release condition was satisfied. Alternatively, the end stop could be represented by a compliant spring--damper contact model, although this would introduce stiff dynamics and require a much smaller time step or a solver designed for stiff systems.
+
+Because the attempted implementation did not accurately resolve the collision instant and did not integrate consistently with RK4, it was not used as a reliable representation of the end-stop dynamics in the subsequent simulation results.
