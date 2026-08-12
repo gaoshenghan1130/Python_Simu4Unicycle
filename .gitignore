@@ -26,3 +26,13 @@ velocity_comparison.png
 *.mat
 
 .vscode/*
+
+*.aux
+*.log
+*.lof
+*.lot
+*.toc
+*.fls
+*.out
+*.gz
+*.bib

@@ -1,0 +1,92 @@
+% ===== 字体（请使用 XeLaTeX 编译） =====
+\usepackage{fontspec}
+\defaultfontfeatures{Ligatures=TeX}
+
+% ===== 页面与排版 =====
+\usepackage[letterpaper,margin=1in,headheight=15pt]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{microtype}
+\usepackage{indentfirst}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0.25em}
+
+% ===== 数学、单位、表格与图片 =====
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+
+% ===== 颜色 =====
+\usepackage{xcolor}
+\definecolor{UMblue}{HTML}{00274C}
+\definecolor{UMmaize}{HTML}{FFCB05}
+
+% ===== 文献 =====
+\usepackage[round,authoryear]{natbib}
+
+% ===== PDF 链接、书签与导航 =====
+% hyperref 应尽量靠后加载；cleveref 必须在 hyperref 之后。
+\usepackage{hyperref}
+\usepackage{bookmark}
+\usepackage[nameinlink,noabbrev]{cleveref}
+\hypersetup{
+  unicode=true,
+  colorlinks=true,
+  linkcolor=UMblue,
+  citecolor=UMblue,
+  urlcolor=UMblue,
+  linktoc=all,
+  bookmarksopen=true,
+  bookmarksnumbered=true,
+  pdfstartview=FitH
+}
+
+% ===== 页眉页脚 =====
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+
+\newcommand{\ContentsLink}{%
+  \hyperlink{toc}{\textcolor{UMblue}{\bfseries Back to Contents}}%
+}
+
+\newcommand{\PageNavigation}{%
+  \Acrobatmenu{PrevPage}{\textcolor{UMblue}{Previous}}%
+  \quad\textcolor{gray}{|}\quad
+  \hyperlink{toc}{\textcolor{UMblue}{Contents}}%
+  \quad\textcolor{gray}{|}\quad
+  \textcolor{black}{\thepage/\pageref*{LastPage}}%
+  \quad\textcolor{gray}{|}\quad
+  \Acrobatmenu{NextPage}{\textcolor{UMblue}{Next}}%
+}
+
+\fancypagestyle{reportstyle}{
+  \fancyhf{}
+  \fancyhead[L]{\small\nouppercase{\leftmark}}
+  \fancyhead[R]{\small\ContentsLink}
+  \fancyfoot[C]{\small\PageNavigation}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\footrulewidth}{0.4pt}
+}
+
+% chapter 首页默认使用 plain；重定义后仍保留全部导航。
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyhead[L]{\small\nouppercase{\leftmark}}
+  \fancyhead[R]{\small\ContentsLink}
+  \fancyfoot[C]{\small\PageNavigation}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\footrulewidth}{0.4pt}
+}
+
+% ===== 目录深度与编号深度 =====
+\setcounter{tocdepth}{2}    % 目录显示到 subsection
+\setcounter{secnumdepth}{3} % 正文编号到 subsubsection
+
+% ===== 常用命令示例 =====
+\newcommand{\vect}[1]{\boldsymbol{#1}}
+\newcommand{\dd}{\mathop{}\!\mathrm{d}}

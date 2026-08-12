@@ -1,0 +1,38 @@
+\chapter{Introduction}
+\label{chap:introduction}
+
+Introduce the background and motivation of the report. All numbered headings
+are automatically added to the table of contents, and their page numbers are
+clickable.
+
+AAA
+
+\section{Background}
+\label{sec:background}
+
+Use \verb|\label| immediately after a chapter, section, equation, table, or
+figure, then refer to it with \verb|\cref|. For example, see
+\cref{chap:methodology}.
+
+\section{Objectives}
+
+The objectives of this report are:
+
+\begin{enumerate}[label=\arabic*.]
+  \item state the research question clearly;
+  \item describe a reproducible method; and
+  \item present and interpret the results.
+\end{enumerate}
+
+A citation looks like this: \citep{lamport1994latex}.
+
+Place image files in the \texttt{figures/} folder and use the following form:
+
+\begin{figure}[htbp]
+  \centering
+  % Replace the box below with:
+  % \includegraphics[width=0.75\textwidth]{your-figure.pdf}
+  \fbox{\rule{0pt}{45mm}\rule{0.72\textwidth}{0pt}}
+  \caption{Replace this box with a figure from the \texttt{figures/} folder.}
+  \label{fig:placeholder}
+\end{figure}

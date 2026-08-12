@@ -1,0 +1,75 @@
+% !TeX program = xelatex
+% !TeX encoding = UTF-8
+\documentclass[12pt,letterpaper,oneside]{report}
+
+\input{config}
+
+\newcommand{\ReportTitle}{Lateral Dynamics and Control of a Unicycle Robot}
+\newcommand{\ReportSubtitle}{Report after implementing the linear motor}
+\newcommand{\ReportAuthor}{Gao Shenghan}
+\newcommand{\ReportInstitution}{University of Michigan}
+\newcommand{\ReportDepartment}{Department of Mechanical Engineering}
+\newcommand{\ReportCourse}{Course / Project Name}
+\newcommand{\ReportAdvisor}{Advisor: Prof. Name}
+\newcommand{\ReportDate}{\today}
+
+\hypersetup{
+  pdftitle={\ReportTitle},
+  pdfauthor={\ReportAuthor},
+  pdfsubject={\ReportCourse},
+  pdfkeywords={report, LaTeX}
+}
+
+\begin{document}
+\pagestyle{reportstyle}
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\thispagestyle{reportstyle}
+\begin{center}
+  \vspace*{2.0cm}
+
+  {\Huge\bfseries \ReportTitle\par}
+  \vspace{0.5cm}
+  {\Large \ReportSubtitle\par}
+
+  \vfill
+
+  \begin{tabular}{rl}
+    Author:      & \ReportAuthor \\
+    Date:        & \ReportDate
+  \end{tabular}
+
+  \vfill
+  \hyperlink{toc}{\colorbox{UMmaize}{\textcolor{UMblue}{\bfseries\strut Go to Contents}}}
+  \vspace{1.0cm}
+\end{center}
+\clearpage
+
+% \include{chapters/00-abstract}
+
+\clearpage
+\phantomsection
+\hypertarget{toc}{}
+\tableofcontents
+
+% \clearpage
+% \listoffigures
+% \clearpage
+% \listoftables
+
+\include{chapters/01-introduction}
+\include{chapters/02-Theoretical&Simu}
+\include{chapters/03-results}
+\include{chapters/04-conclusion}
+
+\clearpage
+\phantomsection
+\addcontentsline{toc}{chapter}{References}
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+% \appendix
+% \include{chapters/appendix-a}
+
+\end{document}
