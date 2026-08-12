@@ -1,9 +1,6 @@
 \chapter{Hardware and Embedded Systems}
 \label{chap:hardware}
 
-% Prevent page stretching that can cause overfull vbox warnings
-\raggedbottom
-
 This chapter describes the hardware architecture and embedded control system of the unicycle robot. The capabilities and limitations of the mechanical components, actuators, sensors, communication interfaces, and embedded processor directly constrain the simulations and controller designs presented in the following chapters.
 
 \section{System Overview}
@@ -570,7 +567,7 @@ The principal hardware limitations affecting the lateral balancing system are su
   \caption{Principal hardware limitations of the lateral balancing system.}
   \label{tab:lateral-hardware-limitations}
   \begin{tabular}{
-    p{0.25\textwidth}
+    p{0.27\textwidth}
     p{0.27\textwidth}
     p{0.38\textwidth}
   }
@@ -585,9 +582,9 @@ The principal hardware limitations affecting the lateral balancing system are su
 
     LM2070 stroke length
     &
-    $220~\mathrm{mm}$ total, corresponding to approximately $\pm110~\mathrm{mm}$ from the center
+    $220~\mathrm{mm}$ total, corresponding to $\pm110~\mathrm{mm}$ from the center
     &
-    The moving mass cannot continue producing corrective motion after reaching an end stop. The firmware begins limiting outward force when $|r|>0.10~\mathrm{m}$.
+    The firmware begins limiting outward force when $|r|>0.10~\mathrm{m}$.
     \\
 
     LM2070 continuous force
@@ -606,12 +603,12 @@ The principal hardware limitations affecting the lateral balancing system are su
 
     BNO085 orientation accuracy
     &
-    $2.0^\circ$ nominal static error and $3.5^\circ$ nominal dynamic error; approximately $5^\circ$--$10^\circ$ deviation observed experimentally
+    $2.0^\circ$ nominal static error; $3.5^\circ$ nominal dynamic error
     &
-    The orientation error is comparable to the allowable lean-angle range and can cause an incorrect control response.
+    The orientation error is comparable to the allowable lean-angle range, causing an incorrect control response.
     \\
 
-    BNO085 angular-velocity accuracy
+    BNO085 velocity accuracy
     &
     $3.1^\circ/\mathrm{s}$ nominal dynamic accuracy
     &
@@ -629,7 +626,7 @@ The principal hardware limitations affecting the lateral balancing system are su
     &
     $10~\mathrm{ms}$
     &
-    The control input is updated discretely rather than continuously, further increasing the effective feedback delay.
+    The control input is from the fusion of the IMU, further increasing the effective feedback delay.
     \\
 
     \hline
@@ -649,3 +646,355 @@ In practice, the allowable continuous force is substantially lower than the peak
 The IMU limitations are particularly important because successful lateral balancing requires the robot to remain within a small angular range. An orientation error of several degrees may therefore be too large to treat as insignificant measurement noise. The combination of orientation error, angular-velocity error, sensor latency, and the discrete control period reduces the robustness that can be achieved on the physical system.
 
 Consequently, the controller simulations should include rod-position saturation, force saturation, thermal restrictions, IMU measurement error, and feedback delay. Simulations based only on the ideal continuous model may significantly overestimate the achievable balancing performance.
+
+\section{System Parameter Identification}
+\label{sec:system-parameter-identification}
+
+Two different unicycle prototypes are considered in this project. The first prototype is located at the University of Michigan, while the second prototype is located at the Budapest University of Technology and Economics (BME). The two sets of parameters describe different physical robots and must not be interpreted as the original and updated parameters of the same system.
+
+\subsection{University of Michigan Prototype}
+
+The physical parameters of the University of Michigan prototype were obtained from measurements of the local robot. The values used in the original MATLAB model are summarized in Table~\ref{tab:umich-parameters}.
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.3}
+  \caption{Physical parameters of the University of Michigan prototype.}
+  \label{tab:umich-parameters}
+  \begin{tabular}{
+    p{0.24\textwidth}
+    p{0.25\textwidth}
+    p{0.39\textwidth}
+  }
+    \hline
+    \textbf{Parameter}
+    &
+    \textbf{Value}
+    &
+    \textbf{Description}
+    \\
+    \hline
+
+    $m_{\mathrm{end}}$
+    &
+    $0.24~\mathrm{kg}$
+    &
+    Additional mass attached to each end of the lateral rod
+    \\
+
+    $m_L$
+    &
+    $0.15+0.24=0.39~\mathrm{kg}$
+    &
+    Mass associated with one half of the lateral assembly
+    \\
+
+    $m_{\mathrm{rod}}$
+    &
+    $2m_L=0.78~\mathrm{kg}$
+    &
+    Total moving mass used in the reduced lateral model
+    \\
+
+    $m_b$
+    &
+    $4.1~\mathrm{kg}$
+    &
+    Mass of the pendulum body assembly
+    \\
+
+    $m_w$
+    &
+    $3.5~\mathrm{kg}$
+    &
+    Mass of the wheel assembly
+    \\
+
+    $h$
+    &
+    $0.115~\mathrm{m}$
+    &
+    Vertical geometric parameter of the pendulum body
+    \\
+
+    $R$
+    &
+    $0.2527~\mathrm{m}$
+    &
+    Wheel radius
+    \\
+
+    $I_b$
+    &
+    $0.01290418213~\mathrm{kg\,m^2}$
+    &
+    Lateral moment of inertia of the body assembly
+    \\
+
+    $I_w$
+    &
+    $0.04591427768~\mathrm{kg\,m^2}$
+    &
+    Lateral moment of inertia of the wheel assembly
+    \\
+
+    \hline
+  \end{tabular}
+\end{table}
+
+The moment of inertia of the lateral rod assembly was approximated as
+
+\begin{equation}
+\begin{aligned}
+I_{\mathrm{rod}}
+&=
+\frac{1}{12}(0.30)(0.314)^2
++
+2(0.24)(0.157)^2
+\\
+&=
+0.01429642~\mathrm{kg\,m^2}.
+\end{aligned}
+\label{eq:umich-rod-inertia}
+\end{equation}
+
+Using these parameters, the combined constants in the reduced lateral model are
+
+\begin{equation}
+J_{\mathrm{UM}}
+=
+m_wR^2
++
+m_b(R+h)^2
++
+I_w
++
+I_b
++
+I_{\mathrm{rod}}
+=
+0.850949~\mathrm{kg\,m^2},
+\end{equation}
+
+and
+
+\begin{equation}
+G_{\mathrm{UM}}
+=
+m_wgR
++
+m_bg(R+h)
+=
+23.4657~\mathrm{N\,m}.
+\end{equation}
+
+Unless otherwise stated, these parameters are used for the simulations and controller designs associated with the University of Michigan robot.
+
+\subsection{BME Prototype}
+
+Máté independently obtained the mass properties of the unicycle prototype located at BME in Hungary. These values describe the complete pendulum and wheel assemblies of the BME robot rather than revised measurements of the University of Michigan robot.
+
+The BME pendulum assembly consists of one Plexiglas sheet, the battery, small electronic components, the rotary motor, and the stationary body of the linear motor. Its measured mass properties are summarized in Table~\ref{tab:bme-pendulum-properties}.
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.3}
+  \caption{Mass properties of the BME pendulum assembly.}
+  \label{tab:bme-pendulum-properties}
+  \begin{tabular}{
+    p{0.49\textwidth}
+    p{0.34\textwidth}
+  }
+    \hline
+    \textbf{Property}
+    &
+    \textbf{Value}
+    \\
+    \hline
+
+    Mass
+    &
+    $2.799~\mathrm{kg}$
+    \\
+
+    $J_x$
+    &
+    $0.01290418213~\mathrm{kg\,m^2}$
+    \\
+
+    $J_y$
+    &
+    $0.02090219895~\mathrm{kg\,m^2}$
+    \\
+
+    $J_z$
+    &
+    $0.01118711607~\mathrm{kg\,m^2}$
+    \\
+
+    $D_{xy}$
+    &
+    Not obtained
+    \\
+
+    $D_{xz}$
+    &
+    $6.27434\times10^{-5}~\mathrm{kg\,m^2}$
+    \\
+
+    $D_{yz}$
+    &
+    Not obtained
+    \\
+
+    Center-of-mass offset in $x$
+    &
+    $-0.00145~\mathrm{m}$
+    \\
+
+    Center-of-mass offset in $y$
+    &
+    $-0.00710~\mathrm{m}$
+    \\
+
+    Center-of-mass offset in $z$
+    &
+    $0.02504~\mathrm{m}$
+    \\
+
+    \hline
+  \end{tabular}
+\end{table}
+
+The corresponding mass properties of the complete BME wheel assembly are given in Table~\ref{tab:bme-wheel-properties}.
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.3}
+  \caption{Mass properties of the BME wheel assembly.}
+  \label{tab:bme-wheel-properties}
+  \begin{tabular}{
+    p{0.49\textwidth}
+    p{0.34\textwidth}
+  }
+    \hline
+    \textbf{Property}
+    &
+    \textbf{Value}
+    \\
+    \hline
+
+    Mass
+    &
+    $2.436~\mathrm{kg}$
+    \\
+
+    $J_x$
+    &
+    $0.04591427768~\mathrm{kg\,m^2}$
+    \\
+
+    $J_y$
+    &
+    $0.09099921839~\mathrm{kg\,m^2}$
+    \\
+
+    $J_z$
+    &
+    $0.04591427768~\mathrm{kg\,m^2}$
+    \\
+
+    $D_{xy}$
+    &
+    $0$
+    \\
+
+    $D_{xz}$
+    &
+    $0$
+    \\
+
+    $D_{yz}$
+    &
+    $0$
+    \\
+
+    Center-of-mass offset in $x$
+    &
+    $0~\mathrm{m}$
+    \\
+
+    Center-of-mass offset in $y$
+    &
+    $0.00833~\mathrm{m}$
+    \\
+
+    Center-of-mass offset in $z$
+    &
+    $0~\mathrm{m}$
+    \\
+
+    \hline
+  \end{tabular}
+\end{table}
+
+The principal mass differences between the two prototypes are summarized in Table~\ref{tab:prototype-mass-comparison}.
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.3}
+  \caption{Comparison of the University of Michigan and BME prototypes.}
+  \label{tab:prototype-mass-comparison}
+  \begin{tabular}{
+    p{0.32\textwidth}
+    p{0.25\textwidth}
+    p{0.25\textwidth}
+  }
+    \hline
+    \textbf{Property}
+    &
+    \textbf{Michigan prototype}
+    &
+    \textbf{BME prototype}
+    \\
+    \hline
+
+    Pendulum assembly mass
+    &
+    $4.100~\mathrm{kg}$
+    &
+    $2.799~\mathrm{kg}$
+    \\
+
+    Wheel assembly mass
+    &
+    $3.500~\mathrm{kg}$
+    &
+    $2.436~\mathrm{kg}$
+    \\
+
+    Pendulum $J_x$
+    &
+    $0.01290418213~\mathrm{kg\,m^2}$
+    &
+    $0.01290418213~\mathrm{kg\,m^2}$
+    \\
+
+    Wheel $J_x$
+    &
+    $0.04591427768~\mathrm{kg\,m^2}$
+    &
+    $0.04591427768~\mathrm{kg\,m^2}$
+    \\
+
+    \hline
+  \end{tabular}
+\end{table}
+
+Because the two parameter sets belong to different physical prototypes, the BME masses and inertias should not be combined with the Michigan geometric and rod parameters. Each complete parameter set must be used consistently when constructing its corresponding dynamic model.
+
+We are considering using some of the BME parameters in the UMich model to improve the accuracy of the simulation, mainly for the parameters not related to the wheel mass and inertia, as the major differences are the protectors on the wheel for launching the robot.

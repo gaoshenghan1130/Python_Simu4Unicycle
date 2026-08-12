@@ -95,13 +95,13 @@ F_eq = 2*m_L*g*sin(theta_eq);
 
 % Nonlinear-model equilibrium state order:
 % z_eq = [theta_eq; theta_dot_eq; r_eq; r_dot_eq]
-z_eq = [theta_eq; 0; r_eq; 0];
+z_eq = [0; 0; 0; 0];
 
 % Equilibrium feedforward plus feedback about the equilibrium state.
-controller = @(t, z, par) F_eq - K_z*(z - z_eq);
+controller = @(t, z, par) - K_z*(z - z_eq);
 
 % Add a small perturbation so the return trajectory is visible.
-z0 = z_eq + [1*pi/180; 0.05; 0.005; 0];
+z0 = z_eq + [0.1*pi/180; 0.00; 0.000; 0];
 
 tspan = [0, 15];
 

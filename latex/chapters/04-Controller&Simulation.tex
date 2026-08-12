@@ -1,0 +1,832 @@
+\chapter{Controller Design and Simulation}
+\label{chap:controller-simulation}
+
+This chapter presents the controllers developed for the lateral balancing system and evaluates their performance using the nonlinear model. The investigated methods include full-state proportional--derivative feedback designed using LQR and pole placement, a one-step force-optimization controller, and a preliminary model predictive control formulation.
+
+The principal objective is to regulate the lateral lean angle and lateral mass position toward
+
+\begin{equation}
+\theta=0,
+\qquad
+r=0,
+\qquad
+\dot{\theta}=0,
+\qquad
+\dot{r}=0.
+\end{equation}
+
+In addition to asymptotic stability, a practically useful controller must satisfy the actuator constraints
+
+\begin{equation}
+|F|\leq F_{\max},
+\qquad
+|r|\leq r_{\max},
+\label{eq:controller-hardware-constraints}
+\end{equation}
+
+where $F_{\max}=27.5~\mathrm{N}$ is the implemented peak-force limit. The sustainable force is lower because the LM2070 has a continuous-force rating of approximately $9.2~\mathrm{N}$.
+
+\section{Linearized Control Model}
+\label{sec:linearized-control-model}
+
+The nonlinear model developed in Chapter~\ref{chap:modelling} is expressed using
+
+\begin{equation}
+q_1=\theta,
+\qquad
+q_2=r-R\theta,
+\end{equation}
+
+and
+
+\begin{equation}
+u_1=\dot{\theta},
+\qquad
+u_2=\dot{r}-R\dot{\theta}.
+\end{equation}
+
+The state vector used for controller design is
+
+\begin{equation}
+\mathbf{x}
+=
+\begin{bmatrix}
+\theta &
+q_2 &
+u_1 &
+u_2
+\end{bmatrix}^{T}.
+\label{eq:controller-state-vector}
+\end{equation}
+
+Because
+
+\begin{equation}
+r=q_2+R\theta,
+\end{equation}
+
+the nonlinear equations can be linearized around the upright equilibrium
+
+\begin{equation}
+\mathbf{x}^{*}=\mathbf{0},
+\qquad
+F^{*}=0.
+\end{equation}
+
+The resulting linear system is
+
+\begin{equation}
+\dot{\mathbf{x}}
+=
+\mathbf{A}\mathbf{x}
++
+\mathbf{B}F,
+\label{eq:linear-controller-model}
+\end{equation}
+
+where
+
+\begin{equation}
+\mathbf{A}
+=
+\begin{bmatrix}
+0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 1 \\
+\dfrac{G-m_{\mathrm{rod}}gR}{J}
+&
+-\dfrac{m_{\mathrm{rod}}g}{J}
+&
+0 & 0
+\\[3mm]
+-g & 0 & 0 & 0
+\end{bmatrix},
+\label{eq:linear-controller-A}
+\end{equation}
+
+and
+
+\begin{equation}
+\mathbf{B}
+=
+\begin{bmatrix}
+0 \\
+0 \\
+\dfrac{R}{J} \\[2mm]
+\dfrac{1}{m_{\mathrm{rod}}}
+\end{bmatrix}.
+\label{eq:linear-controller-B}
+\end{equation}
+
+The controllability matrix is
+
+\begin{equation}
+\mathcal{C}
+=
+\begin{bmatrix}
+\mathbf{B} &
+\mathbf{AB} &
+\mathbf{A}^{2}\mathbf{B} &
+\mathbf{A}^{3}\mathbf{B}
+\end{bmatrix}.
+\end{equation}
+
+For the identified system parameters,
+
+\begin{equation}
+\operatorname{rank}(\mathcal{C})=4.
+\end{equation}
+
+Therefore, the linearized model is theoretically controllable around the upright equilibrium. However, controllability does not guarantee that the required input and rod displacement will remain within the physical limits of the LM2070.
+
+\section{Full-State PD Controller}
+\label{sec:full-state-pd}
+
+A full-state feedback controller was first considered:
+
+\begin{equation}
+F=-\mathbf{K}\mathbf{x},
+\label{eq:state-feedback-controller}
+\end{equation}
+
+where
+
+\begin{equation}
+\mathbf{K}
+=
+\begin{bmatrix}
+k_1 & k_2 & k_3 & k_4
+\end{bmatrix}.
+\end{equation}
+
+The control law is therefore
+
+\begin{equation}
+F
+=
+-k_1\theta
+-k_2q_2
+-k_3\dot{\theta}
+-k_4u_2.
+\label{eq:transformed-pd-controller}
+\end{equation}
+
+This is referred to as a PD controller because it contains proportional and derivative feedback for both generalized coordinates $\theta$ and $q_2$.
+
+For implementation using the measured physical states,
+
+\begin{equation}
+q_2=r-R\theta,
+\qquad
+u_2=\dot{r}-R\dot{\theta},
+\end{equation}
+
+so Equation~\eqref{eq:transformed-pd-controller} can be rewritten as
+
+\begin{equation}
+F
+=
+-\widetilde{k}_{\theta}\theta
+-\widetilde{k}_{r}r
+-\widetilde{k}_{\dot{\theta}}\dot{\theta}
+-\widetilde{k}_{\dot{r}}\dot{r},
+\label{eq:physical-pd-controller}
+\end{equation}
+
+where
+
+\begin{equation}
+\begin{aligned}
+\widetilde{k}_{\theta} &= k_1-Rk_2, \\
+\widetilde{k}_{r} &= k_2, \\
+\widetilde{k}_{\dot{\theta}} &= k_3-Rk_4, \\
+\widetilde{k}_{\dot{r}} &= k_4.
+\end{aligned}
+\label{eq:gain-coordinate-conversion}
+\end{equation}
+
+LQR and pole placement were investigated as two different methods for selecting these four gains.
+
+\subsection{LQR Gain Design}
+\label{subsec:lqr-design}
+
+The linear quadratic regulator selects the feedback gain by minimizing
+
+\begin{equation}
+\mathcal{J}_{\mathrm{LQR}}
+=
+\int_{0}^{\infty}
+\left(
+\mathbf{x}^{T}\mathbf{Q}\mathbf{x}
++
+F^{T}R_FF
+\right)
+\,dt,
+\label{eq:lqr-cost}
+\end{equation}
+
+where $\mathbf{Q}\succeq0$ penalizes deviations of the state and $R_F>0$ penalizes the required motor force.
+
+The LQR gain is
+
+\begin{equation}
+\mathbf{K}_{\mathrm{LQR}}
+=
+R_F^{-1}\mathbf{B}^{T}\mathbf{P},
+\end{equation}
+
+where $\mathbf{P}$ is the positive-definite solution of the continuous-time algebraic Riccati equation
+
+\begin{equation}
+\mathbf{A}^{T}\mathbf{P}
++
+\mathbf{P}\mathbf{A}
+-
+\mathbf{P}\mathbf{B}R_F^{-1}\mathbf{B}^{T}\mathbf{P}
++
+\mathbf{Q}
+=
+0.
+\end{equation}
+
+A representative weighting selection used during the parameter studies was
+
+\begin{equation}
+\mathbf{Q}
+=
+\operatorname{diag}
+\left(
+1000,\,
+100,\,
+100,\,
+10
+\right),
+\qquad
+R_F=30.
+\label{eq:representative-lqr-weights}
+\end{equation}
+
+Increasing the weight on $\theta$ causes the controller to react more strongly to lean-angle error. However, this also increases the demanded peak force and lateral rod displacement. Increasing $R_F$ reduces the force demand but slows the response, allowing the unstable lean angle to grow for a longer time.
+
+Thus, LQR provides a systematic gain-selection method, but the resulting controller remains a linear state-feedback controller. It does not enforce the force and travel constraints directly.
+
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.90\textwidth]{04/lqr1.png}
+  \caption{Nonlinear simulation using the LQR-designed controller.}
+  \label{fig:lqr-response}
+\end{figure}
+
+From this simulation we also notice that the system will be especially sensitive to the initial lean angle. Under these parameter settings and the LQR gain, the maximum tolerable initial lean angle is approximately $0.95^\circ$, as shown in Figure~\ref{fig:lqr-response}. This will be the major limitation of the controller design and will be the focus of the following controller design and simulation.
+
+\subsection{Pole-Placement Gain Design}
+\label{subsec:pole-placement-design}
+
+Pole placement selects $\mathbf{K}$ such that the eigenvalues of the closed-loop matrix
+
+\begin{equation}
+\mathbf{A}_{\mathrm{cl}}
+=
+\mathbf{A}-\mathbf{B}\mathbf{K}
+\end{equation}
+
+are located at specified positions:
+
+\begin{equation}
+\operatorname{eig}
+\left(
+\mathbf{A}-\mathbf{B}\mathbf{K}
+\right)
+=
+\left\{
+\lambda_1,\lambda_2,\lambda_3,\lambda_4
+\right\}.
+\end{equation}
+
+More negative poles generally produce a faster response, but also increase the required motor force. Poles close to the imaginary axis reduce the force demand but may not correct the unstable lean motion rapidly enough.
+
+One pole set considered during the analysis was
+
+\begin{equation}
+\boldsymbol{\lambda}_{\mathrm{des}}
+=
+\begin{bmatrix}
+-2.25 &
+-1.25 &
+-2.00 &
+-1.50
+\end{bmatrix}.
+\label{eq:selected-poles}
+\end{equation}
+
+Using the University of Michigan prototype parameters, the corresponding gain in the transformed coordinates is approximately
+
+\begin{equation}
+\mathbf{K}_{q}
+=
+\begin{bmatrix}
+-387.0626 &
+123.4812 &
+-63.8985 &
+20.2609
+\end{bmatrix}.
+\label{eq:pole-placement-transformed-gain}
+\end{equation}
+
+Using Equation~\eqref{eq:gain-coordinate-conversion}, the equivalent gain for the physical state vector
+
+\begin{equation}
+\mathbf{x}_{p}
+=
+\begin{bmatrix}
+\theta &
+r &
+\dot{\theta} &
+\dot{r}
+\end{bmatrix}^{T}
+\end{equation}
+
+is
+
+\begin{equation}
+\mathbf{K}_{p}
+=
+\begin{bmatrix}
+-418.2664 &
+123.4812 &
+-69.0185 &
+20.2609
+\end{bmatrix}.
+\label{eq:pole-placement-physical-gain}
+\end{equation}
+
+The sign convention in Equations~\eqref{eq:pole-placement-transformed-gain} and \eqref{eq:pole-placement-physical-gain} is
+
+\begin{equation}
+F=-\mathbf{K}\mathbf{x}.
+\end{equation}
+
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.90\textwidth]{04/pp1.png}
+  \caption{Nonlinear simulation using the pole-placement controller.}
+  \label{fig:pole-placement-response}
+\end{figure}
+
+However the result is even worse than the LQR controller, as shown in Figure~\ref{fig:pole-placement-response}. The maximum tolerable initial lean angle is approximately $0.1^\circ$, which is even smaller than the LQR controller. 
+
+\subsection{Nonlinear and Hardware-Constrained Validation}
+\label{subsec:pd-monte-carlo}
+
+A Monte Carlo parameter sweep was used to evaluate the LQR weights, desired poles, and direct feedback gains. Each candidate was evaluated using three successive criteria:
+
+\begin{enumerate}
+    \item The linearized closed-loop model must be asymptotically stable.
+    \item The controller must stabilize the nonlinear model.
+    \item The force and rod displacement must remain within their specified limits.
+\end{enumerate}
+
+Even at a very small initial angle of $1^\circ$ for LQR in Figure \ref{fig:lqr-monte-carlo} and $0.5^\circ$ for pole placement in Figure \ref{fig:pole-monte-carlo}, the nonlinear model can be stabilized, but the required force exceeds the physical limit. Even regardless of the rod length limit, the required force is still too large and these analysis could prove that the LQR and pole-placement controllers are not feasible for the physical settings.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{04/LQRMC.png}
+  \caption{Monte Carlo evaluation of the LQR weighting parameters.}
+  \label{fig:lqr-monte-carlo}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{04/PPlgMC.png}
+  \caption{Monte Carlo evaluation of the desired closed-loop poles.}
+  \label{fig:pole-monte-carlo}
+\end{figure}
+
+\section{Attempted Hierarchical Control Architecture}
+\label{sec:hierarchical-control}
+
+A hierarchical control architecture was also considered to separate the lateral balancing objective from the direct force control of the linear motor. The proposed architecture contains two control layers:
+
+\begin{enumerate}
+    \item The upper-level controller determines a desired rod position $r_d$ based on the current lean motion.
+    \item The lower-level controller applies the linear-motor force required to move the rod toward $r_d$.
+\end{enumerate}
+
+The upper-level command can generally be expressed as
+
+\begin{equation}
+r_d
+=
+\Phi
+\left(
+\theta,\dot{\theta},r,\dot{r}
+\right).
+\label{eq:upper-level-rod-command}
+\end{equation}
+
+A simple lower-level controller would then have the form
+
+\begin{equation}
+F
+=
+F_{\mathrm{ff}}
+-k_{p,r}(r-r_d)
+-k_{d,r}(\dot{r}-\dot{r}_d),
+\label{eq:lower-level-rod-controller}
+\end{equation}
+
+where $F_{\mathrm{ff}}$ is a possible feedforward term.
+
+Near the upright equilibrium, the static equilibrium curve gives
+
+\begin{equation}
+r_{\mathrm{eq}}(\theta)
+=
+\frac{G+m_{\mathrm{rod}}gR}
+     {m_{\mathrm{rod}}g}
+\tan\theta.
+\label{eq:hierarchical-equilibrium-reference}
+\end{equation}
+
+It is therefore tempting to use $r_d=r_{\mathrm{eq}}(\theta)$, or its small-angle approximation
+
+\begin{equation}
+r_d
+\approx
+\frac{G+m_{\mathrm{rod}}gR}
+     {m_{\mathrm{rod}}g}
+\theta.
+\label{eq:proportional-equilibrium-reference}
+\end{equation}
+
+However, this proportional relationship describes only a static equilibrium. During recovery, the rod must develop velocity and may need to move beyond the instantaneous equilibrium position before slowing down and returning toward the center. Therefore, a fixed proportional relationship between $r_d$ and $\theta$ does not provide the required transient behavior.
+
+The main difficulty encountered with this architecture was predicting the rod overshoot. When the rod reaches its commanded position,
+
+\begin{equation}
+r=r_d,
+\end{equation}
+
+its velocity is generally nonzero:
+
+\begin{equation}
+\dot{r}\neq0.
+\end{equation}
+
+The rod consequently passes through the desired position before the lower-level controller can stop it. For a system with constant available braking acceleration $a_b$, the stopping distance could be approximated by
+
+\begin{equation}
+d_{\mathrm{stop}}
+\approx
+\frac{\dot{r}^{\,2}}
+     {2|a_b|}.
+\label{eq:approximate-rod-stopping-distance}
+\end{equation}
+
+In the unicycle system, however, the available acceleration is not constant. It depends on the complete state:
+
+\begin{equation}
+a_b
+=
+a_b
+\left(
+\theta,\dot{\theta},r,\dot{r},F
+\right),
+\end{equation}
+
+and is further affected by force saturation, sensor delay, the discrete control period, and the simultaneous influence of $F$ on the lean dynamics.
+
+The system is therefore not a strict cascade. The lower-level force used to control $r$ also directly changes $\ddot{\theta}$, while the upper-level lean motion continuously changes the required rod position. Consequently, the upper and lower control loops cannot be designed independently by assuming that the rod-position loop is infinitely fast.
+
+Simulation attempts showed that a fixed proportional mapping between the lean angle and desired rod position was not sufficient. A successful hierarchical controller would require a state-dependent braking strategy, a dynamic reference governor, or a predictive controller that explicitly estimates the future rod position and enforces the travel constraint. This approach was therefore not used for the final controller.
+
+\section{One-Step Force Optimization}
+\label{sec:one-step-force-optimization}
+
+A second controller was developed by directly selecting the force that best matches a desired local state correction. This method uses the nonlinear dynamics rather than a fixed linearized model.
+
+Define the position-dependent inertia as
+
+\begin{equation}
+J(r)=J+m_{\mathrm{rod}}r^2.
+\end{equation}
+
+The two generalized accelerations can be written as affine functions of $F$:
+
+\begin{equation}
+\dot{u}_1
+=
+a_{\theta,0}
++
+\frac{R}{J(r)}F,
+\label{eq:l2-angular-acceleration}
+\end{equation}
+
+and
+
+\begin{equation}
+\dot{u}_2
+=
+a_{r,0}
++
+\frac{1}{m_{\mathrm{rod}}}F,
+\label{eq:l2-rod-acceleration}
+\end{equation}
+
+where
+
+\begin{equation}
+a_{\theta,0}
+=
+\frac{
+G\sin\theta
+-m_{\mathrm{rod}}gr\cos\theta
+-m_{\mathrm{rod}}r
+\left(
+2u_1u_2+Ru_1^2
+\right)
+}
+{J(r)},
+\end{equation}
+
+and
+
+\begin{equation}
+a_{r,0}
+=
+-g\sin\theta+ru_1^2.
+\end{equation}
+
+For a short prediction interval $\Delta t$, define the local response vector
+
+\begin{equation}
+\mathbf{d}(F)
+=
+\begin{bmatrix}
+\Delta t\,\dot{u}_1 \\
+\Delta t\,\dot{u}_2 \\
+\dot{u}_1 \\
+\dot{u}_2
+\end{bmatrix}.
+\label{eq:l2-response-vector}
+\end{equation}
+
+Because both accelerations are affine in $F$,
+
+\begin{equation}
+\mathbf{d}(F)
+=
+\mathbf{d}_0+\mathbf{b}_F F,
+\end{equation}
+
+where
+
+\begin{equation}
+\mathbf{b}_F
+=
+\begin{bmatrix}
+\dfrac{R\Delta t}{J(r)} \\[2mm]
+\dfrac{\Delta t}{m_{\mathrm{rod}}} \\[2mm]
+\dfrac{R}{J(r)} \\[2mm]
+\dfrac{1}{m_{\mathrm{rod}}}
+\end{bmatrix}.
+\label{eq:l2-force-direction}
+\end{equation}
+
+The desired local correction is defined as
+
+\begin{equation}
+\mathbf{e}
+=
+-\alpha
+\begin{bmatrix}
+\theta \\
+r-R\theta \\
+\dot{\theta} \\
+\dot{r}-R\dot{\theta}
+\end{bmatrix},
+\label{eq:l2-desired-correction}
+\end{equation}
+
+where $\alpha>0$ determines the desired correction rate.
+
+A weighted quadratic cost is then constructed:
+
+\begin{equation}
+\mathcal{L}(F)
+=
+\left[
+\mathbf{d}(F)-\mathbf{e}
+\right]^{T}
+\mathbf{W}
+\left[
+\mathbf{d}(F)-\mathbf{e}
+\right],
+\label{eq:l2-force-cost}
+\end{equation}
+
+with
+
+\begin{equation}
+\mathbf{W}
+=
+\operatorname{diag}
+\left(
+w_1,w_2,w_3,w_4
+\right).
+\end{equation}
+
+The numerical implementation minimized this scalar cost over a bounded interval. Because Equation~\eqref{eq:l2-force-cost} is quadratic in $F$, an analytical solution can also be obtained by differentiating with respect to the force:
+
+\begin{equation}
+\frac{\partial\mathcal{L}}{\partial F}
+=
+2\mathbf{b}_F^{T}\mathbf{W}
+\left(
+\mathbf{d}_0+\mathbf{b}_FF-\mathbf{e}
+\right).
+\label{eq:l2-force-derivative}
+\end{equation}
+
+Setting
+
+\begin{equation}
+\frac{\partial\mathcal{L}}{\partial F}=0
+\end{equation}
+
+gives
+
+\begin{equation}
+F^{*}
+=
+-
+\frac{
+\mathbf{b}_F^{T}\mathbf{W}
+\left(
+\mathbf{d}_0-\mathbf{e}
+\right)
+}{
+\mathbf{b}_F^{T}\mathbf{W}\mathbf{b}_F
+}.
+\label{eq:l2-optimal-force}
+\end{equation}
+
+The physically applied force must then be saturated:
+
+\begin{equation}
+F_{\mathrm{cmd}}
+=
+\operatorname{sat}
+\left(
+F^{*},
+-F_{\max},
+F_{\max}
+\right).
+\label{eq:l2-saturated-force}
+\end{equation}
+
+This controller directly accounts for the nonlinear gravitational and velocity-dependent terms at the current state. In fact, the controller can be interpreted as a one-step nonlinear optimization that selects the force to best match a desired local state correction. The weighting matrix $\mathbf{W}$ can be tuned to emphasize the importance of each state variable in the local correction.
+
+The result of this controller is shown in Figure~\ref{fig:l2-response}. The maximum tolerable initial lean angle is approximately $5.0^\circ$, which is much larger than the LQR and pole-placement controllers. However, this controller will still saturate the force and rod travel limits for larger initial lean angles, so the feasible region is still limited.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{04/L2.png}
+  \caption{Nonlinear simulation using the one-step force optimization controller.}
+  \label{fig:l2-response}
+\end{figure}
+
+
+\section{Preliminary Model Predictive Control Formulation}
+\label{sec:mpc-attempt}
+
+Model predictive control was also considered because it can explicitly include the force and rod-position constraints. The nonlinear model can be written as
+
+\begin{equation}
+\dot{\mathbf{x}}
+=
+\mathbf{f}(\mathbf{x},F).
+\end{equation}
+
+At each control step, the model is locally linearized around the current state $\mathbf{x}_k$ and previous input $F_{k-1}$:
+
+\begin{equation}
+\mathbf{A}_{c,k}
+=
+\left.
+\frac{\partial\mathbf{f}}{\partial\mathbf{x}}
+\right|_{\mathbf{x}_k,F_{k-1}},
+\end{equation}
+
+and
+
+\begin{equation}
+\mathbf{B}_{c,k}
+=
+\left.
+\frac{\partial\mathbf{f}}{\partial F}
+\right|_{\mathbf{x}_k,F_{k-1}}
+=
+\begin{bmatrix}
+0 \\
+0 \\
+\dfrac{R}{J(r_k)} \\[2mm]
+\dfrac{1}{m_{\mathrm{rod}}}
+\end{bmatrix}.
+\label{eq:mpc-input-jacobian}
+\end{equation}
+
+An affine correction term is included to preserve the value of the nonlinear model at the linearization point:
+
+\begin{equation}
+\mathbf{d}_{c,k}
+=
+\mathbf{f}(\mathbf{x}_k,F_{k-1})
+-
+\mathbf{A}_{c,k}\mathbf{x}_k
+-
+\mathbf{B}_{c,k}F_{k-1}.
+\end{equation}
+
+Using a first-order discretization,
+
+\begin{equation}
+\mathbf{x}_{k+1}
+=
+\mathbf{A}_{k}\mathbf{x}_{k}
++
+\mathbf{B}_{k}F_k
++
+\mathbf{d}_{k},
+\end{equation}
+
+where
+
+\begin{equation}
+\mathbf{A}_{k}
+=
+\mathbf{I}
++
+\mathbf{A}_{c,k}\Delta t,
+\qquad
+\mathbf{B}_{k}
+=
+\mathbf{B}_{c,k}\Delta t,
+\qquad
+\mathbf{d}_{k}
+=
+\mathbf{d}_{c,k}\Delta t.
+\end{equation}
+
+The predicted states over a horizon $N$ can then be written as
+
+\begin{equation}
+\mathbf{X}_k
+=
+\mathbf{M}\mathbf{x}_k
++
+\mathbf{C}\mathbf{U}_k
++
+\mathbf{D}.
+\end{equation}
+
+This produces the quadratic program
+
+\begin{equation}
+\begin{aligned}
+\min_{\mathbf{U}_k}
+\quad&
+\frac{1}{2}
+\mathbf{U}_k^{T}\mathbf{H}\mathbf{U}_k
++
+\mathbf{g}_k^{T}\mathbf{U}_k,
+\\
+\text{subject to}
+\quad&
+-F_{\max}
+\leq
+F_{k+i}
+\leq
+F_{\max},
+\\
+&
+-r_{\max}
+\leq
+r_{k+i}
+\leq
+r_{\max}.
+\end{aligned}
+\label{eq:mpc-optimization}
+\end{equation}
+
+The MPC formulation was implemented at a preliminary level, but a reliable combination of prediction horizon, state weights, input weights, terminal cost, and constraint handling was not obtained. Therefore, MPC was not used for the final experimental controller. It remains a possible direction for future development rather than a completed controller in this work.
+
+\section{Chapter Summary}
+\label{sec:controller-chapter-summary}
+
+LQR and pole placement provide two systematic methods for selecting the gains of the four-state PD controller. Both methods can stabilize the linearized model, but their practical performance is strongly restricted by force saturation, finite rod travel, nonlinear coupling, sensor error, and feedback delay.
+
+The one-step force-optimization controller incorporates the nonlinear dynamics directly, but it does not predict the future rod position. The attempted hierarchical controller separates the generation of a desired rod position from the lower-level force control. However, the rod overshoot could not be determined reliably because the available braking acceleration depends on the complete system state and the same motor force simultaneously affects the lean and rod dynamics.
+
+MPC could theoretically account for these coupled dynamics and hardware constraints over a prediction horizon, but a reliable set of MPC parameters was not obtained during this work. The following chapter provides additional insight into the equilibrium geometry, eigenstructure, and possible future control strategies.
