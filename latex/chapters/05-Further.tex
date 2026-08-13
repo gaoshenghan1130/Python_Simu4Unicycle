@@ -1,0 +1,1169 @@
+\chapter{Further Insights and Future Control Directions}
+\label{chap:further-insights}
+
+This chapter presents additional observations obtained from the equilibrium geometry, eigenvalue and eigenvector analyses, and system-parameter studies. These results provide insight into why the lateral balancing problem remains difficult even when the linearized closed-loop system is asymptotically stable, and offer some possible directions for future controller development.
+
+\section{Equilibrium Curve as a State-Space Target}
+\label{sec:equilibrium-state-space-target}
+
+The nonlinear system has a continuous family of static equilibria. Using the parameter
+
+\begin{equation}
+\eta=\theta^{*},
+\end{equation}
+
+the equilibrium rod position and motor force are
+
+\begin{equation}
+r_{\mathrm{eq}}(\eta)
+=
+\frac{G+m_{\mathrm{rod}}gR}
+     {m_{\mathrm{rod}}g}
+\tan\eta,
+\label{eq:parameterized-equilibrium-position}
+\end{equation}
+
+and
+
+\begin{equation}
+F_{\mathrm{eq}}(\eta)
+=
+m_{\mathrm{rod}}g\sin\eta.
+\label{eq:parameterized-equilibrium-force}
+\end{equation}
+
+In the transformed coordinates,
+
+\begin{equation}
+q_{2,\mathrm{eq}}(\eta)
+=
+r_{\mathrm{eq}}(\eta)-R\eta.
+\end{equation}
+
+The corresponding equilibrium curve in the four-dimensional state space is
+
+\begin{equation}
+\mathcal{E}
+=
+\left\{
+\mathbf{x}_{\mathrm{eq}}(\eta)
+=
+\begin{bmatrix}
+\eta \\
+q_{2,\mathrm{eq}}(\eta) \\
+0 \\
+0
+\end{bmatrix}
+:
+|\eta|<\frac{\pi}{2}
+\right\}.
+\label{eq:state-space-equilibrium-curve}
+\end{equation}
+
+A possible control strategy is to divide the recovery process into two stages. In the first stage, the controller would drive the state toward a neighborhood of $\mathcal{E}$ while reducing the generalized velocities. In the second stage, the controller would gradually move the state along the equilibrium geometry toward the upright origin. Figure \ref{fig:equilibrium-curve} illustrates this concept in the two-dimensional configuration space.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{05/equilibrium_curve_state_space_target.png}
+  \caption{Nonlinear simulation using the one-step force optimization controller.}
+  \label{fig:equilibrium-curve}
+\end{figure}
+
+However, if the system lies exactly on $\mathcal{E}$ and the equilibrium force in Equation~\eqref{eq:parameterized-equilibrium-force} is applied, all state derivatives are zero. The system remains at the same equilibrium point rather than moving toward the origin. Therefore, the robot cannot remain exactly on the static equilibrium curve while simultaneously progressing along it.
+
+Instead, a slowly moving reference point can be introduced. For example,
+
+\begin{equation}
+\dot{\eta}
+=
+-k_{\eta}\eta,
+\qquad
+k_{\eta}>0,
+\label{eq:equilibrium-reference-dynamics}
+\end{equation}
+
+causes the reference parameter to converge gradually to zero.
+
+The associated moving state reference is
+
+\begin{equation}
+\mathbf{x}_d(\eta)
+=
+\begin{bmatrix}
+\eta
+\\[2mm]
+q_{2,\mathrm{eq}}(\eta)
+\\[2mm]
+\dot{\eta}
+\\[2mm]
+\dfrac{d q_{2,\mathrm{eq}}}{d\eta}\dot{\eta}
+\end{bmatrix},
+\label{eq:moving-equilibrium-reference}
+\end{equation}
+
+where
+
+\begin{equation}
+\frac{d q_{2,\mathrm{eq}}}{d\eta}
+=
+\frac{G+m_{\mathrm{rod}}gR}
+     {m_{\mathrm{rod}}g}
+\sec^2\eta
+-R.
+\end{equation}
+
+The controller would then attempt to reduce the tracking error
+
+\begin{equation}
+\mathbf{e}
+=
+\mathbf{x}-\mathbf{x}_d(\eta),
+\end{equation}
+
+while using the equilibrium force as a feedforward term:
+
+\begin{equation}
+F
+=
+F_{\mathrm{eq}}(\eta)
++
+F_{\mathrm{feedback}}.
+\label{eq:equilibrium-curve-control-force}
+\end{equation}
+
+Conceptually, the complete strategy would be
+
+\begin{equation}
+\text{initial state}
+\longrightarrow
+\text{neighborhood of }\mathcal{E}
+\longrightarrow
+\text{moving reference}
+\longrightarrow
+\mathbf{x}=\mathbf{0}.
+\end{equation}
+
+This resembles a manifold-tracking or sliding-mode strategy, although the desired moving reference is not itself a static equilibrium. Because the system contains four states but only one control input, the four tracking errors cannot be regulated independently. The reference motion must therefore be sufficiently slow for the natural system dynamics and the available motor force to maintain the state near the desired curve.
+
+This strategy was not fully implemented during the project. Its feasibility would need to be evaluated under the force, rod-travel, measurement-error, and delay constraints of the physical system.
+
+\section{Open-Loop Eigenvalue and Eigenvector Structure}
+\label{sec:further-open-loop-eigenvalues}
+
+The open-loop eigenstructure describes the natural motion of the lateral system when no state feedback is applied. For this analysis, it is convenient to use the physical rod position and define
+
+\begin{equation}
+\mathbf{z}
+=
+\begin{bmatrix}
+\theta &
+r &
+u_1 &
+u_2
+\end{bmatrix}^{T},
+\end{equation}
+
+where
+
+\begin{equation}
+u_1=\dot{\theta},
+\qquad
+u_2=\dot{r}-R\dot{\theta}.
+\end{equation}
+
+The corresponding kinematic equations are
+
+\begin{equation}
+\dot{\theta}=u_1,
+\qquad
+\dot{r}=Ru_1+u_2.
+\label{eq:open-loop-kinematics}
+\end{equation}
+
+Define the position-dependent rotational inertia as
+
+\begin{equation}
+J(r)=J+m_{\mathrm{rod}}r^2,
+\end{equation}
+
+where $J$ is the constant inertia term defined in Chapter~\ref{chap:modelling}.
+
+\subsection{Linearization Along the Equilibrium Curve}
+
+Consider an equilibrium point
+
+\begin{equation}
+\mathbf{z}^{*}
+=
+\begin{bmatrix}
+\theta^{*} &
+r^{*} &
+0 &
+0
+\end{bmatrix}^{T},
+\end{equation}
+
+where
+
+\begin{equation}
+F^{*}
+=
+m_{\mathrm{rod}}g\sin\theta^{*},
+\end{equation}
+
+and
+
+\begin{equation}
+r^{*}
+=
+\frac{G+m_{\mathrm{rod}}gR}
+     {m_{\mathrm{rod}}g}
+\tan\theta^{*}.
+\end{equation}
+
+For a nonzero equilibrium angle, $F^{*}$ is also nonzero. Therefore, open-loop motion around this point means that the equilibrium force is held constant while no feedback correction is applied:
+
+\begin{equation}
+F=F^{*},
+\qquad
+\delta F=0.
+\end{equation}
+
+Define
+
+\begin{equation}
+J^{*}
+=
+J+m_{\mathrm{rod}}(r^{*})^2.
+\end{equation}
+
+The linearized perturbation model is
+
+\begin{equation}
+\delta\dot{\mathbf{z}}
+=
+\mathbf{A}_{\mathrm{ol}}(\theta^{*})
+\delta\mathbf{z},
+\end{equation}
+
+where
+
+\begin{equation}
+\mathbf{A}_{\mathrm{ol}}(\theta^{*})
+=
+\begin{bmatrix}
+0 & 0 & 1 & 0 \\
+0 & 0 & R & 1 \\
+a_{\theta}^{*} & a_r^{*} & 0 & 0 \\
+c^{*} & 0 & 0 & 0
+\end{bmatrix},
+\label{eq:open-loop-equilibrium-matrix}
+\end{equation}
+
+with
+
+\begin{equation}
+a_{\theta}^{*}
+=
+\frac{
+m_{\mathrm{rod}}gr^{*}\sin\theta^{*}
++
+G\cos\theta^{*}
+}
+{J^{*}},
+\end{equation}
+
+\begin{equation}
+a_r^{*}
+=
+-\frac{
+m_{\mathrm{rod}}g\cos\theta^{*}
+}
+{J^{*}},
+\qquad
+c^{*}
+=
+-g\cos\theta^{*}.
+\end{equation}
+
+Using the equilibrium relationship for $r^{*}$, the angular coefficient can also be written as
+
+\begin{equation}
+a_{\theta}^{*}
+=
+\frac{
+G+m_{\mathrm{rod}}gR\sin^2\theta^{*}
+}
+{J^{*}\cos\theta^{*}}.
+\end{equation}
+
+For compactness, define
+
+\begin{equation}
+\eta^{*}
+=
+a_{\theta}^{*}+Ra_r^{*}
+=
+\frac{
+G-m_{\mathrm{rod}}gR\cos(2\theta^{*})
+}
+{J^{*}\cos\theta^{*}}.
+\label{eq:open-loop-eta}
+\end{equation}
+
+\subsection{Open-Loop Eigenvalues}
+
+The characteristic equation of
+$\mathbf{A}_{\mathrm{ol}}(\theta^{*})$ is
+
+\begin{equation}
+\lambda^4
+-
+\eta^{*}\lambda^2
+-
+\frac{
+m_{\mathrm{rod}}g^2\cos^2\theta^{*}
+}
+{J^{*}}
+=
+0.
+\label{eq:open-loop-characteristic-general}
+\end{equation}
+
+Define
+
+\begin{equation}
+D^{*}
+=
+\sqrt{
+(\eta^{*})^2
++
+\frac{
+4m_{\mathrm{rod}}g^2\cos^2\theta^{*}
+}
+{J^{*}}
+}.
+\end{equation}
+
+The four open-loop eigenvalues are
+
+\begin{equation}
+\lambda_{1,2}
+=
+\pm
+\sqrt{
+\frac{\eta^{*}+D^{*}}{2}
+},
+\label{eq:open-loop-real-eigenvalues}
+\end{equation}
+
+and
+
+\begin{equation}
+\lambda_{3,4}
+=
+\pm i
+\sqrt{
+\frac{D^{*}-\eta^{*}}{2}
+}.
+\label{eq:open-loop-imaginary-eigenvalues}
+\end{equation}
+
+Therefore, the open-loop system contains
+
+\begin{itemize}
+    \item one positive real eigenvalue representing the unstable falling mode;
+    \item one negative real eigenvalue representing the corresponding stable direction;
+    \item one imaginary conjugate pair representing an undamped internal oscillatory mode.
+\end{itemize}
+
+At the upright equilibrium,
+
+\begin{equation}
+\theta^{*}=0,
+\qquad
+r^{*}=0,
+\qquad
+F^{*}=0,
+\end{equation}
+
+the open-loop matrix becomes
+
+\begin{equation}
+\mathbf{A}_{\mathrm{ol}}(0)
+=
+\begin{bmatrix}
+0 & 0 & 1 & 0 \\
+0 & 0 & R & 1 \\
+\dfrac{G}{J}
+&
+-\dfrac{m_{\mathrm{rod}}g}{J}
+&
+0 & 0
+\\[3mm]
+-g & 0 & 0 & 0
+\end{bmatrix}.
+\label{eq:upright-open-loop-matrix}
+\end{equation}
+
+Its characteristic equation is
+
+\begin{equation}
+\lambda^4
+-
+\frac{
+G-m_{\mathrm{rod}}gR
+}
+{J}
+\lambda^2
+-
+\frac{
+m_{\mathrm{rod}}g^2
+}
+{J}
+=
+0.
+\label{eq:upright-open-loop-characteristic}
+\end{equation}
+
+For the University of Michigan prototype parameters, the open-loop eigenvalues are approximately
+
+\begin{equation}
+\lambda_{1,2}
+\approx
+\pm5.33~\mathrm{s}^{-1},
+\qquad
+\lambda_{3,4}
+\approx
+\pm1.76i~\mathrm{s}^{-1}.
+\label{eq:numerical-open-loop-eigenvalues}
+\end{equation}
+
+The positive eigenvalue shows that a disturbance in the unstable direction grows rapidly without feedback.
+
+% ------------------------------------------------------------------
+% OPEN-LOOP EIGENVALUE FIGURE PLACEHOLDER
+%
+% \begin{figure}[htbp]
+%   \centering
+%   \includegraphics[width=0.75\textwidth]
+%   {05/open_loop_eigenvalues.png}
+%   \caption{Open-loop eigenvalues along the equilibrium curve.}
+%   \label{fig:open-loop-eigenvalues}
+% \end{figure}
+% ------------------------------------------------------------------
+
+\subsection{Open-Loop Eigenvectors}
+
+Let $\lambda_i$ be an open-loop eigenvalue. After normalizing the lean-angle component to one, the corresponding eigenvector is
+
+\begin{equation}
+\mathbf{v}_{\mathrm{ol},i}
+=
+\begin{bmatrix}
+1 \\[2mm]
+R-\dfrac{g\cos\theta^{*}}{\lambda_i^2}
+\\[3mm]
+\lambda_i
+\\[2mm]
+-\dfrac{g\cos\theta^{*}}{\lambda_i}
+\end{bmatrix}.
+\label{eq:open-loop-eigenvector}
+\end{equation}
+
+Consequently, the configuration components of each open-loop mode satisfy
+
+\begin{equation}
+\frac{\delta r}{\delta\theta}
+=
+R-
+\frac{
+g\cos\theta^{*}
+}
+{\lambda_i^2}.
+\label{eq:open-loop-modal-direction}
+\end{equation}
+
+Equivalently, for the transformed displacement $q_2=r-R\theta$,
+
+\begin{equation}
+\frac{\delta q_2}{\delta\theta}
+=
+-\frac{
+g\cos\theta^{*}
+}
+{\lambda_i^2}.
+\label{eq:open-loop-q2-direction}
+\end{equation}
+
+Thus, each eigenvalue determines not only the growth, decay, or oscillation rate, but also the required relationship between the lean angle and rod displacement within that mode.
+
+For the unstable real mode of the University of Michigan prototype,
+
+\begin{equation}
+\lambda_{\mathrm{u}}
+\approx5.33~\mathrm{s}^{-1},
+\end{equation}
+
+and
+
+\begin{equation}
+\frac{\delta r}{\delta\theta}
+\approx
+-0.0926~\mathrm{m/rad}.
+\end{equation}
+
+The unstable mode therefore involves the lean angle growing while the rod position changes slightly in the opposite direction.
+
+For the imaginary mode,
+
+\begin{equation}
+\lambda_{\mathrm{o}}
+\approx1.76i~\mathrm{s}^{-1},
+\end{equation}
+
+and
+
+\begin{equation}
+\frac{\delta r}{\delta\theta}
+\approx
+3.41~\mathrm{m/rad}.
+\end{equation}
+
+This mode contains a much larger rod displacement relative to the lean angle and represents the natural internal oscillation between the pendulum and lateral moving mass.
+
+Unfortunately, the eigenvector calculation also shows that there isn't a natural pattern in the system that goes along the equilibrium curve as shown in Figure~\ref{fig:equilibrium-tangent-eigen}. This indicate that the desired control strategy of moving along the equilibrium curve mentioned in section~\ref{sec:further-open-loop-eigenvalues} may not be easily achieved.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.75\textwidth]{05/open_loop_eigenvector_vs_equilibrium_curve.png}
+  \caption{Replace this box with a figure from the \texttt{figures/} folder.}
+  \label{fig:equilibrium-tangent-eigen}
+\end{figure}
+
+
+\section{Closed-Loop Eigenvectors}
+\label{sec:further-closed-loop-eigenvectors}
+
+The closed-loop poles determine the decay rates of the controlled system, while the corresponding eigenvectors determine how the lean angle and rod position move together during each mode.
+
+Consider the full-state feedback law
+
+\begin{equation}
+F
+=
+-\mathbf{K}_{z}\mathbf{z},
+\end{equation}
+
+where
+
+\begin{equation}
+\mathbf{K}_{z}
+=
+\begin{bmatrix}
+k_1 & k_2 & k_3 & k_4
+\end{bmatrix},
+\end{equation}
+
+so that
+
+\begin{equation}
+F
+=
+-k_1\theta
+-k_2r
+-k_3u_1
+-k_4u_2.
+\label{eq:closed-loop-physical-feedback}
+\end{equation}
+
+If the controller was originally designed using
+
+\begin{equation}
+\mathbf{x}
+=
+\begin{bmatrix}
+\theta &
+q_2 &
+u_1 &
+u_2
+\end{bmatrix}^{T},
+\end{equation}
+
+with gain
+
+\begin{equation}
+\mathbf{K}_{x}
+=
+\begin{bmatrix}
+\kappa_1 &
+\kappa_2 &
+\kappa_3 &
+\kappa_4
+\end{bmatrix},
+\end{equation}
+
+then the equivalent gain in the
+$\mathbf{z}=[\theta,r,u_1,u_2]^T$ coordinates is
+
+\begin{equation}
+\mathbf{K}_{z}
+=
+\begin{bmatrix}
+\kappa_1-R\kappa_2 &
+\kappa_2 &
+\kappa_3 &
+\kappa_4
+\end{bmatrix}.
+\label{eq:closed-loop-gain-transformation}
+\end{equation}
+
+The closed-loop system matrix at the upright equilibrium is
+
+\begin{equation}
+\mathbf{A}_{\mathrm{cl}}
+=
+\mathbf{A}_{\mathrm{ol}}(0)
+-
+\mathbf{B}\mathbf{K}_{z},
+\end{equation}
+
+or explicitly,
+
+\begin{equation}
+\mathbf{A}_{\mathrm{cl}}
+=
+\begin{bmatrix}
+0 & 0 & 1 & 0 \\
+0 & 0 & R & 1 \\[1mm]
+\dfrac{G-Rk_1}{J}
+&
+-\dfrac{m_{\mathrm{rod}}g+Rk_2}{J}
+&
+-\dfrac{Rk_3}{J}
+&
+-\dfrac{Rk_4}{J}
+\\[4mm]
+-g-\dfrac{k_1}{m_{\mathrm{rod}}}
+&
+-\dfrac{k_2}{m_{\mathrm{rod}}}
+&
+-\dfrac{k_3}{m_{\mathrm{rod}}}
+&
+-\dfrac{k_4}{m_{\mathrm{rod}}}
+\end{bmatrix}.
+\label{eq:closed-loop-eigenvector-matrix}
+\end{equation}
+
+Let $\lambda_i$ be a closed-loop eigenvalue with eigenvector
+
+\begin{equation}
+\mathbf{v}_i
+=
+\begin{bmatrix}
+v_{1,i} &
+v_{2,i} &
+v_{3,i} &
+v_{4,i}
+\end{bmatrix}^{T}.
+\end{equation}
+
+The first two rows of the eigenvector equation give
+
+\begin{equation}
+v_{3,i}
+=
+\lambda_i v_{1,i},
+\end{equation}
+
+and
+
+\begin{equation}
+v_{4,i}
+=
+\lambda_i
+\left(
+v_{2,i}-Rv_{1,i}
+\right).
+\label{eq:closed-loop-kinematic-eigenvector-relations}
+\end{equation}
+
+Define
+
+\begin{equation}
+P_{11}(\lambda)
+=
+\lambda^2
++
+\frac{
+R(k_3-Rk_4)
+}
+{J}\lambda
++
+\frac{
+Rk_1-G
+}
+{J},
+\label{eq:closed-loop-P11}
+\end{equation}
+
+and
+
+\begin{equation}
+P_{12}(\lambda)
+=
+\frac{
+Rk_4
+}
+{J}\lambda
++
+\frac{
+m_{\mathrm{rod}}g+Rk_2
+}
+{J}.
+\label{eq:closed-loop-P12}
+\end{equation}
+
+The lean-angle and rod-position components must satisfy
+
+\begin{equation}
+P_{11}(\lambda_i)v_{1,i}
++
+P_{12}(\lambda_i)v_{2,i}
+=
+0.
+\end{equation}
+
+Provided that $P_{12}(\lambda_i)\neq0$, normalize the eigenvector by setting
+
+\begin{equation}
+v_{1,i}=1.
+\end{equation}
+
+The modal configuration ratio is then
+
+\begin{equation}
+\eta_i
+=
+\frac{r}{\theta}
+=
+-\frac{
+P_{11}(\lambda_i)
+}
+{
+P_{12}(\lambda_i)
+}.
+\label{eq:closed-loop-modal-ratio}
+\end{equation}
+
+The normalized closed-loop eigenvector in the
+$\mathbf{z}=[\theta,r,u_1,u_2]^T$ coordinates is therefore
+
+\begin{equation}
+\mathbf{v}_{z,i}
+=
+\begin{bmatrix}
+1 \\[1mm]
+\eta_i \\[1mm]
+\lambda_i \\[1mm]
+\lambda_i(\eta_i-R)
+\end{bmatrix}.
+\label{eq:normalized-closed-loop-eigenvector}
+\end{equation}
+
+Because
+
+\begin{equation}
+\dot{r}=Ru_1+u_2,
+\end{equation}
+
+the same mode expressed using the physical velocity $\dot{r}$ is
+
+\begin{equation}
+\mathbf{v}_{p,i}
+=
+\begin{bmatrix}
+1 \\[1mm]
+\eta_i \\[1mm]
+\lambda_i \\[1mm]
+\lambda_i\eta_i
+\end{bmatrix},
+\qquad
+\mathbf{x}_p
+=
+\begin{bmatrix}
+\theta &
+r &
+\dot{\theta} &
+\dot{r}
+\end{bmatrix}^{T}.
+\label{eq:physical-closed-loop-eigenvector}
+\end{equation}
+
+Equation~\eqref{eq:closed-loop-modal-ratio} shows that selecting the closed-loop poles does more than determine the decay rates. Each pole is associated with a specific ratio between rod displacement and lean angle, and this ratio also depends on all four feedback gains.
+
+For the tightly clustered pole set
+
+\begin{equation}
+\lambda_1=-1.73,
+\qquad
+\lambda_2=-1.74,
+\qquad
+\lambda_3=-1.75,
+\qquad
+\lambda_4=-1.76,
+\label{eq:clustered-closed-loop-poles}
+\end{equation}
+
+the modal ratios are approximately
+
+\begin{equation}
+\eta_i
+\approx
+3.21~\mathrm{m/rad},
+\qquad
+i=1,2,3,4.
+\label{eq:clustered-modal-ratios}
+\end{equation}
+
+Thus, all four closed-loop modes approximately satisfy
+
+\begin{equation}
+\begin{bmatrix}
+\theta \\
+r
+\end{bmatrix}
+\propto
+\begin{bmatrix}
+1 \\
+3.21
+\end{bmatrix}.
+\label{eq:closed-loop-configuration-direction}
+\end{equation}
+
+This relationship also illustrates the severity of the rod-travel constraint. A modal lean angle of $1^\circ$ corresponds approximately to
+
+\begin{equation}
+r
+\approx
+3.21
+\left(
+\frac{\pi}{180}
+\right)
+=
+0.056~\mathrm{m},
+\end{equation}
+
+while a modal lean angle of $2^\circ$ corresponds approximately to
+
+\begin{equation}
+r
+\approx
+0.112~\mathrm{m}.
+\end{equation}
+
+The latter is already close to the usable travel limit of the linear motor. These values are modal estimates rather than guaranteed nonlinear trajectories, but they demonstrate why even a small lean-angle disturbance can require substantial lateral mass motion.
+
+The four modal directions associated with the clustered poles are almost parallel. Consequently, the closed-loop modes differ mainly in their decay rates rather than their physical directions. This near-parallelism makes the closed-loop system sensitive to parameter errors, initial conditions, measurement noise, and actuator saturation. The relationship between pole clustering, eigenvector conditioning, and transient amplification is examined in the following section.
+
+
+\section{Pole Clustering and Non-Normality}
+\label{sec:further-pole-clustering}
+
+The pole locations determine the asymptotic decay rates of the linear
+closed-loop system, but they do not fully determine its transient behavior.
+Let the closed-loop matrix be diagonalizable and write
+
+\begin{equation}
+\mathbf{A}_{\mathrm{cl}}
+=
+\mathbf{V}\mathbf{\Lambda}\mathbf{V}^{-1},
+\label{eq:closed-loop-modal-decomposition}
+\end{equation}
+
+where the columns of $\mathbf{V}$ are normalized right eigenvectors and
+$\mathbf{\Lambda}$ contains the closed-loop poles. The sensitivity of the
+modal decomposition can be measured using the two-norm condition number
+
+\begin{equation}
+\kappa_2(\mathbf{V})
+=
+\left\|\mathbf{V}\right\|_2
+\left\|\mathbf{V}^{-1}\right\|_2
+=
+\frac{\sigma_{\max}(\mathbf{V})}
+     {\sigma_{\min}(\mathbf{V})}.
+\label{eq:eigenvector-condition-number}
+\end{equation}
+
+If the eigenvectors are nearly linearly dependent,
+$\sigma_{\min}(\mathbf{V})$ becomes small and
+$\kappa_2(\mathbf{V})$ becomes large. This indicates an ill-conditioned modal
+basis and a closed-loop matrix close to defective behavior.
+
+For the tightly clustered pole set
+
+\begin{equation}
+\{-1.73,-1.74,-1.75,-1.76\},
+\end{equation}
+
+the four normalized eigenvectors are nearly parallel and the computed
+condition number is approximately
+
+\begin{equation}
+\kappa_2(\mathbf{V})
+\approx
+6.4\times10^4.
+\label{eq:clustered-eigenvector-condition-number}
+\end{equation}
+
+This value depends on numerical precision and eigenvector normalization, but
+its large magnitude clearly shows that the modal basis is poorly conditioned.
+The system is therefore highly non-normal even though all four poles lie in the
+open left half-plane.3
+
+To study whether the near-parallel eigenvectors were caused by pole
+clustering, the desired poles were parameterized as
+
+\begin{equation}
+\begin{aligned}
+\lambda_1&=-1.75-\epsilon,\\
+\lambda_2&=-1.75+\epsilon,\\
+\lambda_3&=-1.75-\alpha_{p}\epsilon,\\
+\lambda_4&=-1.75+\alpha_{p}\epsilon,
+\end{aligned}
+\label{eq:pole-spreading-parameterization}
+\end{equation}
+
+where $\epsilon$ controls the overall pole separation and $\alpha_p$ controls
+the relative separation of the inner pair. The sweep showed that increasing
+the pole separation generally improves the conditioning of the eigenvector
+matrix. One representative choice, from the sweep in Figure~\ref{fig:pole-clustering-condition-number}:
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.82\textwidth]
+  {05/heatMapcondvLog.png}
+  \caption{Condition number of the closed-loop eigenvector matrix as a
+  function of the pole-separation parameters.}
+  \label{fig:pole-clustering-condition-number}
+\end{figure}
+
+\begin{equation}
+\alpha_p=0.5,
+\qquad
+\epsilon=0.5,
+\end{equation}
+
+produces the pole set
+
+\begin{equation}
+\{-2.25,-2.00,-1.50,-1.25\}.
+\end{equation}
+
+Although this choice reduces the degree of clustering, the corresponding
+nonlinear sweep still allowed an initial lean angle of only approximately
+$0.117^{\circ}$, and the predicted rod excursion reached approximately
+$0.25~\mathrm{m}$. This exceeds the usable travel of the LM2070. Therefore,
+separating the poles improves modal conditioning but does not by itself remove
+the actuator limitation.
+
+The pole-placement problem must therefore balance at least three objectives:
+asymptotic decay rate, eigenvector conditioning, and actuator usage. Moving the
+poles farther left can increase the required motor force, while clustering
+them too tightly can produce nearly parallel eigenvectors and poor transient
+robustness. A satisfactory design cannot be selected from pole locations alone.
+
+\section{Effect of Physical Parameters}
+\label{sec:further-physical-parameters}
+
+The feasibility of lateral balancing depends strongly on the mechanical
+parameters. In this section, the term \emph{practical controllability} refers
+to the ability to stabilize the nonlinear system within the force and travel
+limits. It should not be confused with the binary Kalman controllability-rank
+test. A parameterized linear model may retain full controllability rank while
+requiring an impractically large force or rod displacement.
+
+For reference, define the pendulum center-of-mass distance
+
+\begin{equation}
+L=R+h.
+\end{equation}
+
+The principal constant inertia and gravitational coefficients are
+
+\begin{equation}
+J
+=
+m_wR^2
++m_bL^2
++I_w
++I_b
++I_{\mathrm{rod}},
+\label{eq:parameter-study-inertia}
+\end{equation}
+
+and
+
+\begin{equation}
+G
+=
+m_wgR
++m_bgL.
+\label{eq:parameter-study-gravity}
+\end{equation}
+
+Because most parameters appear in both $J$ and $G$, their effects are generally
+not monotonic. A meaningful parameter sweep should rebuild the linear model and
+redesign the controller for each parameter set before evaluating the nonlinear
+response.
+
+\subsection{Moving-Mass Value}
+
+Increasing $m_{\mathrm{rod}}$ strengthens the gravitational coupling term
+$m_{\mathrm{rod}}gr$, which allows a given rod displacement to generate a
+larger balancing moment. It also increases the dimensionless direct-route
+ratio $m_{\mathrm{rod}}R^2/J$. These effects initially suggest that a heavier
+moving mass may improve balancing performance.
+
+However, the rod acceleration produced by a given force is
+
+\begin{equation}
+\left.\dot{u}_2\right|_F
+=
+\frac{F}{m_{\mathrm{rod}}},
+\end{equation}
+
+so a heavier mass moves more slowly and requires more force to follow the same
+trajectory. Additional end masses also increase the rod-assembly inertia and
+the structural load. The mass sweep in Figure \ref{fig:rod-mass-parameter-sweep} and Figure \ref{fig:rod-mass-parameter-sweep2} therefore shows a trade-off: moderate
+increases can reduce the lean response, but sufficiently large masses make the
+system slower and eventually degrade the closed-loop response. In the previous
+sweep, this deterioration became visible when the added end mass approached
+approximately $4~\mathrm{kg}$. The mass required for the direct angular route
+to become comparable to the moving-mass route was of the order of
+$10.7~\mathrm{kg}$ under the assumed geometry, which is not practical for the
+present mechanism.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.82\textwidth]
+  {05/rod_mass.png}
+  \caption{Nonlinear closed-loop response for different moving-mass values,
+  with the controller redesigned for each mass case.}
+  \label{fig:rod-mass-parameter-sweep}
+\end{figure}
+
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.82\textwidth]
+  {05/rodmass2.png}
+  \caption{Nonlinear closed-loop response for higher moving-mass values,
+  with the controller redesigned for each mass case.}
+  \label{fig:rod-mass-parameter-sweep2}
+\end{figure}
+
+
+
+
+\subsection{Rotational Inertia}
+
+Increasing the constant rotational inertia $J$ reduces both the open-loop
+angular acceleration and the direct input coefficient $R/J$. A larger inertia
+can slow the growth of the falling motion, but it simultaneously reduces the
+ability of the motor force to change the lean rate. Consequently, increasing
+$J$ does not automatically improve the system. The benefit of a slower natural
+response must be compared with the loss of actuator authority and the larger
+force required to obtain the same angular acceleration. However in our case, the faster natural response is the dominant cause of the $\theta$ overshoot, so increasing the inertia does improve the nonlinear response. The parameter sweep in Figure \ref{fig:inertia-parameter-sweep} shows that a larger inertia reduces the lean-angle overshoot and improves the overall closed-loop performance.
+
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.82\textwidth]
+  {05/inertia.png}
+  \caption{Effect of the constant rotational inertia on the nonlinear
+  closed-loop response.}
+  \label{fig:inertia-parameter-sweep}
+\end{figure}
+
+
+\subsection{Pendulum Height}
+
+Changing the pendulum height modifies both the body contribution to the inertia,
+$m_bL^2$, and its gravitational coefficient, $m_bgL$. If the body terms are
+dominant, their ratio is approximately
+
+\begin{equation}
+\frac{m_bgL}{m_bL^2}
+=
+\frac{g}{L}.
+\label{eq:pendulum-height-ratio}
+\end{equation}
+
+Therefore, lowering the pendulum center of mass while it remains above the
+wheel center does not necessarily make the inverted system easier to control.
+A smaller $L$ reduces the inertia faster than it reduces the gravitational
+moment, increasing the characteristic angular-acceleration scale $g/L$. This
+explains why the parameter sweep showed poorer performance when the pendulum
+was moved downward. In fact, from Figure \ref{fig:pendulum-height-parameter-sweep}, the response is significantly reduced when the pendulum height decreases from $0.5~\mathrm{m}$ to $-0.5~\mathrm{m}$.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.82\textwidth]
+  {05/sweeph.png}
+  \caption{Effect of the pendulum center-of-mass height on the nonlinear
+  closed-loop response.}
+  \label{fig:pendulum-height-parameter-sweep}
+\end{figure}
+
+\subsection{Pendulum Mass}
+
+Increasing the pendulum mass $m_b$ also increases both $J$ and $G$. When the
+body contribution dominates, the ratio $G/J$ approaches $g/L$ and becomes only
+weakly dependent on $m_b$. Thus, increasing the pendulum mass does not
+substantially reduce the intrinsic unstable angular rate. At the same time, the
+direct motor coefficient $R/J$ decreases as $J$ increases, reducing the angular
+control authority for a given force.
+
+The pendulum-mass sweep from Figure \ref{fig:pendulum-mass-parameter-sweep} shows the combined effect of the pendulum mass with the force limit, rod travel, and the redesigned controller gains. These effect seems to counteract each other and get balanced on $\theta$, but on the rod position, the heavier pendulum mass requires more rod travel to stabilize the system. The nonlinear response is therefore limited by the rod travel rather than the lean angle.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.82\textwidth]
+  {05/sweepp.png}
+  \caption{Effect of the pendulum mass on the nonlinear closed-loop
+  response.}
+  \label{fig:pendulum-mass-parameter-sweep}
+\end{figure}
+
+Taken together, the parameter studies show that no single mechanical change
+eliminates the fundamental limitation. A heavier moving mass increases the
+available gravitational moment but is more difficult to accelerate. A larger
+rotational inertia slows the lean response but will be more difficult to achieve without considering the additional structural requirements and mass differences. Lowering or increasing the pendulum mass changes the inertia and
+gravity terms simultaneously. The design must therefore be evaluated as a
+coupled actuator--mechanism--controller system rather than through one
+parameter at a time.
+
+
+\section{Chapter Summary}
+\label{sec:further-insights-summary}
+
+The equilibrium geometry suggests a two-stage recovery strategy in which the
+state is first captured near the equilibrium curve and then made to track a
+slowly moving reference toward the upright origin. However, the equilibrium
+curve is a family of static states rather than an open-loop trajectory. Motion
+along its geometry requires a coordinated change in the motor force.
+
+The open-loop system has four eigenvectors, but the stable and unstable real
+modes share one configuration-space direction, while the imaginary conjugate
+pair defines a second direction. Neither direction is exactly tangent to the
+equilibrium curve. In closed loop, tightly clustered poles produce nearly
+parallel eigenvectors and a poorly conditioned modal basis. Consequently,
+negative pole locations guarantee asymptotic stability of the linear model but
+do not guarantee small transient motion, low parameter sensitivity, or
+compliance with the actuator constraints.
+
+Finally, the input-direction and parameter analyses show that the LM2070 acts
+primarily by moving the lateral mass and creating a gravitational moment. The
+direct angular effect of the force is will cause significant lean, while the indirect route is slower and requires substantial rod travel. Changes in mass, inertia, and pendulum height introduce competing effects and do not remove this basic limitation. These observations explain why a controller that is successful in an ideal linear simulation may still be infeasible on the physical robot.
