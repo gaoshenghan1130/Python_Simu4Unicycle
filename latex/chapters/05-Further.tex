@@ -532,15 +532,14 @@ and
 
 This mode contains a much larger rod displacement relative to the lean angle and represents the natural internal oscillation between the pendulum and lateral moving mass.
 
-Unfortunately, the eigenvector calculation also shows that there isn't a natural pattern in the system that goes along the equilibrium curve as shown in Figure~\ref{fig:equilibrium-tangent-eigen}. This indicate that the desired control strategy of moving along the equilibrium curve mentioned in section~\ref{sec:further-open-loop-eigenvalues} may not be easily achieved.
+Unfortunately, the eigenvector calculation also shows that there isn't a natural pattern in the system that goes along the equilibrium curve as shown in Figure~\ref{fig:equilibrium-tangent-eigen}. This indicate that the desired control strategy of moving along the equilibrium curve mentioned in section~\ref{sec:equilibrium-state-space-target} may not be easily achieved.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.75\textwidth]{05/open_loop_eigenvector_vs_equilibrium_curve.png}
-  \caption{Replace this box with a figure from the \texttt{figures/} folder.}
+  \caption{Eigenvector directions of the open-loop system on equilibrium curve.}
   \label{fig:equilibrium-tangent-eigen}
 \end{figure}
-
 
 \section{Closed-Loop Eigenvectors}
 \label{sec:further-closed-loop-eigenvectors}
@@ -920,7 +919,7 @@ condition number is approximately
 This value depends on numerical precision and eigenvector normalization, but
 its large magnitude clearly shows that the modal basis is poorly conditioned.
 The system is therefore highly non-normal even though all four poles lie in the
-open left half-plane.3
+open left half-plane.
 
 To study whether the near-parallel eigenvectors were caused by pole
 clustering, the desired poles were parameterized as
@@ -1166,4 +1165,4 @@ compliance with the actuator constraints.
 
 Finally, the input-direction and parameter analyses show that the LM2070 acts
 primarily by moving the lateral mass and creating a gravitational moment. The
-direct angular effect of the force is will cause significant lean, while the indirect route is slower and requires substantial rod travel. Changes in mass, inertia, and pendulum height introduce competing effects and do not remove this basic limitation. These observations explain why a controller that is successful in an ideal linear simulation may still be infeasible on the physical robot.
+direct angular effect of the force will cause significant lean, while the indirect route is slower and requires substantial rod travel. Changes in mass, inertia, and pendulum height introduce competing effects and do not remove this basic limitation. These observations explain why a controller that is successful in an ideal linear simulation may still be infeasible on the physical robot.
