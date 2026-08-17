@@ -46,7 +46,7 @@ disp(K);
 lqr_controller = @(t, z, par) - K * z; 
 z0 = [0.95* pi/180; 0; 0; 0];
 tspan = [0, 15];
-[t_out, z_out] = ode45(@(t, z) LatModel_SignCorrection(t, z, par, lqr_controller), tspan, z0);
+[t_out, z_out] = ode45(@(t, z) LatModelAppell(t, z, par, lqr_controller), tspan, z0);
 
 % Recalculate for F data
 F_out = zeros(length(t_out), 1);
