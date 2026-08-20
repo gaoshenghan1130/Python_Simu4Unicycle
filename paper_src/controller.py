@@ -103,11 +103,11 @@ class PDGains:
         [theta, theta_dot, r, r_dot]
     """
 
-    kp_theta: float = -806.66155536
-    kd_theta: float = -144.58221828
+    kp_theta: float = -797.095497
+    kd_theta: float = -103.668186
 
-    kp_r: float = 885.34727354
-    kd_r: float = 155.84633817
+    kp_r: float = 854.34418
+    kd_r: float = 105.568949
 
     theta_reference: float = 0.0
     r_reference: float = 0.0

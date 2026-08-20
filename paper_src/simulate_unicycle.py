@@ -55,7 +55,7 @@ class InitialCondition:
     """Physical initial conditions."""
 
     # Lateral states
-    theta: float = np.deg2rad(1)
+    theta: float = np.deg2rad(2.8)
     r: float = 0.0
     theta_dot: float = 0.0
     r_dot: float = 0.0

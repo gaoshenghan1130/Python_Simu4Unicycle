@@ -1,6 +1,6 @@
 function [t, Z] = timeConstantSimu(par, model, controller)
     % init
-    z0 = [0.925 * pi/180; 0; 0; 0.0];
+    z0 = [0.1 * pi/180; 0; 0; 0.0];
 
     % Simulation settings
     dt = 0.001; 

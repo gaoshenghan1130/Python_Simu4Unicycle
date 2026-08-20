@@ -82,10 +82,10 @@ function par = LatParam()
     %
     % F = -K_physical*x_physical
 
-    par.K_theta = -804.12848241;
-    par.K_r = 882.43017806;
-    par.K_theta_dot = -144.12564980;
-    par.K_r_dot = 155.37589642;
+    par.K_theta = -800;
+    par.K_r = 901;
+    par.K_theta_dot = -120;
+    par.K_r_dot = 127;
 
 
     %% Gain vectors for different state orders
