@@ -11,6 +11,16 @@ force_limit = 27.6;
 rod_limit = 0.10;
 fall_limit = 27*pi/180;
 
+% A trajectory is considered converged only if every state remains inside
+% these limits throughout the final settling window. This rejects bounded
+% sustained oscillations that happen to cross zero at the final time.
+
+settling_window = 3.0;
+settled_theta_limit = 1.0*pi/180;
+settled_r_limit = 0.010;
+settled_theta_dot_limit = 5.0*pi/180;
+settled_r_dot_limit = 0.050;
+
 rng(1);
 
 N = 10000;
@@ -25,11 +35,17 @@ nonlinear_stable_idx = false(N, 1);
 force_valid_idx = false(N, 1);
 rod_valid_idx = false(N, 1);
 simulation_failed_idx = false(N, 1);
+bounded_idx = false(N, 1);
+tail_converged_idx = false(N, 1);
 
 max_theta_record = nan(N, 1);
 final_theta_record = nan(N, 1);
 max_r_record = nan(N, 1);
 max_force_record = nan(N, 1);
+tail_max_theta_record = nan(N, 1);
+tail_max_r_record = nan(N, 1);
+tail_max_theta_dot_record = nan(N, 1);
+tail_max_r_dot_record = nan(N, 1);
 
 %% Closed-loop nonzero-equilibrium contours
 %
@@ -151,6 +167,11 @@ for i = 1:N
 
         theta_out = x_out(:, 1);
         r_out = x_out(:, 2);
+        theta_dot_out = x_out(:, 3);
+
+        % x_out(:, 4) is sigma2 = r_dot - R*theta_dot.
+        r_dot_out = ...
+            x_out(:, 4) + par.R*x_out(:, 3);
 
         F_out = -(x_out*K.');
 
@@ -162,10 +183,44 @@ for i = 1:N
         simulation_completed = ...
             t_out(end) >= tspan(end) - 1e-6;
 
-        theta_valid = ...
+        bounded = ...
             simulation_completed ...
-            && max_theta < 20*pi/180 ...
-            && final_theta < 5*pi/180;
+            && max_theta < 20*pi/180;
+
+        tail_idx = ...
+            t_out >= tspan(end) - settling_window;
+
+        if simulation_completed && any(tail_idx)
+
+            tail_max_theta = ...
+                max(abs(theta_out(tail_idx)));
+
+            tail_max_r = ...
+                max(abs(r_out(tail_idx)));
+
+            tail_max_theta_dot = ...
+                max(abs(theta_dot_out(tail_idx)));
+
+            tail_max_r_dot = ...
+                max(abs(r_dot_out(tail_idx)));
+
+        else
+
+            tail_max_theta = inf;
+            tail_max_r = inf;
+            tail_max_theta_dot = inf;
+            tail_max_r_dot = inf;
+
+        end
+
+        tail_converged = ...
+            tail_max_theta <= settled_theta_limit ...
+            && tail_max_r <= settled_r_limit ...
+            && tail_max_theta_dot ...
+                <= settled_theta_dot_limit ...
+            && tail_max_r_dot <= settled_r_dot_limit;
+
+        theta_valid = bounded && tail_converged;
 
         force_valid = ...
             theta_valid ...
@@ -178,11 +233,18 @@ for i = 1:N
         nonlinear_stable_idx(i) = theta_valid;
         force_valid_idx(i) = force_valid;
         rod_valid_idx(i) = rod_valid;
+        bounded_idx(i) = bounded;
+        tail_converged_idx(i) = tail_converged;
 
         max_theta_record(i) = max_theta;
         final_theta_record(i) = final_theta;
         max_r_record(i) = max_r;
         max_force_record(i) = max_force;
+        tail_max_theta_record(i) = tail_max_theta;
+        tail_max_r_record(i) = tail_max_r;
+        tail_max_theta_dot_record(i) = ...
+            tail_max_theta_dot;
+        tail_max_r_dot_record(i) = tail_max_r_dot;
 
     catch
         simulation_failed_idx(i) = true;
@@ -212,7 +274,17 @@ fprintf( ...
 );
 
 fprintf( ...
-    'Nonlinear stable:       %d\n', ...
+    'Bounded trajectories:   %d\n', ...
+    sum(bounded_idx) ...
+);
+
+fprintf( ...
+    'Bounded but unsettled:  %d\n', ...
+    sum(bounded_idx & ~tail_converged_idx) ...
+);
+
+fprintf( ...
+    'Converged stable:       %d\n', ...
     sum(nonlinear_stable_idx) ...
 );
 
@@ -236,12 +308,10 @@ fprintf( ...
 % Selection priority:
 %   1. all simulated and equilibrium limits satisfied;
 %   2. force-limit-valid and equilibrium-force-valid;
-%   3. nonlinear stable;
-%   4. any sampled gain set with a positive nonzero equilibrium.
+%   3. nonlinear stable and converged.
 %
-% This fallback hierarchy guarantees that the best available gain set is
-% still printed when no sample satisfies the rod limit. The printed
-% selection class states clearly which constraints were retained.
+% Nonconvergent samples are never eligible, even when no sample satisfies
+% the rod or force constraints.
 
 equilibrium_force_valid_idx = ...
     abs(force_equilibrium_record) ...
@@ -267,9 +337,6 @@ stable_candidate_idx = ...
     nonlinear_stable_idx ...
     & isfinite(theta_equilibrium_record);
 
-equilibrium_candidate_idx = ...
-    isfinite(theta_equilibrium_record);
-
 if any(strict_candidate_idx)
 
     best_candidate_idx = strict_candidate_idx;
@@ -286,19 +353,13 @@ elseif any(stable_candidate_idx)
 
     best_candidate_idx = stable_candidate_idx;
     selection_name = ...
-        'nonlinear stable; force and rod limits relaxed';
-
-elseif any(equilibrium_candidate_idx)
-
-    best_candidate_idx = equilibrium_candidate_idx;
-    selection_name = ...
-        'nonzero equilibrium exists; simulation limits relaxed';
+        'converged stable; force and rod limits relaxed';
 
 else
 
     best_candidate_idx = false(N, 1);
     selection_name = ...
-        'no positive nonzero equilibrium found';
+        'no converged sample with a nonzero equilibrium';
 
 end
 
@@ -415,13 +476,33 @@ if any(best_candidate_idx)
         max_force_record(best_sample_idx) ...
     );
 
+    fprintf( ...
+        'Tail max |theta|:       %.9f deg\n', ...
+        tail_max_theta_record(best_sample_idx)*180/pi ...
+    );
+
+    fprintf( ...
+        'Tail max |r|:           %.6f cm\n', ...
+        100*tail_max_r_record(best_sample_idx) ...
+    );
+
+    fprintf( ...
+        'Tail max |theta_dot|:   %.9f deg/s\n', ...
+        tail_max_theta_dot_record(best_sample_idx)*180/pi ...
+    );
+
+    fprintf( ...
+        'Tail max |r_dot|:       %.9f m/s\n', ...
+        tail_max_r_dot_record(best_sample_idx) ...
+    );
+
 else
 
     best_sample_idx = [];
 
     fprintf( ...
-        ['No sampled gain set has a positive nonzero ' ...
-        'equilibrium inside the search-angle range.\n'] ...
+        ['No converged sampled gain set has a positive ' ...
+        'nonzero equilibrium inside the search-angle range.\n'] ...
     );
 
 end
@@ -759,7 +840,7 @@ function plotGainConstraint( ...
             'MarkerEdgeColor', 'w', ...
             'LineWidth', 0.5, ...
             'DisplayName', ...
-            'Nonlinear stable' ...
+            'Converged stable' ...
         );
 
         legend_handles(end + 1) = h_stable;
@@ -872,7 +953,7 @@ function plotGainConstraint( ...
             'MarkerEdgeColor', 'w', ...
             'LineWidth', 0.5, ...
             'DisplayName', ...
-            'Nonlinear stable' ...
+            'Converged stable' ...
         );
 
         legend_handles_2(end + 1) = ...

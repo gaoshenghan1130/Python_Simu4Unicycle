@@ -102,8 +102,34 @@ m_{\mathrm{rod}}g\sin\theta^*
 }.
 $$
 
-To make more sense of this equation:
+Define
 
 $$
-K_\theta\theta^* = -K_ra_{\mathrm{eq}}\tan\theta^* - m_{\mathrm{rod}}g\sin\theta^*.
+f(\theta^*) = K_\theta\theta^* + K_ra_{\mathrm{eq}}\tan\theta^* + m_{\mathrm{rod}}g\sin\theta^*.
+$$
+
+We want it to have another root on $\theta^* \in (0, \pi/2)$. And we know that $f(0) = 0$ and:
+
+$$
+f(\theta^*)' = K_\theta + K_ra_{\mathrm{eq}}\sec^2\theta^* + m_{\mathrm{rod}}g\cos\theta^*
+$$
+
+There should be a pole $\theta_p$ such that $f(\theta_p)' = 0$, and the sufficient condition for existence of a nonzero route will be:
+
+$$
+f(\theta_p) < 0 \\
+$$
+
+Thus:
+
+$$
+K_\theta\theta_p + K_ra_{\mathrm{eq}}\tan\theta_p + m_{\mathrm{rod}}g\sin\theta_p < 0 \\
+K_\theta + K_ra_{\mathrm{eq}}\sec^2\theta_p + m_{\mathrm{rod}}g\cos\theta_p = 0
+$$
+
+We consider the boundary condition where the first equation is satisfied with equality. Then we can solve for $K_r$ and $K_\theta$:
+
+$$
+K_\theta\theta_p + K_ra_{\mathrm{eq}}\tan\theta_p + m_{\mathrm{rod}}g\sin\theta_p = 0 \\
+K_\theta + K_ra_{\mathrm{eq}}\sec^2\theta_p + m_{\mathrm{rod}}g\cos\theta_p = 0
 $$
