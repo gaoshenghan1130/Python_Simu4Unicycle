@@ -50,7 +50,7 @@ B = N \ [0; 0; 0; 1];
 %% 3. Pole placement and closed-loop eigenvectors
 
 P_desired = [-2.25, -1.25, -2.00, -1.50];
-K_numeric = [-806.66, 885.35, -144.58 , 155.85];%place(A, B, P_desired);
+K_numeric = [-805.909522, 900, -46.963696 , 50];%place(A, B, P_desired);
 
 disp('Pole-placement gain K in [theta, r, theta_dot, r_dot] order:');
 disp(K_numeric);
