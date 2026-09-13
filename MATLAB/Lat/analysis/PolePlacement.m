@@ -2,7 +2,14 @@ clear;
 clc;
 close all;
 
-addpath("param/", "model/");
+% Resolve folders relative to this script.
+script_dir = fileparts(mfilename('fullpath'));
+
+if isempty(script_dir)
+    script_dir = pwd;
+end
+
+addpath(fullfile(script_dir, 'param'));
 
 %% 1. System parameters
 
@@ -30,9 +37,11 @@ G_theta2 = -2*m_L*g;
 G_r1     = -2*m_L*g;
 
 %% 2. Linearized state-space model
-%
-% Linear model state order:
+% Linear state:
 % x = [theta; r; theta_dot; r_dot]
+%
+% Linearization at the stationary upright origin.
+% No damping or friction, consistent with the supplied Appell model.
 
 N = [1, 0,       0,          0;
      0, 1,       0,          0;
@@ -47,28 +56,40 @@ A_tilde = [0,        0,    1, 0;
 A = N \ A_tilde;
 B = N \ [0; 0; 0; 1];
 
-%% 3. Pole placement and closed-loop eigenvectors
+%% 3. Gains and closed-loop eigenvectors
 
 P_desired = [-2.25, -1.25, -2.00, -1.50];
-K_numeric = [-805.909522, 900, -46.963696 , 50];%place(A, B, P_desired);
 
-disp('Pole-placement gain K in [theta, r, theta_dot, r_dot] order:');
+% true: keep your original manually specified gains.
+% false: compute gains from P_desired.
+use_manual_gain = false;
+
+if use_manual_gain
+    K_numeric = [-805.909522, 900, -46.963696, 50];
+    disp('Using manually specified gains.');
+else
+    K_numeric = place(A, B, P_desired);
+    disp('Using pole-placement gains.');
+end
+
+disp('K in [theta, r, theta_dot, r_dot] order:');
 disp(K_numeric);
 
-
-
 A_cl_numeric = A - B*K_numeric;
+
 [eigenvectors_x, eigenvalue_matrix] = eig(A_cl_numeric);
 eigenvalues = diag(eigenvalue_matrix);
 
-disp('Closed-loop eigenvalues:');
+disp('Actual closed-loop eigenvalues:');
 disp(eigenvalues);
 
-disp('Closed-loop eigenvectors in [theta, r, theta_dot, r_dot] order:');
+disp('Closed-loop eigenvectors in linear state order:');
 disp(eigenvectors_x);
 
-% LatModel_SignCorrection state order:
+% Nonlinear state:
 % z = [theta; theta_dot; r; r_dot]
+%
+% z = T_x_to_z*x
 T_x_to_z = [1, 0, 0, 0;
             0, 0, 1, 0;
             0, 1, 0, 0;
@@ -76,269 +97,261 @@ T_x_to_z = [1, 0, 0, 0;
 
 eigenvectors_z = T_x_to_z*eigenvectors_x;
 
-% Convert the feedback gain to the nonlinear model state order.
-K_z = [K_numeric(1), K_numeric(3), K_numeric(2), K_numeric(4)];
+% F = -K_numeric*x = -K_z*z
+K_z = K_numeric*T_x_to_z.';
 
-%% 4. Nonzero equilibrium and nonlinear simulation
+%% 4. Consistent equilibrium and initial conditions
+% Both simulations use the origin because A and B were derived there.
 
-% The A and B matrices above are linearized at theta = 0. Therefore, the
-% eigenvectors are exact at the upright origin and approximate when a
-% nonzero equilibrium angle is used here.
-theta_eq = 0.1;  % rad
+theta_eq = 0;
+r_eq     = 0;
+F_eq     = 0;
 
-G = par.m_W*par.g*par.R ...
-  + par.m_B*par.g*(par.R + par.h);
+z_eq = [theta_eq; 0; r_eq; 0];
 
-r_eq = (G + 2*par.m_L*par.g*par.R) ...
-     / (2*par.m_L*par.g) ...
-     * tan(theta_eq);
+controller = @(t, z) F_eq - K_z*(z(:) - z_eq);
 
-F_eq = 2*m_L*g*sin(theta_eq);
+% Identical physical perturbation for both simulations.
+delta_z0 = [0.1*pi/180; 0; 0; 0];
 
-% Nonlinear-model equilibrium state order:
-% z_eq = [theta_eq; theta_dot_eq; r_eq; r_dot_eq]
-z_eq = [0; 0; 0; 0];
-
-% Equilibrium feedforward plus feedback about the equilibrium state.
-controller = @(t, z, par) - K_z*(z - z_eq);
-
-% Add a small perturbation so the return trajectory is visible.
-z0 = z_eq + [0.1*pi/180; 0.00; 0.000; 0];
+z0       = z_eq + delta_z0;
+delta_x0 = T_x_to_z.'*delta_z0;
 
 tspan = [0, 15];
+options = odeset('RelTol', 1e-8, 'AbsTol', 1e-10);
 
+% The nonlinear model is defined at the end of this file.
 [t_out, z_out] = ode45( ...
-    @(t, z) LatModel_SignCorrection(t, z, par, controller), ...
-    tspan, ...
-    z0);
-
-% Recalculate the input force along the trajectory.
-F_out = zeros(length(t_out), 1);
-
-for i = 1:length(t_out)
-    F_out(i) = controller(t_out(i), z_out(i, :).', par);
-end
-
-% All eigenvectors describe state deviations about the equilibrium.
-delta_z_out = z_out - z_eq.';
-
-% Simulate the linear closed-loop model as well. This is the trajectory that
-% corresponds exactly to A_cl_numeric and its eigenvectors.
-delta_x0 = [z0(1) - theta_eq;
-            z0(3) - r_eq;
-            z0(2);
-            z0(4)];
+    @(t, z) appell_lateral_rhs(t, z, par, controller), ...
+    tspan, z0, options);
 
 [t_linear, delta_x_linear] = ode45( ...
     @(t, delta_x) A_cl_numeric*delta_x, ...
-    tspan, ...
-    delta_x0);
+    tspan, delta_x0, options);
 
+delta_z_out = z_out - z_eq.';
 delta_z_linear = (T_x_to_z*delta_x_linear.').';
 
-if norm(delta_z_out(end, :)) > 10*norm(delta_z_out(1, :))
-    warning(['The nonlinear trajectory diverged from the equilibrium. ', ...
-        'Check whether the force sign and state order in ', ...
-        'LatModel_SignCorrection agree with the A and B matrices.']);
-end
+z_linear = delta_z_linear + z_eq.';
+
+F_out = F_eq - delta_z_out*K_z.';
+F_linear = F_eq - delta_x_linear*K_numeric.';
 
 %% 5. State and force time histories
 
 figure('Name', 'Closed-loop time histories', 'Color', 'w');
 
 subplot(3, 1, 1);
-plot(t_out, z_out(:, 1), 'LineWidth', 1.5);
+
+plot(t_out, z_out(:, 1), 'b', 'LineWidth', 1.5);
 hold on;
-yline(theta_eq, '--k', 'Equilibrium');
+plot(t_linear, z_linear(:, 1), '--k', 'LineWidth', 1.2);
+yline(theta_eq, ':', 'Equilibrium');
 hold off;
-ylabel('$\theta\; (\mathrm{rad})$', 'Interpreter', 'latex');
-title('Pole-placement controlled nonlinear system');
+
+ylabel('$\theta\;(\mathrm{rad})$', 'Interpreter', 'latex');
+title('Linear and nonlinear closed-loop responses');
+legend('Nonlinear', 'Linear', 'Location', 'best');
 grid on;
 
 subplot(3, 1, 2);
-plot(t_out, z_out(:, 3), 'LineWidth', 1.5);
+
+plot(t_out, z_out(:, 3), 'b', 'LineWidth', 1.5);
 hold on;
-yline(r_eq, '--k', 'Equilibrium');
+plot(t_linear, z_linear(:, 3), '--k', 'LineWidth', 1.2);
+yline(r_eq, ':', 'Equilibrium');
 hold off;
-ylabel('$r\; (\mathrm{m})$', 'Interpreter', 'latex');
+
+ylabel('$r\;(\mathrm{m})$', 'Interpreter', 'latex');
 grid on;
 
 subplot(3, 1, 3);
+
 plot(t_out, F_out, 'r', 'LineWidth', 1.5);
 hold on;
-yline(F_eq, '--k', 'Equilibrium');
+plot(t_linear, F_linear, '--k', 'LineWidth', 1.2);
+yline(F_eq, ':', 'Equilibrium');
 hold off;
-xlabel('$t\; (\mathrm{s})$', 'Interpreter', 'latex');
-ylabel('$F\; (\mathrm{N})$', 'Interpreter', 'latex');
+
+xlabel('$t\;(\mathrm{s})$', 'Interpreter', 'latex');
+ylabel('$F\;(\mathrm{N})$', 'Interpreter', 'latex');
 grid on;
 
-%% 6. Eigenvectors and trajectory in the theta-r plane
+%% 6. Eigenvectors and trajectories in the theta-r plane
 
-figure('Name', 'Eigenvectors in theta-r plane', 'Color', 'w');
-hold on;
-grid on;
-box on;
+plot_modal_projection( ...
+    delta_z_linear, delta_z_out, ...
+    eigenvectors_z, eigenvalues, ...
+    [1, 3], [0.03, 0.10], ...
+    'Position plane', ...
+    '$\delta\theta\;(\mathrm{rad})$', ...
+    '$\delta r\;(\mathrm{m})$');
 
-plot(delta_z_linear(:, 1), delta_z_linear(:, 3), ...
-    'k', ...
-    'LineWidth', 2.0, ...
-    'DisplayName', 'Linear closed-loop trajectory');
+%% 7. Eigenvectors and trajectories in the velocity plane
 
-plot(delta_z_out(:, 1), delta_z_out(:, 3), ...
-    '--', ...
-    'Color', [0.6, 0.6, 0.6], ...
-    'LineWidth', 1.2, ...
-    'DisplayName', 'Nonlinear trajectory');
+plot_modal_projection( ...
+    delta_z_linear, delta_z_out, ...
+    eigenvectors_z, eigenvalues, ...
+    [2, 4], [0.10, 0.35], ...
+    'Velocity plane', ...
+    '$\delta\dot{\theta}\;(\mathrm{rad/s})$', ...
+    '$\delta\dot r\;(\mathrm{m/s})$');
 
-plot(delta_z_out(1, 1), delta_z_out(1, 3), ...
-    'ko', ...
-    'MarkerFaceColor', 'y', ...
-    'DisplayName', 'Initial state');
+%% Local functions
 
-plot(0, 0, ...
-    'kp', ...
-    'MarkerSize', 11, ...
-    'MarkerFaceColor', 'g', ...
-    'DisplayName', 'Equilibrium');
+function dz = appell_lateral_rhs(t, z, par, controller)
+% Nonlinear equations from the supplied LatModel_Appel document.
+%
+% State: z = [theta; theta_dot; r; r_dot]
+% Input: F acts positively on the moving rod.
+% No damping, friction, or force saturation.
 
-mode_colors = lines(4);
+    z = z(:);
 
-% Fix the plot around the equilibrium so a diverging nonlinear trajectory
-% cannot make the modal directions disappear.
-theta_limit = max(2.5*abs(delta_z_linear(1, 1)), 0.03);
-r_limit     = max(2.5*abs(delta_z_linear(1, 3)), 0.10);
+    theta     = z(1);
+    theta_dot = z(2);
+    r         = z(3);
+    r_dot     = z(4);
 
-for i = 1:4
-    v_theta_r = real([eigenvectors_z(1, i); eigenvectors_z(3, i)]);
-    projection_norm = norm(v_theta_r);
+    R = par.R;
+    g = par.g;
 
-    if projection_norm < 1e-12
-        continue;
-    end
+    m_rod = 2*par.m_L;
 
-    % Scale the modal direction to fill 75 percent of the local plot window
-    % while preserving its physical theta-r slope.
-    modal_scale = 0.75/max(abs(v_theta_r(1))/theta_limit, ...
-                           abs(v_theta_r(2))/r_limit);
-    v_theta_r = modal_scale*v_theta_r;
+    I0 = par.m_W*R^2 ...
+       + par.m_B*(R + par.h)^2 ...
+       + par.I_b ...
+       + par.I_rod ...
+       + par.I_w;
 
-    plot([-v_theta_r(1), v_theta_r(1)], ...
-         [-v_theta_r(2), v_theta_r(2)], ...
-        '--', ...
-        'Color', mode_colors(i, :), ...
-        'LineWidth', 1.2, ...
-        'HandleVisibility', 'off');
+    G = g*(par.m_W*R + par.m_B*(R + par.h));
 
-    quiver(0, 0, ...
-        v_theta_r(1), ...
-        v_theta_r(2), ...
-        0, ...
-        'Color', mode_colors(i, :), ...
-        'LineWidth', 2, ...
-        'MaxHeadSize', 0.8, ...
-        'DisplayName', sprintf('Mode %d: lambda = %.2f', ...
-        i, real(eigenvalues(i))));
+    % Pseudovelocities used in the Appell model.
+    u1 = theta_dot;
+    u2 = r_dot - R*theta_dot;
 
-    quiver(0, 0, ...
-        -v_theta_r(1), ...
-        -v_theta_r(2), ...
-        0, ...
-        'Color', mode_colors(i, :), ...
-        'LineWidth', 2, ...
-        'MaxHeadSize', 0.8, ...
-        'HandleVisibility', 'off');
+    F = controller(t, z);
+
+    u1_dot = ( ...
+          R*F ...
+        - m_rod*g*r*cos(theta) ...
+        + G*sin(theta) ...
+        - m_rod*r*(2*u2*u1 + R*u1^2) ...
+        ) / (I0 + m_rod*r^2);
+
+    u2_dot = F/m_rod - g*sin(theta) + r*u1^2;
+
+    % u2 = r_dot - R*theta_dot
+    theta_ddot = u1_dot;
+    r_ddot = u2_dot + R*u1_dot;
+
+    dz = [theta_dot;
+          theta_ddot;
+          r_dot;
+          r_ddot];
 end
 
-xlabel('$\delta\theta\; (\mathrm{rad})$', ...
-    'Interpreter', 'latex');
-ylabel('$\delta r\; (\mathrm{m})$', ...
-    'Interpreter', 'latex');
-title('Closed-loop modes and local trajectories in the $\theta$-$r$ plane', ...
-    'Interpreter', 'latex');
-xlim([-theta_limit, theta_limit]);
-ylim([-r_limit, r_limit]);
-legend('Location', 'best');
-hold off;
+function plot_modal_projection( ...
+    z_linear, z_nonlinear, V, lambda, ...
+    indices, minimum_limits, figure_name, x_label, y_label)
 
-%% 7. Eigenvectors and trajectory in the theta_dot-r_dot plane
+    figure('Name', figure_name, 'Color', 'w');
+    hold on;
+    grid on;
+    box on;
 
-figure('Name', 'Eigenvectors in velocity plane', 'Color', 'w');
-hold on;
-grid on;
-box on;
+    ix = indices(1);
+    iy = indices(2);
 
-plot(delta_z_linear(:, 2), delta_z_linear(:, 4), ...
-    'k', ...
-    'LineWidth', 2.0, ...
-    'DisplayName', 'Linear closed-loop trajectory');
+    plot(z_linear(:, ix), z_linear(:, iy), ...
+        'k', 'LineWidth', 2, ...
+        'DisplayName', 'Linear trajectory');
 
-plot(delta_z_out(:, 2), delta_z_out(:, 4), ...
-    '--', ...
-    'Color', [0.6, 0.6, 0.6], ...
-    'LineWidth', 1.2, ...
-    'DisplayName', 'Nonlinear trajectory');
+    plot(z_nonlinear(:, ix), z_nonlinear(:, iy), ...
+        '--', 'Color', [0.6, 0.6, 0.6], ...
+        'LineWidth', 1.2, ...
+        'DisplayName', 'Nonlinear trajectory');
 
-plot(delta_z_out(1, 2), delta_z_out(1, 4), ...
-    'ko', ...
-    'MarkerFaceColor', 'y', ...
-    'DisplayName', 'Initial state');
+    plot(z_nonlinear(1, ix), z_nonlinear(1, iy), ...
+        'ko', 'MarkerFaceColor', 'y', ...
+        'DisplayName', 'Initial state');
 
-plot(0, 0, ...
-    'kp', ...
-    'MarkerSize', 11, ...
-    'MarkerFaceColor', 'g', ...
-    'DisplayName', 'Equilibrium');
+    plot(0, 0, 'kp', ...
+        'MarkerSize', 11, 'MarkerFaceColor', 'g', ...
+        'DisplayName', 'Equilibrium');
 
-theta_dot_limit = max(2.5*abs(delta_z_linear(1, 2)), 0.10);
-r_dot_limit     = max(2.5*abs(delta_z_linear(1, 4)), 0.35);
+    x_limit = max( ...
+        1.2*max(abs(z_linear(:, ix))), minimum_limits(1));
 
-for i = 1:4
-    v_velocity = real([eigenvectors_z(2, i); eigenvectors_z(4, i)]);
-    projection_norm = norm(v_velocity);
+    y_limit = max( ...
+        1.2*max(abs(z_linear(:, iy))), minimum_limits(2));
 
-    if projection_norm < 1e-12
-        continue;
+    colors = lines(numel(lambda));
+
+    for i = 1:numel(lambda)
+
+        % Plot a conjugate pair only once.
+        if imag(lambda(i)) < -1e-8
+            continue;
+        end
+
+        v = V(:, i);
+
+        % Fix arbitrary eigenvector phase for a reproducible projection.
+        [~, pivot] = max(abs(v));
+        v = v*exp(-1i*angle(v(pivot)));
+
+        if abs(imag(lambda(i))) < 1e-8
+            directions = real(v(indices));
+            labels = {sprintf('\\lambda = %.3g', real(lambda(i)))};
+        else
+            % A complex mode has a real invariant plane, not one
+            % real eigenvector direction. Show its projected basis.
+            directions = [real(v(indices)), imag(v(indices))];
+
+            labels = { ...
+                sprintf('Re(v), \\lambda = %.3g + %.3gi', ...
+                    real(lambda(i)), imag(lambda(i))), ...
+                sprintf('Im(v), \\lambda = %.3g + %.3gi', ...
+                    real(lambda(i)), imag(lambda(i)))};
+        end
+
+        for j = 1:size(directions, 2)
+
+            direction = directions(:, j);
+
+            scale_denominator = max( ...
+                abs(direction(1))/x_limit, ...
+                abs(direction(2))/y_limit);
+
+            if scale_denominator < 1e-12
+                continue;
+            end
+
+            direction = 0.75*direction/scale_denominator;
+
+            if j == 1
+                line_style = '--';
+            else
+                line_style = ':';
+            end
+
+            plot([-direction(1), direction(1)], ...
+                 [-direction(2), direction(2)], ...
+                 'LineStyle', line_style, ...
+                 'Color', colors(i, :), ...
+                 'LineWidth', 1.3, ...
+                 'DisplayName', labels{j});
+        end
     end
 
-    modal_scale = 0.75/max(abs(v_velocity(1))/theta_dot_limit, ...
-                           abs(v_velocity(2))/r_dot_limit);
-    v_velocity = modal_scale*v_velocity;
+    xlabel(x_label, 'Interpreter', 'latex');
+    ylabel(y_label, 'Interpreter', 'latex');
+    title(figure_name);
 
-    plot([-v_velocity(1), v_velocity(1)], ...
-         [-v_velocity(2), v_velocity(2)], ...
-        '--', ...
-        'Color', mode_colors(i, :), ...
-        'LineWidth', 1.2, ...
-        'HandleVisibility', 'off');
+    xlim([-x_limit, x_limit]);
+    ylim([-y_limit, y_limit]);
 
-    quiver(0, 0, ...
-        v_velocity(1), ...
-        v_velocity(2), ...
-        0, ...
-        'Color', mode_colors(i, :), ...
-        'LineWidth', 2, ...
-        'MaxHeadSize', 0.8, ...
-        'DisplayName', sprintf('Mode %d: lambda = %.2f', ...
-        i, real(eigenvalues(i))));
-
-    quiver(0, 0, ...
-        -v_velocity(1), ...
-        -v_velocity(2), ...
-        0, ...
-        'Color', mode_colors(i, :), ...
-        'LineWidth', 2, ...
-        'MaxHeadSize', 0.8, ...
-        'HandleVisibility', 'off');
+    legend('Location', 'best');
+    hold off;
 end
-
-xlabel('$\delta\dot{\theta}\; (\mathrm{rad/s})$', ...
-    'Interpreter', 'latex');
-ylabel('$\delta\dot{r}\; (\mathrm{m/s})$', ...
-    'Interpreter', 'latex');
-title(['Closed-loop modes and local trajectories in the ', ...
-       '$\dot{\theta}$-$\dot{r}$ plane'], ...
-    'Interpreter', 'latex');
-xlim([-theta_dot_limit, theta_dot_limit]);
-ylim([-r_dot_limit, r_dot_limit]);
-legend('Location', 'best');
-hold off;
