@@ -70,21 +70,6 @@ $$
 
 ## Matrix Form
 
-$$
-\begin{bmatrix} 
-2m_L(R^2 + r^2) + m_w R^2 + m_p (R + h)^2 + (I_w + I_b  + I_{rod})  & -2m_LR  \\ 
--2m_LR & 2m_L 
-\end{bmatrix} 
-\begin{bmatrix} 
-\ddot{\theta} \\ 
-\ddot{r} 
-\end{bmatrix} 
-= \begin{bmatrix} 
--4m_L r \dot{r} \dot{\theta} + \left( 2m_L R + m_w R + m_p (R + h) \right) g \sin\theta - 2m_L g r \cos\theta \\ 
-F + 2m_L r \dot{\theta}^2 - 2m_L g \sin\theta 
-\end{bmatrix}
-$$
-
 Compare to lagrange form with reverted $\theta$ direction (Without interia terms and friction):
 
 $$
