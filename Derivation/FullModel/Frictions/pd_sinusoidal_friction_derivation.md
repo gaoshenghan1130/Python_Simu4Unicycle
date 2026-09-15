@@ -316,491 +316,180 @@ It does not require explicitly solving for $t_a$.
 For repeated roots, use the repeated-root solution or take
 the corresponding limit of the combined expressions.
 
-## 7. Sticking Duration from the Sliding Interval
-
-Assume equal static and kinetic Coulomb friction magnitudes:
-
-$$
-C_s=C_d=C.
-$$
-
-Retain the same-period and half-wave symmetry assumptions,
-but now allow one sticking interval at each displacement extremum.
-
-Define
-
-$$
-T=\frac{2\pi}{\omega},\qquad H=\frac{T}{2}.
-$$
-
-Let $T_s$ denote the duration of one sticking interval.
-The duration of the sliding interval is therefore
-
-$$
-\boxed{L=H-T_s.}
-$$
-
-If the measured total sticking duration per full period is
-$T_{\mathrm{stop}}$, then
-
-$$
-T_s=\frac{T_{\mathrm{stop}}}{2},\qquad
-L=\frac{T-T_{\mathrm{stop}}}{2}.
-$$
-
-### Initial State at Release
-
-Define $t_m$ as the time when the rod leaves the positive
-displacement maximum and starts moving in the negative direction:
-
-$$
-x(t_m)=X,\qquad \dot x(t_m)=0.
-$$
-
-At release, the PD force crosses the negative friction threshold:
-
-$$
-\boxed{
-PA\sin(\omega t_m)+DA\omega\cos(\omega t_m)-PX=-C.
-}
-$$
-
-Define
-
-$$
-G=A\sqrt{P^2+D^2\omega^2},\qquad
-\delta=\operatorname{atan2}(D\omega,P).
-$$
-
-The release condition becomes
-
-$$
-G\sin(\omega t_m+\delta)=PX-C.
-$$
-
-For a descending threshold crossing,
-
-$$
-\boxed{
-t_m=
-\frac{
-\pi-\arcsin\!\left(\frac{PX-C}{G}\right)-\delta+2\pi n
-}{\omega}.
-}
-$$
-
-Choose the integer $n$ to select the desired cycle.
-A nondegenerate descending crossing requires
-
-$$
-\left|\frac{PX-C}{G}\right|<1.
-$$
-
-### Sliding Solution
-
-For $\tau=t-t_m$ with $0<\tau<L$, the velocity is negative:
-
-$$
-x(t_m+\tau)=x_p(t_m+\tau)+\frac CP
-+k_1e^{r_1\tau}+k_2e^{r_2\tau}.
-$$
-
-Define
-
-$$
-y=X-x_p(t_m)-\frac CP,\qquad
-w_0=-\dot x_p(t_m).
-$$
-
-For distinct roots,
-
-$$
-\boxed{
-k_1=\frac{w_0-r_2y}{r_1-r_2},\qquad
-k_2=\frac{r_1y-w_0}{r_1-r_2}.
-}
-$$
-
-These constants are determined from the release state.
-They replace the no-sticking half-cycle constants when
-sticking is included.
-
-### End of Sliding and Subsequent Sticking
-
-After sliding for $L=H-T_s$, the rod reaches the negative extremum:
-
-$$
-\boxed{
-x(t_m+L)=-X,\qquad
-\dot x(t_m+L)=0.
-}
-$$
-
-Thus,
-
-$$
-\boxed{
-x_p(t_m+L)+\frac CP
-+k_1e^{r_1L}+k_2e^{r_2L}+X=0,
-}
-$$
-
-$$
-\boxed{
-\dot x_p(t_m+L)
-+r_1k_1e^{r_1L}+r_2k_2e^{r_2L}=0.
-}
-$$
-
-The rod then remains at $x=-X$ for $T_s$:
-
-$$
-x(t)=-X,\qquad \dot x(t)=0,
-\qquad t_m+L\le t\le t_m+H.
-$$
-
-At $t_m+H$, it starts moving in the positive direction.
-By half-wave symmetry, its release force is $+C$.
-
 ### Parameter Identification
 
-Given the measured amplitude $X$ and sticking duration $T_s$, define
+Given the measured amplitude $X$ and sticking duration $T_s$,
+the sliding duration is
 
 $$
 L=\frac{\pi}{\omega}-T_s.
 $$
 
-The release time is determined by
+For each candidate pair $(b,C)$, the release condition determines
+$t_m$, and the initial state $x(t_m)=X$, $\dot x(t_m)=0$
+determines the sliding solution.
 
-$$
-t_m(C)=
-\frac{
-\pi-\arcsin\!\left(\frac{PX-C}{G}\right)-\delta
-}{\omega}
-\pmod{T}.
-$$
-
-Define the endpoint residuals
-
-$$
-R_x(b,C;X,T_s)
-=
-x_p(t_m+L)+\frac CP
-+k_1e^{r_1L}+k_2e^{r_2L}+X,
-$$
-
-$$
-R_v(b,C;X,T_s)
-=
-\dot x_p(t_m+L)
-+r_1k_1e^{r_1L}+r_2k_2e^{r_2L},
-$$
-
-where $x_p,r_1,r_2,k_1,k_2$ are evaluated using the candidate
-parameters and the release state.
-
-The parameter estimates are obtained by solving
-
-$$
-\boxed{
-\begin{pmatrix}
-\hat b\\
-\hat C
-\end{pmatrix}
-\in
-\left\{
-\begin{pmatrix}
-b\\
-C
-\end{pmatrix}
-\in[0,\infty)^2:
-\begin{aligned}
-R_x(b,C;X,T_s)&=0,\\
-R_v(b,C;X,T_s)&=0
-\end{aligned}
-\right\}.
-}
-$$
-
-Only solutions satisfying the release, sliding, and sticking
-conditions are admissible. Local identifiability requires
-
-$$
-\det
-\left[
-\frac{\partial(R_x,R_v)}{\partial(b,C)}
-\right]_{(\hat b,\hat C)}
-\ne0.
-$$
-
-Conversely, for prescribed $b,C$, the predicted amplitude and
-sticking duration satisfy
-
-$$
-\boxed{
-\begin{pmatrix}
-X\\
-T_s
-\end{pmatrix}
-\in
-\left\{
-\begin{pmatrix}
-\xi\\
-\eta
-\end{pmatrix}
-:
-\begin{aligned}
-&\xi>0,\qquad 0\le\eta<\frac{\pi}{\omega},\\
-&R_x(b,C;\xi,\eta)=0,\\
-&R_v(b,C;\xi,\eta)=0
-\end{aligned}
-\right\}.
-}
-$$
-
-## 8. Hybrid Amplitude–Position Parameter Identification
-
-Short sticking intervals can be difficult to measure accurately.
-We therefore replace the endpoint velocity equation in the
-identification objective with the no-sticking amplitude relation.
-
-The resulting method combines:
-
-1. The no-sticking analytical amplitude.
-2. The position reached after the measured sliding duration.
-
-The endpoint velocity is retained as a validation quantity.
-
-### No-Sticking Amplitude Residual
-
-Let $X_0(b,C)$ denote the no-sticking amplitude derived in Section 6:
-
-$$
-X_0(b,C)
-=
-\frac CP+S_0+
-\sqrt{B_0^2-\left(\frac{Q_0}{\omega}\right)^2}.
-$$
-
-Here, $S_0$ and $Q_0$ are computed from the no-sticking
-half-cycle conditions. They must not be confused with the
-initial conditions of the sliding segment that includes sticking.
-
-An equivalent matrix representation is
-
-$$
-M=
-\begin{pmatrix}
-0 & 1\\
--P/m & -(D+b)/m
-\end{pmatrix},
-\qquad
-H=\frac{\pi}{\omega},
-$$
-
-$$
-\boxed{
-\begin{pmatrix}
-S_0\\
-Q_0
-\end{pmatrix}
-=
-\left(I+e^{MH}\right)^{-1}
-\begin{pmatrix}
--2C/P\\
-0
-\end{pmatrix}.
-}
-$$
-
-This representation also applies when the characteristic roots
-are repeated.
-
-Define the amplitude residual
-
-$$
-\boxed{
-R_A(b,C)=X_0(b,C)-X_{\mathrm{meas}}.
-}
-$$
-
-### Sliding Endpoint Position Residual
-
-Using the measured duration of one sticking interval, define
-
-$$
-L=H-T_{s,\mathrm{meas}}.
-$$
-
-The release time $t_m$ is determined by the descending
-negative-force threshold crossing:
-
-$$
-G\sin(\omega t_m+\delta)-PX_{\mathrm{meas}}=-C.
-$$
-
-At release,
-
-$$
-z(t_m)=
-\begin{pmatrix}
-X_{\mathrm{meas}}\\
-0
-\end{pmatrix},
-\qquad
-z=
-\begin{pmatrix}
-x\\
-\dot x
-\end{pmatrix}.
-$$
-
-Define
-
-$$
-z_p(t)=
-\begin{pmatrix}
-x_p(t)\\
-\dot x_p(t)
-\end{pmatrix},
-\qquad
-d=
-\begin{pmatrix}
-C/P\\
-0
-\end{pmatrix}.
-$$
-
-The negative-sliding solution evaluated at time $L$ is
-
-$$
-z_{\mathrm{end}}
-=
-z_p(t_m+L)+d
-+
-e^{ML}
-\left[
-\begin{pmatrix}
-X_{\mathrm{meas}}\\
-0
-\end{pmatrix}
--z_p(t_m)-d
-\right].
-$$
-
-Define the position residual
-
-$$
-\boxed{
-R_x(b,C)
-=
-\begin{pmatrix}1&0\end{pmatrix}
-z_{\mathrm{end}}
-+X_{\mathrm{meas}}.
-}
-$$
-
-### Parameter Estimation
-
-The hybrid identification equations are
+The parameters can then be obtained numerically in MATLAB
+by solving the two endpoint equations:
 
 $$
 \boxed{
 \begin{cases}
-R_A(b,C)=0,\\
-R_x(b,C)=0.
+x(t_m+L;b,C)=-X,\\
+\dot x(t_m+L;b,C)=0.
 \end{cases}
 }
 $$
 
-With measurement and approximation errors, the numerical
-estimates are defined by
+## 7. Modified Identification Method
+
+Since the sticking intervals are short and difficult to measure
+accurately, we instead combine the no-sticking amplitude formula
+from Section 6 with the sliding endpoint position condition
+from Section 7:
 
 $$
 \boxed{
-(\hat b,\hat C)
-\in
-\underset{(b,C)\in\mathcal D}{\operatorname{argmin}}
-\left[
-\left(\frac{R_A(b,C)}{X_{\mathrm{meas}}}\right)^2
-+
-\left(\frac{R_x(b,C)}{X_{\mathrm{meas}}}\right)^2
-\right],
+\begin{cases}
+X_0(b,C)=X_{\mathrm{meas}},\\
+x(t_m+L;b,C)=-X_{\mathrm{meas}},
+\end{cases}
+\qquad
+L=\frac{\pi}{\omega}-T_{s,\mathrm{meas}}.
 }
 $$
 
-where the admissible domain includes
+Here, $X_0(b,C)$ is the no-sticking amplitude prediction.
+The second equation uses the sliding solution initialized at
+release from $x=X_{\mathrm{meas}}$, $\dot x=0$.
+
+MATLAB's `fminsearch` is used to adjust $b$ and $C$ until both
+equations are approximately satisfied. Multiple initial guesses
+are used, with the parameters constrained to be positive and
+the release condition required to have a real solution.
+
+The endpoint velocity is not used to identify the parameters.
+Instead, it is checked afterward:
 
 $$
-b\ge0,\qquad C\ge0,\qquad
-|PX_{\mathrm{meas}}-C|<G,
+\dot x(t_m+L;\hat b,\hat C)\approx0.
 $$
 
-and requires the no-sticking amplitude expression to be real
-and positive.
+Near a true stopping point, position changes slowly because
+the velocity is close to zero. The position condition may
+therefore be less sensitive to timing errors than the velocity
+condition, although this does not guarantee more reliable
+parameter estimates.
 
-### Sensitivity to Sticking-Time Error
+This method is approximate because the amplitude formula
+neglects sticking. The identified parameters are subsequently
+tested in the full stick-slip simulation and compared with
+the measured position and velocity responses.
 
-At a true stopping point,
+The output time shift is applied only for comparison and does
+not participate in parameter identification.
+
+## 8. Preliminary Experimental Results
+
+The hybrid identification method was applied to two sinusoidal
+tracking experiments with desired amplitudes of 25 mm and 50 mm,
+both at 0.5 Hz.
+
+The model parameters used were
 
 $$
-\frac{\partial x(t_m+L)}{\partial L}
+m=1.0\ \mathrm{kg},\qquad
+P=100\ \mathrm{N/m},\qquad
+D=8\ \mathrm{N\,s/m}.
+$$
+
+Static and kinetic Coulomb friction were assumed equal:
+
+$$
+C_s=C_k=C.
+$$
+
+### Data Preparation
+
+The measured position was centered using the extrema within
+the selected analysis window:
+
+$$
+x_{\mathrm{offset}}
 =
-\dot x(t_m+L)=0.
-$$
-
-Since $L=H-T_s$, the endpoint position has zero first-order
-sensitivity to $T_s$ at an exact stop, with parameters and
-release state held fixed.
-
-By contrast, the endpoint velocity has sensitivity
-
-$$
-\frac{\partial \dot x(t_m+L)}{\partial T_s}
+\frac{x_{\max}+x_{\min}}{2},
+\qquad
+x_{\mathrm{centered}}(t)
 =
--\ddot x(t_m+L^-),
+x_{\mathrm{measured}}(t)-x_{\mathrm{offset}}.
 $$
 
-which need not vanish.
+The removed offsets were $-0.550$ mm and $-0.835$ mm for the
+25 mm and 50 mm datasets, respectively.
 
-This motivates using endpoint position rather than endpoint
-velocity when the measured sticking duration is uncertain.
-However, the sensitivity benefit is local and need not hold
-at a hybrid solution whose endpoint velocity is nonzero.
+For visual comparison, the simulated signals were advanced
+by 70 ms. This time alignment was applied after simulation
+and did not participate in parameter identification.
 
-Furthermore, reduced sensitivity to timing error does not
-guarantee accurate parameter estimates. The two residual
-equations may be poorly conditioned or nearly dependent,
-particularly for short sticking intervals.
+### Identified Parameters
 
-### Validation and Limitations
+| Quantity | 25 mm input | 50 mm input |
+|---|---:|---:|
+| Measured response amplitude $X$ [mm] | 23.120 | 47.325 |
+| Identified $b$ [N s/m] | 6.66817 | 6.39715 |
+| Identified $C$ [N] | 0.234922 | 0.388243 |
+| Scaled identification residual norm | $4.10\times10^{-13}$ | $3.36\times10^{-13}$ |
+| Sliding endpoint velocity [m/s] | $3.49\times10^{-4}$ | $-5.53\times10^{-4}$ |
 
-The unused endpoint velocity residual is
+The viscous coefficients differ by approximately 4% relative
+to their mean. The Coulomb estimates show a larger variation
+between the two experiments.
+
+The small residual norms indicate that the two selected
+identification equations were solved accurately. They do not
+by themselves establish the accuracy of the friction model
+or the uniqueness of the parameter estimates.
+
+### Manual Tuning and Interpretation
+
+A shared manually tuned parameter set,
 
 $$
-\boxed{
-R_v(\hat b,\hat C)
-=
-\begin{pmatrix}0&1\end{pmatrix}
-z_{\mathrm{end}}.
-}
+b=6.5\ \mathrm{N\,s/m},\qquad C=0.30\ \mathrm{N},
 $$
 
-A physically consistent stopping point requires $R_v=0$.
-A nonzero value measures inconsistency between the hybrid
-estimate and the assumed stopping event.
+also gave close visual agreement with the measured position
+and velocity responses after time alignment.
 
-The following should also be checked:
+Together with the two identification results, this suggests
+that the viscous coefficient is relatively consistent across
+the tested amplitudes:
 
-- Negative velocity throughout the intended sliding interval.
-- Static-force feasibility during the intended sticking interval.
-- Agreement of the full stick-slip simulation with measured motion.
-- Sensitivity of the estimated parameters to changes in measured
-  amplitude, sticking duration, and optimization initial guesses.
+$$
+\boxed{b\approx6.5\pm0.2\ \mathrm{N\,s/m}.}
+$$
 
-Because $X_0$ neglects sticking, this method is an approximate
-identification procedure rather than an exact stick-slip solution.
+This range summarizes the present estimates and manual tuning;
+it is not a statistical confidence interval.
 
-Any applied output time shift is used only for plotting and
-time-aligned comparison. It does not enter the parameter
-identification equations.
+The Coulomb friction magnitude $C$ is more difficult to identify
+reliably. First, the hybrid method uses a no-sticking amplitude
+relation, so the effect of sticking is only partially represented.
+This approximation, together with uncertainty in the short
+sticking intervals, may contribute to the variation in the
+identified values.
+
+Second, the actual friction may depend on rod position.
+If the mechanism is viewed as a sliding rod supported by a sleeve,
+clearance between the rod and sleeve may allow slight tilting
+and uneven contact. As the rod moves farther from the center,
+changes in loading and moment may redistribute the contact
+pressure and potentially increase the normal contact forces,
+changing the friction and breakaway force.
+
+This provides a possible mechanical explanation for differences
+between the 25 mm and 50 mm experiments. However, the current
+results do not establish position-dependent friction: the two
+tests also involve different velocities, and the identified
+parameter $C$ combines static and kinetic friction under the
+assumption $C_s=C_k$.
