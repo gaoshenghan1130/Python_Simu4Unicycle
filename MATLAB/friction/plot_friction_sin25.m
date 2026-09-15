@@ -1,408 +1,343 @@
-clear; clc; close all;
+function fig = friction_dual_ui
+% FRICTION_DUAL_UI  Compare 25 mm and 50 mm friction experiments.
+% Save as friction_dual_ui.m and run: friction_dual_ui
+% Requires MATLAB with uifigure/uigridlayout (R2018b or later).
+% No Optimization Toolbox required. All model helpers are in this file.
+% Shared manual m,P,D,b,C; independent A,f,X,Ts and time shift per dataset.
+% Identification: no-sticking amplitude + stick-slip endpoint position.
+% Time shifts are display alignment only, not identified physical delays.
 
-%% ============================================================
-%  1. USER SETTINGS
-% =============================================================
+fig = uifigure('Name','Rod friction | 25 mm and 50 mm', ...
+    'Position',[60 50 1480 920]);
+root = uigridlayout(fig,[1 2]);
+root.ColumnWidth = {355,'1x'};
+root.Padding = [10 10 10 10];
+left = uigridlayout(root,[4 1]);
+left.RowHeight = {240,'1x',78,44};
+left.Padding = [0 0 0 0];
 
-fileName = 'friction_sine_A050.mat';
+sharedPanel = uipanel(left,'Title','Shared model / manual parameters');
+sg = uigridlayout(sharedPanel,[6 2]);
+sg.ColumnWidth = {'1x',115};
+sg.RowHeight = {28,28,28,28,28,28};
+sg.RowSpacing=4; sg.Padding=[8 8 8 8];
+mUI = numericRow(sg,1,'Mass m [kg]',1,[1e-6 Inf]);
+PUI = numericRow(sg,2,'P [N/m]',100,[1e-6 Inf]);
+DUI = numericRow(sg,3,'D [N s/m]',8,[0 Inf]);
+bUI = numericRow(sg,4,'Manual b [N s/m]',6,[0 Inf]);
+CUI = numericRow(sg,5,'Manual C [N]',0.42,[0 Inf]);
+uilabel(sg,'Text','Static = kinetic friction');
+uilabel(sg,'Text','Cs = Ck = C');
 
-m = 1.0;          % Moving mass [kg]
-P = 100;          % Position gain [N/m]
-D = 8;            % Velocity gain [N*s/m]
-
-A = 0.050;        % Desired amplitude [m]
-f = 0.5;          % Desired frequency [Hz]
-
-% Both simulations assume Cs = Ck = C.
-b_manual = 6.0;   % Viscous coefficient [N*s/m]
-C_manual = 0.42;   % Coulomb friction [N]
-
-% Measured steady-state quantities
-X_meas  = 0.04725; % Half peak-to-peak amplitude [m]
-Ts_meas = 0.035;   % ONE sticking interval [s]
-
-% Identification starting guesses
-b_guess = 1.0;
-C_guess = 0.2;
-
-% Output time alignment, applied to both simulations:
-% Negative = earlier / left
-% Positive = later / right
-% Does not participate in parameter identification.
-simTimeShift = -0.07;   % [s]
-
-initialVelocityTolerance = 1e-3;   % [m/s]
-
-%% ============================================================
-%  2. LOAD DATA
-% =============================================================
-
-S = load(fileName);
-
-t = S.t_s(:);
-xd = S.xd_m(:);
-vd = S.vd_mps(:);
-
-xMeasuredRaw = S.r_m(:);
-vMeasured = S.v_mps(:);
-idxOriginal = logical(S.analysis_mask(:));
-
-%% Automatically center measured position
-% Use only the selected analysis window.
-offsetMask = idxOriginal & isfinite(xMeasuredRaw);
-
-assert(any(offsetMask), ...
-    'No valid position samples in the analysis window.');
-
-xMaxMeasured = max(xMeasuredRaw(offsetMask));
-xMinMeasured = min(xMeasuredRaw(offsetMask));
-
-positionOffset = (xMaxMeasured+xMinMeasured)/2;
-
-% Apply the same correction to the entire measured position signal.
-xMeasured = xMeasuredRaw-positionOffset;
-
-fprintf('\n--- Automatic position centering ---\n');
-fprintf('Original maximum = %.6f mm\n',1000*xMaxMeasured);
-fprintf('Original minimum = %.6f mm\n',1000*xMinMeasured);
-fprintf('Removed offset   = %+.6f mm\n',1000*positionOffset);
-fprintf('Centered maximum = %.6f mm\n', ...
-    1000*max(xMeasured(offsetMask)));
-fprintf('Centered minimum = %.6f mm\n', ...
-    1000*min(xMeasured(offsetMask)));
-
-assert(all(diff(t)>0), 'Time must be strictly increasing.');
-assert(numel(xd)==numel(t) && numel(vd)==numel(t));
-assert(numel(xMeasured)==numel(t) && numel(vMeasured)==numel(t));
-assert(numel(idxOriginal)==numel(t) && any(idxOriginal));
-assert(all(isfinite([t;xd;vd;xMeasured;vMeasured])));
-assert(m>0 && P>0 && D>=0 && A>0 && f>0);
-assert(b_manual>=0 && C_manual>=0);
-assert(isscalar(simTimeShift) && isfinite(simTimeShift));
-
-omega = 2*pi*f;
-T = 1/f;
-H = T/2;
-
-assert(isfinite(X_meas) && X_meas>0);
-assert(isfinite(Ts_meas) && Ts_meas>0 && Ts_meas<H, ...
-    'Use 0 < Ts_meas < T/2.');
-
-p.m = m;
-p.P = P;
-p.D = D;
-p.A = A;
-p.w = omega;
-p.T = T;
-
-z0 = [xMeasured(1);vMeasured(1)];
-
-if abs(z0(2))<initialVelocityTolerance
-    z0(2)=0;
+tabs = uitabgroup(left);
+ctrl = cell(1,2);
+cache = cell(1,2);
+for k = 1:2
+    tab = uitab(tabs,'Title',sprintf('%d mm',25*k));
+    g = uigridlayout(tab,[12 2]);
+    g.ColumnWidth = {'1x',115};
+    g.RowSpacing=4; g.Padding=[8 8 8 8];
+    g.RowHeight = {22,30,28,28,28,28,30,28,28,30,42,'1x'};
+    lab = uilabel(g,'Text','MAT filename (editable, or Browse)');
+    lab.Layout.Row=1; lab.Layout.Column=[1 2];
+    c.file = uieditfield(g,'text','Value',sprintf('friction_sine_A%03d.mat',25*k));
+    c.file.Layout.Row=2; c.file.Layout.Column=1;
+    bt = uibutton(g,'Text','Browse...','ButtonPushedFcn',@(~,~)browseFile(k));
+    bt.Layout.Row=2; bt.Layout.Column=2;
+    c.A = numericRow(g,3,'Desired A [mm]',25*k,[1e-6 Inf]);
+    c.f = numericRow(g,4,'Frequency [Hz]',0.5,[1e-6 Inf]);
+    if k==1
+        initialX=0; initialTs=0;
+    else
+        initialX=47.25; initialTs=35;
+    end
+    c.X = numericRow(g,5,'Measured X [mm]',initialX,[0 Inf]);
+    c.Ts = numericRow(g,6,'One stop Ts [ms]',initialTs,[0 Inf]);
+    bt = uibutton(g,'Text','Use measured peak amplitude', ...
+        'ButtonPushedFcn',@(~,~)useMeasuredX(k));
+    bt.Layout.Row=7; bt.Layout.Column=[1 2];
+    c.shift = numericRow(g,8,'Output time shift [s]',-0.07,[-Inf Inf]);
+    c.shift.ValueChangedFcn = @(~,~)redrawAll();
+    c.extra = numericRow(g,9,'Extra measured offset [mm]',0,[-Inf Inf]);
+    c.center = uicheckbox(g,'Text','Auto-center measured position','Value',true);
+    c.center.Layout.Row=10; c.center.Layout.Column=[1 2];
+    lab=uilabel(g,'Text',{'Negative time shift = earlier. Positive = later.'; ...
+        'X=0: initialize from data. Ts=0: skip identification.'});
+    lab.Layout.Row=11; lab.Layout.Column=[1 2];
+    c.info = uitextarea(g,'Editable','off','Value',{'Ready. Choose the MAT file.'});
+    c.info.Layout.Row=12; c.info.Layout.Column=[1 2];
+    ctrl{k}=c;
 end
 
-%% ============================================================
-%  3. HYBRID PARAMETER IDENTIFICATION
-%
-%  Equation 1:
-%    X_no_stick(b,C) - X_meas = 0
-%
-%  Equation 2:
-%    x_slide(tm + L;b,C) + X_meas = 0
-%
-%  L = T/2 - Ts_meas
-%
-%  The endpoint velocity is NOT included in the objective.
-%  It is retained as a validation quantity.
-%
-%  Assumptions:
-%  - Same-period, half-wave symmetric response
-%  - Cs = Ck = C
-%  - Known sinusoidal reference A,f
-%  - No CBF or saturation intervention
-% =============================================================
+buttons=uigridlayout(left,[2 2]);
+buttons.Padding=[0 0 0 0]; buttons.RowHeight={30,30};
+runManual=uibutton(buttons,'Text','Run manual: both files', ...
+    'ButtonPushedFcn',@(~,~)runBoth(false));
+runFull=uibutton(buttons,'Text','Identify + run both', ...
+    'ButtonPushedFcn',@(~,~)runBoth(true));
+zoomUI=uicheckbox(buttons,'Text','Analysis window only','Value',true, ...
+    'ValueChangedFcn',@(~,~)redrawAll());
+uilabel(buttons,'Text','Shift edits redraw instantly.');
+status=uilabel(left,'Text','Edit parameters, then click a Run button.', ...
+    'WordWrap','on');
 
-G = A*hypot(P,D*omega);
+right=uigridlayout(root,[3 1]);
+right.Padding=[0 0 0 0];
+right.RowHeight={'1x',140,105};
+plots=uigridlayout(right,[3 2]);
+plots.RowHeight={'1x','1x','1x'};
+axesUI=gobjects(3,2);
+for k=1:2
+    for row=1:3
+        ax=uiaxes(plots);
+        ax.Layout.Row=row; ax.Layout.Column=k;
+        axesUI(row,k)=ax;
+        grid(ax,'on');
+        xlabel(ax,'Time [s]');
+    end
+    ylabel(axesUI(1,k),'Position [mm]');
+    ylabel(axesUI(2,k),'Velocity [m/s]');
+    ylabel(axesUI(3,k),'PD force [N]');
+    title(axesUI(1,k),sprintf('%d mm dataset',25*k));
+    linkaxes(axesUI(:,k),'x');
+end
+results=uitable(right,'ColumnName', ...
+    {'Dataset','Response','b [N s/m]','C [N]','X [mm]', ...
+     'RMSE raw [mm]','RMSE aligned [mm]','Shift [s]'}, ...
+    'ColumnEditable',false(1,8));
+logUI=uitextarea(right,'Editable','off','Value',{ ...
+    'Defaults preserve the supplied 50 mm settings (b=6, C=0.42).'; ...
+    '25 mm: X initializes from data; enter its measured Ts to identify.'; ...
+    'Changing m/P/D/b/C, offsets, X/Ts or file requires Run again.'; ...
+    'Two independent identifications; the manual b,C are shared.'});
 
-% Release condition: |P*X-C| < G
-margin = 1e-8*max(G,1);
-Clo = max(0,P*X_meas-G)+margin;
-Chi = P*X_meas+G-margin;
+    function browseFile(k)
+        [name,folder]=uigetfile('*.mat','Select experiment MAT file');
+        if isequal(name,0), return; end
+        ctrl{k}.file.Value=fullfile(folder,name);
+        status.Text='File selected. Click Run to reload and simulate.';
+    end
 
-assert(Chi>Clo, 'No admissible release-force interval.');
+    function useMeasuredX(k)
+        try
+            data=readExperiment(ctrl{k});
+            ctrl{k}.X.Value=1000*data.amplitude;
+            ctrl{k}.info.Value={sprintf('Measured X = %.5f mm',1000*data.amplitude); ...
+                sprintf('Removed offset = %+.5f mm',1000*data.offset)};
+            status.Text='X updated from analysis_mask. Click Identify + run both.';
+        catch err
+            uialert(fig,err.message,'Could not read amplitude');
+        end
+    end
 
-objective = @(q) identificationObjective( ...
-    q,Clo,Chi,p,X_meas,Ts_meas);
+    function runBoth(doIdentify)
+        runManual.Enable='off'; runFull.Enable='off';
+        cleanup=onCleanup(@restoreButtons); %#ok<NASGU>
+        messages={};
+        for k=1:2
+            status.Text=sprintf('Processing %d mm dataset...',25*k);
+            drawnow;
+            cache{k}=[];
+            try
+                c=ctrl{k};
+                data=readExperiment(c);
+                p=struct('m',mUI.Value,'P',PUI.Value,'D',DUI.Value, ...
+                    'A',c.A.Value/1000,'w',2*pi*c.f.Value,'T',1/c.f.Value);
+                if all(isnan(data.F))
+                    data.F=p.P*(data.xd-data.x)+p.D*(data.vd-data.v);
+                end
+                if c.X.Value==0
+                    c.X.Value=1000*data.amplitude;
+                end
+                X=c.X.Value/1000; Ts=c.Ts.Value/1000;
+                z0=[data.x(1);data.v(1)];
+                if abs(z0(2))<1e-3, z0(2)=0; end
+                b=bUI.Value; C=CUI.Value;
+                [xm,vm]=simulateRod(data.t,data.xd,data.vd,z0,p,b,C);
+                fm=p.P*(data.xd-xm)+p.D*(data.vd-vm);
+                q=struct('data',data,'manual',[xm vm fm], ...
+                    'b',b,'C',C,'identified',[],'bi',NaN,'Ci',NaN,'p',p);
+                notes={sprintf('Offset removed: %+.5f mm',1000*data.offset); ...
+                    sprintf('Measured peak amplitude: %.5f mm',1000*data.amplitude)};
+                if doIdentify && Ts>0
+                    try
+                        status.Text=sprintf('Identifying %d mm dataset...',25*k);
+                        drawnow;
+                        fit=identifyHybrid(p,X,Ts,max(b,1e-3),max(C,1e-3));
+                        [xi,vi]=simulateRod(data.t,data.xd,data.vd,z0,p,fit.b,fit.C);
+                        fi=p.P*(data.xd-xi)+p.D*(data.vd-vi);
+                        q.identified=[xi vi fi]; q.bi=fit.b; q.Ci=fit.C;
+                        notes=[notes; {sprintf('Identified b=%.6g, C=%.6g',fit.b,fit.C); ...
+                            sprintf('Scaled residual: %.3g',fit.norm); ...
+                            sprintf('Endpoint velocity: %.3g m/s',fit.vEnd); ...
+                            sprintf('Checks: branch %d, slide %d, stick %d, endpoint %d', ...
+                            fit.branch,fit.check.slidingOK,fit.check.stickingOK,fit.check.endpointOK)}];
+                        if fit.norm>1e-3 || fit.exit<=0 || ~fit.branch || ...
+                                ~fit.check.slidingOK || ~fit.check.stickingOK || ~fit.check.endpointOK
+                            notes{end+1}='Approximation checks failed: inspect the simulated response.';
+                        end
+                    catch fitError
+                        notes{end+1}=['Identification failed: ' fitError.message];
+                    end
+                elseif doIdentify
+                    notes{end+1}='Identification skipped: enter measured Ts > 0 ms.';
+                else
+                    notes{end+1}='Manual simulation only. Use Identify + run both for the red line.';
+                end
+                if data.cbf
+                    notes{end+1}='CBF/command changes detected; model uses unconstrained PD.';
+                end
+                if abs(data.amplitude-X)>0.1*X
+                    notes{end+1}='Entered X differs >10% from raw half peak-to-peak.';
+                end
+                cache{k}=q;
+                c.info.Value=notes;
+                messages=[messages;{sprintf('--- %d mm ---',25*k)};notes]; %#ok<AGROW>
+            catch err
+                ctrl{k}.info.Value={['Error: ' err.message]};
+                messages=[messages;{sprintf('%d mm: %s',25*k,err.message)}]; %#ok<AGROW>
+            end
+        end
+        logUI.Value=messages;
+        redrawAll();
+        status.Text='Finished. Change parameters and rerun; time shifts update immediately.';
+    end
 
-options = optimset( ...
-    'Display','off', ...
-    'MaxIter',1500, ...
-    'MaxFunEvals',4000, ...
-    'TolX',1e-9, ...
-    'TolFun',1e-12);
+    function restoreButtons()
+        if isvalid(fig)
+            runManual.Enable='on'; runFull.Enable='on';
+        end
+    end
 
-bStarts = [
-    max(b_guess,1e-3), ...
-    max(b_guess/5,1e-3), ...
-    max(5*b_guess,1e-3)
-];
-
-CStarts = [
-    C_guess, ...
-    Clo+0.25*(Chi-Clo), ...
-    Clo+0.75*(Chi-Clo)
-];
-
-bestCost = Inf;
-bestQ = [];
-bestExit = NaN;
-
-for j = 1:numel(bStarts)
-
-    Cstart = min(max(CStarts(j),Clo+0.001*(Chi-Clo)), ...
-                                  Chi-0.001*(Chi-Clo));
-
-    fraction = (Cstart-Clo)/(Chi-Clo);
-    q0 = [log(bStarts(j));log(fraction/(1-fraction))];
-
-    [q,cost,exitflag] = fminsearch(objective,q0,options);
-
-    if cost<bestCost
-        bestCost = cost;
-        bestQ = q;
-        bestExit = exitflag;
+    function redrawAll()
+        rows=cell(0,8);
+        for k=1:2
+            for r=1:3, cla(axesUI(r,k)); end
+            if isempty(cache{k})
+                title(axesUI(1,k),sprintf('%d mm: load/run to display',25*k));
+                continue;
+            end
+            q=cache{k}; d=q.data; shift=ctrl{k}.shift.Value;
+            measured=[d.x d.v d.F];
+            manual=interp1(d.t+shift,q.manual,d.t,'linear',NaN);
+            identified=[];
+            if ~isempty(q.identified)
+                identified=interp1(d.t+shift,q.identified,d.t,'linear',NaN);
+            end
+            for r=1:3
+                ax=axesUI(r,k); hold(ax,'on'); scale=1;
+                if r==1, scale=1000; end
+                plot(ax,d.t,scale*measured(:,r),'Color',[.12 .12 .12], ...
+                    'DisplayName','Measured','LineWidth',1);
+                plot(ax,d.t,scale*manual(:,r),'Color',[0 .45 .74], ...
+                    'DisplayName','Manual b,C','LineWidth',1.2);
+                if ~isempty(identified)
+                    plot(ax,d.t,scale*identified(:,r),'Color',[.85 .2 .1], ...
+                        'DisplayName','Identified b,C','LineWidth',1.2);
+                end
+                grid(ax,'on');
+                if zoomUI.Value
+                    xlim(ax,[min(d.t(d.mask)) max(d.t(d.mask))]);
+                else
+                    xlim(ax,[d.t(1) d.t(end)]);
+                end
+                if r==1, legend(ax,'show','Location','best'); end
+                hold(ax,'off');
+            end
+            title(axesUI(1,k),sprintf('%d mm | offset %+.3f mm | shift %+.3f s', ...
+                25*k,1000*d.offset,shift));
+            ix=d.mask & all(isfinite(manual),2);
+            if ~isempty(identified), ix=ix & all(isfinite(identified),2); end
+            if nnz(ix)<2
+                status.Text='Time shift leaves no comparison overlap in an analysis window.';
+                continue;
+            end
+            amp=@(x)1000*(max(x(ix))-min(x(ix)))/2;
+            rmse=@(x)1000*sqrt(mean((x(ix)-d.x(ix)).^2));
+            tag=sprintf('%d mm',25*k);
+            rows(end+1,:)={tag,'Measured',NaN,NaN,amp(d.x),0,0,0}; %#ok<AGROW>
+            rows(end+1,:)={tag,'Manual',q.b,q.C,amp(manual(:,1)), ...
+                rmse(q.manual(:,1)),rmse(manual(:,1)),shift}; %#ok<AGROW>
+            if ~isempty(identified)
+                rows(end+1,:)={tag,'Identified',q.bi,q.Ci,amp(identified(:,1)), ...
+                    rmse(q.identified(:,1)),rmse(identified(:,1)),shift}; %#ok<AGROW>
+            end
+        end
+        results.Data=rows;
     end
 end
 
-if isempty(bestQ) || bestCost>=1e19
-    error('No valid identification candidate found.');
+function field=numericRow(parent,row,label,value,limits)
+lab=uilabel(parent,'Text',label);
+lab.Layout.Row=row; lab.Layout.Column=1;
+field=uieditfield(parent,'numeric','Value',value,'Limits',limits);
+field.Layout.Row=row; field.Layout.Column=2;
 end
 
-[b_identified,C_identified] = ...
-    decodeParameters(bestQ,Clo,Chi);
-
-[Rhybrid,detail] = hybridResidual( ...
-    b_identified,C_identified,p,X_meas,Ts_meas);
-
-candidateCheck = checkCandidate( ...
-    b_identified,C_identified,p,X_meas,Ts_meas,detail);
-
-% Validate the hypothetical no-sticking waveform separately.
-noStickValid = checkNoStick( ...
-    b_identified,C_identified,p);
-
-fprintf('\n--- Hybrid parameter identification ---\n');
-fprintf('Measured X               = %.8f m\n',X_meas);
-fprintf('Measured Ts              = %.8f s\n',Ts_meas);
-fprintf('Identified b             = %.8f N*s/m\n',b_identified);
-fprintf('Identified C             = %.8f N\n',C_identified);
-fprintf('No-sticking amplitude    = %.8f m\n',detail.XnoStick);
-fprintf('Amplitude residual       = %.3g m\n',Rhybrid(1));
-fprintf('Endpoint position error  = %.3g m\n',Rhybrid(2));
-fprintf('Endpoint velocity        = %.3g m/s (validation only)\n', ...
-    detail.zEnd(2));
-fprintf('Scaled objective norm    = %.3g\n',sqrt(bestCost));
-fprintf('Optimizer exit flag      = %d\n',bestExit);
-fprintf('No-sticking branch check = %d\n',noStickValid);
-fprintf('Sliding direction check  = %d\n',candidateCheck.slidingOK);
-fprintf('Sticking force check     = %d\n',candidateCheck.stickingOK);
-fprintf('Approx. endpoint check   = %d\n',candidateCheck.endpointOK);
-
-if bestExit<=0 || sqrt(bestCost)>1e-3
-    warning('Hybrid equations were not solved to a small residual.');
+function d=readExperiment(c)
+filename=strtrim(c.file.Value);
+if ~isfile(filename)
+    error('File not found: %s. Edit the path or use Browse.',filename);
 end
-
-if ~noStickValid
-    warning(['The no-sticking amplitude branch fails its velocity check. ', ...
-        'Treat the amplitude expression as an unvalidated approximation.']);
+S=load(filename);
+required={'t_s','xd_m','vd_mps','r_m','v_mps','analysis_mask'};
+for j=1:numel(required)
+    if ~isfield(S,required{j}), error('Missing field: %s',required{j}); end
 end
-
-if ~candidateCheck.slidingOK || ~candidateCheck.stickingOK ...
-        || ~candidateCheck.endpointOK
-    warning(['The hybrid estimate does not closely satisfy all ', ...
-        'stick-slip boundary conditions. Inspect the simulations.']);
+d.t=S.t_s(:); d.xd=S.xd_m(:); d.vd=S.vd_mps(:);
+d.x=S.r_m(:); d.v=S.v_mps(:); d.mask=logical(S.analysis_mask(:));
+n=numel(d.t);
+assert(n>=3 && all(diff(d.t)>0),'Time must increase and have at least 3 samples.');
+assert(all([numel(d.xd),numel(d.vd),numel(d.x),numel(d.v),numel(d.mask)]==n), ...
+    'Data arrays must have the same length.');
+assert(all(isfinite([d.t;d.xd;d.vd;d.x;d.v])),'Data contains NaN or Inf.');
+assert(nnz(d.mask)>=2,'analysis_mask needs at least 2 valid samples.');
+d.offset=0;
+if c.center.Value
+    d.offset=(max(d.x(d.mask))+min(d.x(d.mask)))/2;
 end
-
-%% ============================================================
-%  4. RUN BOTH MODELS
-%
-%  Fpd = P*(xd-x) + D*(vd-v)
-%
-%  Sliding:
-%    m*a = Fpd - b*v - C*sign(v)
-%
-%  Sticking:
-%    v = 0 and |Fpd| <= C
-%
-%  Simulation uses logged xd and vd.
-% =============================================================
-
-[xManualRaw,vManualRaw,stickingManualRaw] = simulateRod( ...
-    t,xd,vd,z0,p,b_manual,C_manual);
-
-[xIdentifiedRaw,vIdentifiedRaw,stickingIdentifiedRaw] = simulateRod( ...
-    t,xd,vd,z0,p,b_identified,C_identified);
-
-FmanualRaw = P*(xd-xManualRaw)+D*(vd-vManualRaw);
-FidentifiedRaw = P*(xd-xIdentifiedRaw)+D*(vd-vIdentifiedRaw);
-
-%% ============================================================
-%  5. TIME ALIGNMENT
-% =============================================================
-
-tSim = t+simTimeShift;
-
-xManual = interp1(tSim,xManualRaw,t,'linear',NaN);
-vManual = interp1(tSim,vManualRaw,t,'linear',NaN);
-Fmanual = interp1(tSim,FmanualRaw,t,'linear',NaN);
-
-xIdentified = interp1(tSim,xIdentifiedRaw,t,'linear',NaN);
-vIdentified = interp1(tSim,vIdentifiedRaw,t,'linear',NaN);
-Fidentified = interp1(tSim,FidentifiedRaw,t,'linear',NaN);
-
-stickingManual = stickingManualRaw+simTimeShift;
-stickingIdentified = stickingIdentifiedRaw+simTimeShift;
-
-valid = isfinite(xManual) & isfinite(vManual) ...
-      & isfinite(Fmanual) ...
-      & isfinite(xIdentified) & isfinite(vIdentified) ...
-      & isfinite(Fidentified);
-
-idx = idxOriginal & valid;
-
-assert(nnz(idx)>=2, ...
-    'Time shift leaves too few comparison samples.');
-
-fprintf('\nSimulation time shift = %+.6f s\n',simTimeShift);
-
-%% ============================================================
-%  6. COMPARE AMPLITUDE AND RMSE
-% =============================================================
-
-Xdata = 0.5*(max(xMeasured(idx))-min(xMeasured(idx)));
-Xmanual = 0.5*(max(xManual(idx))-min(xManual(idx)));
-Xidentified = 0.5*(max(xIdentified(idx))-min(xIdentified(idx)));
-
-rmseManualRaw = sqrt(mean( ...
-    (xManualRaw(idx)-xMeasured(idx)).^2));
-
-rmseIdentifiedRaw = sqrt(mean( ...
-    (xIdentifiedRaw(idx)-xMeasured(idx)).^2));
-
-rmseManual = sqrt(mean( ...
-    (xManual(idx)-xMeasured(idx)).^2));
-
-rmseIdentified = sqrt(mean( ...
-    (xIdentified(idx)-xMeasured(idx)).^2));
-
-comparison = table( ...
-    {'Measured';'Manual model';'Identified model'}, ...
-    [NaN;b_manual;b_identified], ...
-    [NaN;C_manual;C_identified], ...
-    1000*[Xdata;Xmanual;Xidentified], ...
-    1000*[0;rmseManualRaw;rmseIdentifiedRaw], ...
-    1000*[0;rmseManual;rmseIdentified], ...
-    'VariableNames', { ...
-    'Response', ...
-    'b_Ns_per_m', ...
-    'C_N', ...
-    'Amplitude_mm', ...
-    'RMSE_before_shift_mm', ...
-    'RMSE_after_shift_mm'});
-
-disp(comparison);
-
-fprintf(['Amplitude is half peak-to-peak over the comparison window; ', ...
-    'measurement noise can affect it.\n']);
-
-if isfield(S,'Fpd_N') && isfield(S,'Fcmd_N')
-    difference = abs(S.Fpd_N(:)-S.Fcmd_N(:));
-
-    if any(difference(idxOriginal)>1e-3)
-        warning(['PD and applied commands differ. ', ...
-            'These simulations omit CBF/saturation intervention.']);
-    end
-end
-
-%% ============================================================
-%  7. PLOTS
-% =============================================================
-
-colors = [
-    0.10 0.10 0.10;
-    0.00 0.45 0.74;
-    0.85 0.20 0.10
-];
-
-figure('Color','w','Name','Measured vs rod simulations');
-tiledlayout(3,1);
-
-ax1 = nexttile;
-
-plot(t,1000*xMeasured,'Color',colors(1,:),'LineWidth',1);
-hold on;
-plot(t,1000*xManual,'Color',colors(2,:),'LineWidth',1.2);
-plot(t,1000*xIdentified,'Color',colors(3,:),'LineWidth',1.2);
-
-ylabel('Position (mm)');
-legend('Measured','Manual b,C','Identified b,C','Location','best');
-title(sprintf('Simulation time shift = %+.4f s',simTimeShift));
-grid on;
-
-ax2 = nexttile;
-
-plot(t,vMeasured,'Color',colors(1,:),'LineWidth',1);
-hold on;
-plot(t,vManual,'Color',colors(2,:),'LineWidth',1.2);
-plot(t,vIdentified,'Color',colors(3,:),'LineWidth',1.2);
-
-ylabel('Velocity (m/s)');
-grid on;
-
-ax3 = nexttile;
-
+d.offset=d.offset+c.extra.Value/1000;
+d.x=d.x-d.offset;
+d.amplitude=(max(d.x(d.mask))-min(d.x(d.mask)))/2;
+d.F=NaN(n,1);
 if isfield(S,'Fpd_N')
-    plot(t,S.Fpd_N(:),'Color',colors(1,:),'LineWidth',1);
-else
-    plot(t,P*(xd-xMeasured)+D*(vd-vMeasured), ...
-        'Color',colors(1,:),'LineWidth',1);
+    assert(numel(S.Fpd_N)==n,'Fpd_N length mismatch.');
+    d.F=S.Fpd_N(:);
+end
+d.cbf=false;
+if isfield(S,'Fcmd_N') && isfield(S,'Fpd_N')
+    assert(numel(S.Fcmd_N)==n,'Fcmd_N length mismatch.');
+    difference=abs(S.Fpd_N(:)-S.Fcmd_N(:));
+    d.cbf=any(difference(d.mask)>1e-3);
+end
 end
 
-hold on;
-plot(t,Fmanual,'Color',colors(2,:),'LineWidth',1.2);
-plot(t,Fidentified,'Color',colors(3,:),'LineWidth',1.2);
-
-ylabel('PD force (N)');
-xlabel('Time (s)');
-legend('Measured/logged PD','Manual model','Identified model', ...
-    'Location','best');
-grid on;
-
-linkaxes([ax1,ax2,ax3],'x');
-
-figure('Color','w','Name','Analysis window comparison');
-
-plot(t,1000*xMeasured,'Color',colors(1,:),'LineWidth',1);
-hold on;
-plot(t,1000*xManual,'Color',colors(2,:),'LineWidth',1.2);
-plot(t,1000*xIdentified,'Color',colors(3,:),'LineWidth',1.2);
-
-xlim([min(t(idx)),max(t(idx))]);
-xlabel('Time (s)');
-ylabel('Position (mm)');
-legend('Measured','Manual b,C','Identified b,C','Location','best');
-
-title({
-    sprintf('Manual: b=%.4g, C=%.4g | Identified: b=%.4g, C=%.4g', ...
-        b_manual,C_manual,b_identified,C_identified)
-    sprintf('Simulation time shift = %+.4f s',simTimeShift)
-});
-
-grid on;
-
-%% ============================================================
-%  LOCAL FUNCTIONS
-% =============================================================
+function fit=identifyHybrid(p,X,Ts,bGuess,CGuess)
+assert(X>0 && Ts>0 && Ts<pi/p.w,'Need X>0 and 0<Ts<T/2.');
+G=p.A*hypot(p.P,p.D*p.w);
+margin=1e-8*max(G,1);
+lo=max(0,p.P*X-G)+margin; hi=p.P*X+G-margin;
+assert(hi>lo,'No valid release-force interval.');
+objective=@(q)identificationObjective(q,lo,hi,p,X,Ts);
+opt=optimset('Display','off','MaxIter',1500,'MaxFunEvals',4000, ...
+    'TolX',1e-9,'TolFun',1e-12);
+bStarts=[bGuess,max(bGuess/5,1e-3),max(5*bGuess,1e-3)];
+cStarts=[CGuess,lo+.25*(hi-lo),lo+.75*(hi-lo)];
+best=Inf; bestQ=[]; fit.exit=NaN;
+for j=1:3
+    cc=min(max(cStarts(j),lo+.001*(hi-lo)),hi-.001*(hi-lo));
+    fraction=(cc-lo)/(hi-lo);
+    q0=[log(bStarts(j));log(fraction/(1-fraction))];
+    [q,cost,flag]=fminsearch(objective,q0,opt);
+    if cost<best, best=cost; bestQ=q; fit.exit=flag; end
+end
+assert(~isempty(bestQ) && best<1e19,'No valid identification candidate.');
+[fit.b,fit.C]=decodeParameters(bestQ,lo,hi);
+[~,detail]=hybridResidual(fit.b,fit.C,p,X,Ts);
+fit.norm=sqrt(best); fit.vEnd=detail.zEnd(2);
+fit.check=checkCandidate(fit.b,fit.C,p,X,Ts,detail);
+fit.branch=checkNoStick(fit.b,fit.C,p);
+end
 
 function [b,C] = decodeParameters(q,Clo,Chi)
     b = exp(q(1));
