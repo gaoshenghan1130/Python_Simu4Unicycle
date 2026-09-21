@@ -23,7 +23,6 @@ velocity_comparison.png
 *.zip
 *.pdf
 *.asv
-*.mat
 
 .vscode/*
 
