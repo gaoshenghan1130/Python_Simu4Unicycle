@@ -31,6 +31,7 @@ PA\sin(\omega t)+DA\omega\cos(\omega t)+C,
 } 
 $$
 
+
 Assume $m,P,D+b>0$, $A,\omega>0$, and $C\geq0$.
 The following analysis concerns sliding motion without sticking.
 

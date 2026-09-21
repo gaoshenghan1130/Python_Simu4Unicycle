@@ -1,34 +1,18 @@
-%% Pole placement at the stationary upright equilibrium
-% Run with the supplied model functions in this folder.
-% Requires Control System Toolbox (place).
-% Feedback convention: u = -K*(x-x_eq), where u = [F; M2].
-% This equilibrium has eight controllable states and four uncontrollable
-% zero poles. Only the two independent 4-state blocks are assigned poles.
-% No simulation is performed. The script prints gains only.
-clear; clc;
-addpath(fileparts(mfilename('fullpath')));
-
-%% Parameters (SI units; same values as unicycle_model.md)
-p.g   = 9.81;
-p.R   = 0.253;
-p.mw  = 2.436;
-p.JW1 = 0.09099921839;
-p.JW2 = 0.04591427768;
-p.mr  = 2.3;
-p.JR  = 0.0517629;
-p.BR  = 0;
-p.h   = 0.025;
-p.mp  = 2.799;
-p.JPx = 0.01290418213;
-p.JPy = 0.02090219895;
-p.JPz = 0.01118711607;
-p.BP  = 0;
-
-%% Desired poles: edit these two lines
-% Illustrative choices, not experimentally tuned gains.
-poles_lateral      = [-2.25, -1.25, -2.00, -1.50];
-poles_longitudinal = [-3, -3.5, -4, -4.5];
-
+function [K,info] = pole_placement(p,d)
+% Stationary upright design using the CURRENT physical parameters.
+% Edit config/pole_placement_settings.m to select all eight desired poles.
+% With no arguments, print the default design; never clears the workspace.
+root=fileparts(fileparts(mfilename('fullpath')));
+addpath(fullfile(root,'model'),fullfile(root,'config'));
+if nargin<1, p=model_parameters(); end
+if nargin<2, d=pole_placement_settings(); end
+if isfield(d,'lateral_states') && ~ismember(lower(char(d.lateral_states)),{'balance','balance_chi'})
+    error('unicycle:LateralStates','Use balance or balance_chi for lateral_states.');
+end
+if isfield(d,'lateral_states') && strcmpi(d.lateral_states,'balance_chi')
+    [K,info]=rolling_chi_placement(p,d);
+    return;
+end
 %% Linearize the supplied full nonlinear model
 % x = [sigma1 sigma2 sigma3 sigma_r sigma_g psi theta phi r gamma xG yG]'
 % This decomposition is specific to rest, upright lean/body and centered rod.
@@ -77,28 +61,74 @@ B_expected(5:8,2) = B_longitudinal;
 assert(norm(A_z-A_expected,inf) < 1e-9 && ...
        norm(B_z-B_expected,inf) < 1e-9, ...
        'The assumed stationary-equilibrium block decomposition does not hold.');
-assert(rank(ctrb(A_lateral,B_lateral)) == 4, ...
+assert(rank(controllability_matrix(A_lateral,B_lateral)) == 4, ...
     'Lateral block is not controllable with these parameters.');
-assert(rank(ctrb(A_longitudinal,B_longitudinal)) == 4, ...
+assert(rank(controllability_matrix(A_longitudinal,B_longitudinal)) == 4, ...
     'Longitudinal block is not controllable with these parameters.');
 
 %% Compute gains and embed them in the original 12-state ordering
-K_lateral = place(A_lateral,B_lateral,poles_lateral);
-K_longitudinal = place(A_longitudinal,B_longitudinal,poles_longitudinal);
+K_lateral = assign_poles(A_lateral,B_lateral,d.lateral,d.method);
+K_longitudinal = assign_poles(A_longitudinal,B_longitudinal,d.longitudinal,d.method);
 K = zeros(2,12);
 K(1,idx_lateral) = K_lateral;
 K(2,idx_longitudinal) = K_longitudinal;
 
-%% Print gains only (the minus sign belongs to the feedback law)
-fprintf('F = -K_lateral * [theta; r; sigma1; sigma_r]\n');
-fprintf('K_lateral = [%.10g  %.10g  %.10g  %.10g]\n\n',K_lateral);
-fprintf('M2 = -K_longitudinal * [phi; gamma; sigma2; sigma_g]\n');
-fprintf('K_longitudinal = [%.10g  %.10g  %.10g  %.10g]\n\n',K_longitudinal);
-fprintf('[F; M2] = -K*(x-x_eq)\n');
-fprintf('K columns: sigma1 sigma2 sigma3 sigma_r sigma_g psi theta phi r gamma xG yG\n');
-fprintf('K = [\n');
-for i = 1:2
-    fprintf(' %.10g',K(i,:));
-    fprintf(';\n');
+
+info.A=A; info.B=B; info.x_eq=x_eq; info.u_eq=u_eq;
+info.idx_lateral=idx_lateral; info.idx_longitudinal=idx_longitudinal;
+info.K_lateral=K_lateral; info.K_longitudinal=K_longitudinal;
+info.requested_lateral=d.lateral; info.requested_longitudinal=d.longitudinal;
+info.actual_lateral=eig(A_lateral-B_lateral*K_lateral);
+info.actual_longitudinal=eig(A_longitudinal-B_longitudinal*K_longitudinal);
+info.full_poles=eig(A-B*K);
+info.method=d.method;
+if nargout==0
+    fprintf('u = -K*x; columns: sigma1 sigma2 sigma3 sigma_r sigma_g psi theta phi r gamma xG yG\n');
+    disp(K);
+    fprintf('Lateral poles / longitudinal poles:\n');
+    disp([info.actual_lateral,info.actual_longitudinal]);
+    fprintf('Four unassigned zero poles remain in the full stationary model.\n');
 end
-fprintf('];\n');
+end
+
+function C=controllability_matrix(A,B)
+C=[B,A*B,A^2*B,A^3*B];
+end
+
+function K=assign_poles(A,B,poles,method)
+validateattributes(poles,{'numeric'},{'vector','numel',4,'finite'});
+poles=poles(:).';
+coeff=poly(poles);
+if norm(imag(coeff),inf)>1e-10*max(1,norm(coeff,inf))
+    error('unicycle:PolePairs','Complex poles must occur in conjugate pairs.');
+end
+if any(real(poles)>=0)
+    error('unicycle:UnstablePoles','All requested poles must have negative real parts.');
+end
+switch lower(char(method))
+    case 'acker'
+        % SISO Ackermann formula supports repeated poles without a toolbox.
+        C=controllability_matrix(A,B);
+        if rcond(C)<1e-12
+            error('unicycle:Conditioning','Controllability matrix is ill-conditioned; revise parameters.');
+        end
+        q=real(coeff);
+        PA=A^4+q(2)*A^3+q(3)*A^2+q(4)*A+q(5)*eye(4);
+        K=([0 0 0 1]/C)*PA;
+    case 'place'
+        if isempty(which('place'))
+            error('unicycle:Toolbox','place requires Control System Toolbox; select acker instead.');
+        end
+        if numel(unique(poles))~=4
+            error('unicycle:RepeatedPoles','SISO place requires distinct poles; select acker for repeated poles.');
+        end
+        K=place(A,B,poles);
+    otherwise
+        error('unicycle:PoleMethod','Unknown pole method: %s',method);
+end
+% Polynomial check is appropriate even for numerically split repeated roots.
+actual=poly(A-B*K);
+if norm(actual-real(coeff),inf)>1e-6*max(1,norm(coeff,inf))
+    error('unicycle:PoleAccuracy','Pole assignment failed the characteristic-polynomial check.');
+end
+end

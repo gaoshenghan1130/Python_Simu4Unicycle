@@ -1,8 +1,8 @@
 function result = simulate_unicycle(p,c,s)
-% Continuous-time PD simulation; output_dt is not a controller sample time.
+% Continuous-time closed-loop simulation; output_dt is not a controller sample time.
 x0=initial_state(s,p);
 assert(abs(s.theta0)<s.tilt_limit,'Initial tilt exceeds stop limit.');
-control=@(t,x) pd_controller(t,x,p,c);
+control=@(t,x) controller_output(t,x,p,c);
 rhs=@(t,x) model_rhs(t,x,control(t,x),p);
 times=(0:s.output_dt:s.t_end)';
 if times(end)<s.t_end, times(end+1)=s.t_end; end
