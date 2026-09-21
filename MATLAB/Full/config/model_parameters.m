@@ -7,7 +7,7 @@ p.JW1=0.09099921839;
 p.JW2=0.04591427768;
 p.mr=2.3;
 p.JR=0.0517629;
-p.BR=0;
+p.BR=0; % Rod viscous damping b [N*s/m], force = -BR*r_dot
 p.h=0.025;
 p.mp=2.799;
 p.JPx=0.01290418213;

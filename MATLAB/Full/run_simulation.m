@@ -1,11 +1,12 @@
-% Run this script to simulate and plot. No additional toolbox required.
+% Run this script after editing config/experiment_settings.m.
 project_root=fileparts(mfilename('fullpath'));
 addpath(fullfile(project_root,'config'),fullfile(project_root,'model'), ...
-        fullfile(project_root,'controllers'),fullfile(project_root,'simulation'));
-p=model_parameters();
-c=controller_parameters();
-s=simulation_settings();
-result=simulate_unicycle(p,c,s);
-plot_simulation(result);
-% result.X: rows are time samples, columns follow the documented state order.
-% result.U: columns are [F,M2]. Data remain in the workspace; no files saved.
+    fullfile(project_root,'controllers'),fullfile(project_root,'simulation'), ...
+    fullfile(project_root,'analysis'));
+experiment=experiment_settings();
+results=run_experiment(experiment);
+plot_simulation(results);
+if isfield(results(1).controller,'reference_rate'), plot_heading(results); end
+result=results(1); % backward-compatible first run; all cases are in results
+% results(k): t, X, U, parameters, controller (including generated K),
+% settings, design, label, sweep_value, and tilt-event information.
