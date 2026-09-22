@@ -1,278 +1,179 @@
-# Full model：杆阻尼 b=6.5、近原点极点及不同速度的稳定性测试
+# Full Model Simulation Report: Open-Loop Oscillations and Pole-Placement Tolerance
 
-## 结论
+Updated: 2026-09-22. Four open-loop cases and 130 closed-loop simulations. Closed-loop initial perturbations are limited to **theta, r, and chi**.
 
-杆的粘性阻尼已在完整模型中实现，原参数 `BR=0`；本次已将 `config/model_parameters.m` 的 `BR` 设为 **6.5 N·s/m**，没有重复添加阻尼力。期望极点设置在左半平面 **−1 s⁻¹ 附近**
-在 0.05、0.1、0.2、0.5、1、2、3、5 m/s 的每个速度上，重新线性化并生成对应控制器。9 个指定极点全部配置成功，但全模型还保留 3 个零极点。使用当前配置初值（侧倾 2.8°、gamma=0.1 rad）时，**8 组均未通过非线性稳定性测试**。使用零侧倾、零俯仰、0.1° 航向误差的小扰动时，8 组均完成 60 s 并满足本文的末段收敛判据。
+## Table of Contents
 
-因此，这组慢极点不能作为当前配置初值下已稳定的控制参数；小扰动测试通过也不等于完整 12 维系统渐近稳定。
+- [1. Lateral Open Loop: Rod Mass 0.272 kg](#open-0272)
+- [2. Lateral Open Loop: Rod Mass 1 kg](#open-1)
+- [3. Lateral Open Loop: Rod Mass 2.3 kg](#open-23)
+- [4. Damped Lateral Open Loop: Rod Mass 0.272 kg](#open-damped)
+- [5. 2.375 m/s: Initial Lean Tolerance vs. Pole Location](#v-2.375-tolerance)
+- [6. 2.375 m/s: Initial theta Responses](#v-2.375-theta)
+- [7. 2.375 m/s: Initial r Responses](#v-2.375-r)
+- [8. 2.375 m/s: Initial chi Responses](#v-2.375-chi)
+- [9. 1 m/s: Initial Lean Tolerance vs. Pole Location](#v-1-tolerance)
+- [10. 1 m/s: Initial theta Responses](#v-1-theta)
+- [11. 1 m/s: Initial r Responses](#v-1-r)
+- [12. 1 m/s: Initial chi Responses](#v-1-chi)
+- [13. Why Initial Lean Can Leave a Steady Offset](#lean-offset-proof)
 
-## 1. 状态、输入和符号
+## Experimental Settings
 
-完整模型状态顺序不变：
+- **Open-loop comparison:** initial speed 2.375 m/s, theta0=1°, all other initial perturbations zero. Lateral actuator force F=0; longitudinal gamma PD remains active, `M2=3*gamma+0.8*gamma_dot`. Speed is not held constant by this PD controller. Rod masses are 0.272, 1, and 2.3 kg without damping, plus 0.272 kg with b=6.5 N·s/m.
+- **Closed-loop comparison:** rod mass **2.3 kg**, viscous rod damping **b=6.5 N·s/m**, and BP=0. Initial and reference speeds match at either **2.375 or 1 m/s**. The Jacobian and gains are recomputed at each speed and pole setting. There is no gamma-zero constraint; longitudinal pole-placement feedback remains active.
+- **Pole locations:** the five lateral poles are `alpha * [-0.8, -0.9, -1, -1.1, -1.2]`, with alpha initially 0.5, 1, and 2. Thus “near -2” means `[-1.6, -1.8, -2, -2.2, -2.4]`. The longitudinal poles remain `[-0.8, -0.95, -1.05, -1.2]` to isolate the effect of lateral pole placement. Gains include the specified damping.
+- **Directional search:** if a direction improves the largest tested theta that satisfies the near-zero criterion, extend the pole scale by another factor of two. Stop when that score no longer improves (at most four extensions). This is a coarse search, not a global optimization or an exact tolerance boundary.
+- **Initial conditions:** theta = 0.00001°, 0.0001°, 0.001°, 0.01°, 0.1°, 1°, or 5°; r = 1, 5, or 10 mm; chi = 1°, 5°, or 10°. Only one initial condition is perturbed per run; gamma and all initial rates are zero. For the straight reference path along the x axis, chi=psi.
+- **Numerics and limits:** duration 30 s, output interval and maximum step 0.01 s, relative tolerance 1e-8, absolute tolerance 1e-10. Stop at |r|=0.5 m, |theta|=80°, or |gamma|=80°. These are screening thresholds, not contact mechanics. Actuator force and torque are unlimited. JR stays fixed at 0.0517629 kg·m² when mass varies; this is a parameter study, not an exact reconstruction of Mate's hardware.
 
-$$
-x=[\sigma_1,\sigma_2,\sigma_3,\sigma_r,\sigma_g,
-\psi,\vartheta,\phi,r,\gamma,x_G,y_G]^T,
-\qquad u=[F,M_2]^T.
-$$
+**Reading the tolerance maps:** green = near zero throughout the last 5 s (|theta|, |chi|, |gamma| < 0.1° and |r| < 1 mm); yellow = completed 30 s but failed that criterion; red = stopped at a threshold. A green result is a finite-time numerical criterion, not proof of asymptotic stability. Reported maxima are the largest **tested** values, not certified limits. All theta tests use positive initial angles. Response-panel vertical axes are scaled independently; compare their tick values as well as curve shapes.
 
-代码中的 `theta` 表示侧倾角 $\vartheta$；$\chi$ 表示航向误差。参考直线沿 +x 轴，故本例 $\chi=\psi$。$r$ 为杆平移位移，单位 m；$\gamma$ 为俯仰角，配置文件单位 rad，图表单位 °。
+<a id="open-0272"></a>
+## 1. Lateral Open Loop: Rod Mass 0.272 kg
 
-实际运动学：
+Lean angle and rod displacement exhibit persistent oscillations without reaching a stopping threshold within 30 s. The heading psi continues to drift. These results reproduce lateral oscillations, but do not demonstrate stable straight-line heading.
 
-$$
-\dot\vartheta=\sigma_1,\qquad
-\dot r=R\sigma_1+\sigma_r,\qquad
-\dot\psi=\frac{\sigma_3}{\cos\vartheta},\qquad
-\dot\gamma=\sigma_g-\sigma_3\tan\vartheta.
-$$
+![Lateral open loop with longitudinal gamma PD, rod mass 0.272 kg](figures/pole_placement_report/open_1.png)
 
-本次含 χ 的横向反馈向量为
+<a id="open-1"></a>
+## 2. Lateral Open Loop: Rod Mass 1 kg
 
-$$
-z_{lat}=[\vartheta,r,\sigma_1,\sigma_r,\chi]^T,
-\qquad F=-K_{lat}z_{lat}.
-$$
+Oscillations remain, with a noticeably smaller rod-displacement amplitude than in the 0.272 kg case. Heading drift persists.
 
-纵向反馈向量为
+![Lateral open loop with longitudinal gamma PD, rod mass 1 kg](figures/pole_placement_report/open_2.png)
 
-$$
-z_{lon}=[\phi-\phi_{ref},\gamma,\sigma_2-v/R,\sigma_g]^T,
-\quad \phi_{ref}(t)=vt/R,\quad M_2=-K_{lon}z_{lon}.
-$$
+<a id="open-23"></a>
+## 3. Lateral Open Loop: Rod Mass 2.3 kg
 
-设计参考是非零速度的直线滚动轨迹，而不是静止平衡点。前进速度为 $v=R\sigma_2$。参考 $x_{G,ref}=vt$ 同样随时间更新，但当前位置未直接加入反馈。
+The rod-displacement amplitude decreases further, while lean oscillations remain. Together, the three cases show that open-loop oscillations can occur without rod damping and that rod mass changes the oscillation pattern.
 
-## 2. 杆阻尼确实作用于实际杆速度
+![Lateral open loop with longitudinal gamma PD, rod mass 2.3 kg](figures/pole_placement_report/open_3.png)
 
-`model/model_residual.m` 使用 $M(x)\dot\sigma+c(x,u)=0$。其中已有
+<a id="open-damped"></a>
+## 4. Damped Lateral Open Loop: Rod Mass 0.272 kg
 
-$$
-\begin{aligned}
-c_1&\supset B_RR^2\sigma_1+B_RR\sigma_r=B_RR\dot r,\\
-c_4&\supset B_RR\sigma_1+B_R\sigma_r=B_R\dot r.
-\end{aligned}
-$$
+This case uses **b=6.5 N·s/m**, with all other conditions matching Section 1: initial speed 2.375 m/s, theta0=1°, F=0, and longitudinal gamma PD control. The damping force is passive; the plotted F is the commanded actuator force and remains zero.
 
-因此物理阻尼力为
+The simulation completes 30 s. Lean oscillations persist, with a peak of approximately **2.64°**. The large, slow rod-displacement oscillation seen without damping is suppressed; r instead drifts to approximately **-0.0385 m**. Heading still drifts, reaching approximately **-216.3°**. Damping changes the response but does not restore straight-line heading or zero lean.
 
-$$
-F_d=-b\dot r,\qquad b=B_R=6.5\ \mathrm{N\,s/m},
-$$
+![Damped lateral open loop with longitudinal gamma PD, rod mass 0.272 kg](figures/pole_placement_report/open_4.png)
 
-而不是 $-b\sigma_r$。阻尼耗散功率为
+<a id="v-2.375-tolerance"></a>
+## 5. 2.375 m/s: Initial Lean Tolerance vs. Pole Location
 
-$$
-P_d=-b\dot r^2\leq0.
-$$
+| Lateral pole center | Largest tested theta completing 30 s | Largest tested theta near zero |
+| --- | --- | --- |
+| -0.5 | 0.0001° | None in tested grid |
+| -1 | 0.01° | 1e-05° |
+| -2 | 1° | 0.001° |
+| -4 | 1° | 0.001° |
 
-扫描脚本对残差差值和耗散项都进行了数值断言。纵向阻尼 `BP` 保持 0，其余物理参数沿用现有完整模型（包括杆质量 2.3 kg、轮半径 0.253 m）。
+The largest tested near-zero theta is **0.001°**, achieved with lateral poles near **-2, -4**. Search extensions: extended 2 to 4; largest near-zero theta 0.001 to 0.001 deg.
 
-还有一个与本次实验有关的区别：若每次都重新 pole placement、且输入不限幅，设计出的导数反馈会补偿这项阻尼。由当前输入映射可得
+![Initial lean tolerance at 2.375 m/s](figures/pole_tolerance/v_2.375_tolerance.png)
 
-$$
-K_{lat}(b)=K_{lat}(0)-b[0,0,R,1,0].
-$$
+<a id="v-2.375-theta"></a>
+## 6. 2.375 m/s: Initial theta Responses
 
-于是 $F_b=F_0+b\dot r$；扣除物理阻尼后，理想模型的净杆驱动力与无阻尼重新设计时一致。因此“增加阻尼后再把极点配置到同一位置”并不自动改善稳定性。保持旧增益不变时则是另一项实验，本次没有将其混入速度扫描。
+Each column uses a different lateral pole location. Curves ending early reached a stopping threshold; the legend gives the stopping time. A completed curve can retain nonzero lean, rod displacement, or heading. The tolerance map above distinguishes these residuals from recovery.
 
-## 3. 极点选择、降阶及不可控模态
+![Initial theta responses at 2.375 m/s](figures/pole_tolerance/v_2.375_theta.png)
 
-本次采用 `balance_chi`，使用无需 Control System Toolbox 的 Ackermann 公式：
+<a id="v-2.375-r"></a>
+## 7. 2.375 m/s: Initial r Responses
 
-$$
-\Lambda_{lat}=\{-0.8,-0.9,-1.0,-1.1,-1.2\}\ \mathrm{s}^{-1},
-$$
+Initial r values are 1, 5, and 10 mm. near -0.5: 0/3 near zero, 3/3 stopped; near -1: 1/3 near zero, 2/3 stopped; near -2: 3/3 near zero; near -4: 3/3 near zero.
 
-$$
-\Lambda_{lon}=\{-0.8,-0.95,-1.05,-1.2\}\ \mathrm{s}^{-1}.
-$$
+![Initial r responses at 2.375 m/s](figures/pole_tolerance/v_2.375_r.png)
 
-静止 `balance` 模式的 4 个横向期望极点也更新为 $[-0.8,-0.95,-1.05,-1.2]$，但本报告速度扫描使用的是含 χ 的 5 状态模式。每个极点属于整个分块，不是某个状态独占一个极点。
+<a id="v-2.375-chi"></a>
+## 8. 2.375 m/s: Initial chi Responses
 
-对完整模型数值线性化，在每个非零速度处有
+Initial chi values are 1°, 5°, and 10°. near -0.5: 1/3 near zero; near -1: 3/3 near zero; near -2: 3/3 near zero; near -4: 3/3 near zero.
 
-$$
-\dot\sigma_3=a(v)\sigma_1,\qquad
-I=\sigma_3-a(v)\vartheta,\qquad \dot I=0.
-$$
+![Initial chi responses at 2.375 m/s](figures/pole_tolerance/v_2.375_chi.png)
 
-这是线性化模型的不变量，不是任意幅度下的完整非线性守恒量。本模型 $a(v)\approx-3.30393642129v$，并非直接照搬简化论文的系数。横向设计在 $I=0$ 子空间内代入 $\sigma_3=a(v)\vartheta$，得到 5 阶可控分块；非线性仿真仍保留原来的全部 12 个状态。
+<a id="v-1-tolerance"></a>
+## 9. 1 m/s: Initial Lean Tolerance vs. Pole Location
 
-完整闭环矩阵 $A-BK$ 还有 3 个零极点，因此不能声称整个系统渐近稳定。尤其当前配置初值 $\sigma_3(0)=0$、$\vartheta(0)=2.8°$，有 $I(0)\ne0$；在线性模型中不可能同时令 $\sigma_3$ 和 $\vartheta$ 都趋于零。在 0.2 m/s 时 $I(0)\approx0.0322922$ rad/s。本文的小扰动诊断初值特意取 $I(0)=0$。
+| Lateral pole center | Largest tested theta completing 30 s | Largest tested theta near zero |
+| --- | --- | --- |
+| -0.5 | 0.0001° | None in tested grid |
+| -1 | 0.01° | 1e-05° |
+| -2 | 0.1° | 0.0001° |
+| -4 | 1° | 0.001° |
+| -8 | 5° | 0.01° |
+| -16 | 1° | 0.01° |
 
-此外，本控制器没有反馈横向位置 epsilon；航向收敛并不代表回到参考线上。零速度时 χ 的这一配置方式退化，故扫描不包含 v=0。
+The largest tested near-zero theta is **0.01°**, achieved with lateral poles near **-8, -16**. Search extensions: extended 2 to 4; largest near-zero theta 0.0001 to 0.001 deg; extended 4 to 8; largest near-zero theta 0.001 to 0.01 deg; extended 8 to 16; largest near-zero theta 0.01 to 0.01 deg.
 
-## 4. 0.2 m/s 下的数值设计
+![Initial lean tolerance at 1 m/s](figures/pole_tolerance/v_1_tolerance.png)
 
-在 $b=6.5$、$v=0.2$ 时，按 $z_{lat}$ 顺序的降阶模型为
+<a id="v-1-theta"></a>
+## 10. 1 m/s: Initial theta Responses
 
-$$
-A_{lat}=\begin{bmatrix}
-0&0&1&0&0\\
-0&0&0.253&1&0\\
-27.851776&-46.731198&-0.861717&-3.405995&0\\
--9.677843&0&-0.715&-2.826087&0\\
--0.660787&0&0&0&0
-\end{bmatrix},\quad
-B_{lat}=\begin{bmatrix}0\\0\\0.523999\\0.434783\\0\end{bmatrix}.
-$$
+Each column uses a different lateral pole location. Curves ending early reached a stopping threshold; the legend gives the stopping time. A completed curve can retain nonzero lean, rod displacement, or heading. The tolerance map above distinguishes these residuals from recovery.
 
-增益如下（负号已放在控制律中，角度以 rad 进入控制器）：
+![Initial theta responses at 1 m/s](figures/pole_tolerance/v_1_theta.png)
 
-```text
-K_lat = [-279.4959224 303.9271633 -27.18873097 35.78585792 0.07078898284]
-K_lon = [-0.01767859595 -0.7948442818 -0.07227621465 -0.09070609059]
-```
+<a id="v-1-r"></a>
+## 11. 1 m/s: Initial r Responses
 
-各速度的横向增益，顺序为 `[theta, r, sigma1, sigma_r, chi]`：
+Initial r values are 1, 5, and 10 mm. near -0.5: 0/3 near zero, 3/3 stopped; near -1: 0/3 near zero, 2/3 stopped; near -2: 2/3 near zero; near -4: 3/3 near zero; near -8: 3/3 near zero; near -16: 3/3 near zero.
 
-| v (m/s) | K_theta | K_r | K_sigma1 | K_sigma_r | K_chi |
-|---:|---:|---:|---:|---:|---:|
-| 0.05 | -302.9763 | 326.4066 | -29.19509 | 38.20392 | 0.2831559 |
-| 0.1 | -298.06 | 321.7074 | -28.77567 | 37.69843 | 0.141578 |
-| 0.2 | -279.4959 | 303.9272 | -27.18873 | 35.78586 | 0.07078898 |
-| 0.5 | -185.3525 | 212.5349 | -19.03168 | 25.955 | 0.02831559 |
-| 1 | -54.33627 | 75.66316 | -6.81544 | 11.23201 | 0.0141578 |
-| 2 | -7.987426 | -30.61344 | 2.670086 | -0.1999303 | 0.007078898 |
-| 3 | -89.67644 | -60.94944 | 5.37767 | -3.463105 | 0.004719266 |
-| 5 | -437.1229 | -78.55803 | 6.949293 | -5.357222 | 0.002831559 |
+![Initial r responses at 1 m/s](figures/pole_tolerance/v_1_r.png)
 
-纵向线性分块在这组直线滚动速度下不随速度变化，故纵向增益相同。9 个指定极点在全部速度上的最大匹配误差为 2.7e-08 s⁻¹。完整 A、B、增益、实际极点和参考轨迹参数保存于 `designs.json` 和 `study.mat`。
+<a id="v-1-chi"></a>
+## 12. 1 m/s: Initial chi Responses
 
-## 5. 扫描条件与判据
+Initial chi values are 1°, 5°, and 10°. near -0.5: 2/3 near zero; near -1: 3/3 near zero; near -2: 3/3 near zero; near -4: 3/3 near zero; near -8: 3/3 near zero; near -16: 2/3 near zero, 1/3 stopped.
 
-- 每个速度分别重新线性化、生成 K；初始速度等于设计/参考速度。不代表一个固定 K 覆盖全部速度，也不是一次连续变速实验。
-- 时长上限 60 s；`RelTol=1e-8`，`AbsTol=1e-10`，`MaxStep=0.01 s`，输出间隔 0.02 s。
-- 保留原有 80° 侧倾终止。仅扫描脚本额外在 $|r|=2$ m 时停止，防止发散后发生矩阵病态和数值溢出；2 m 是数值发散保护，不是硬件行程限制，也不施加碰撞或限位力。
-- 力和力矩无限幅，没有另加物理行程约束；峰值是输出采样及终止点上的峰值。
-- “通过收敛判据”：完整跑到 60 s，且最后 10 s 内 $|\vartheta|,|\gamma|,|\chi|<0.1°$、$|r|<1$ mm、$|R\sigma_2-v|<0.001$ m/s。该判据是有限时间仿真检查，非非线性稳定性证明，也不检验横向位置收敛。
+![Initial chi responses at 1 m/s](figures/pole_tolerance/v_1_chi.png)
 
-### A. 当前配置初值
+## Interpretation and Reproduction
 
-$\vartheta_0=2.8°$，$r_0=0$，$\gamma_0=0.1$ rad $\approx5.72958°$；其余角度及初始角速度/杆速度为 0；初始前进速度为对应 v。
+Evaluate both the near-zero criterion and the r/chi disturbance responses when comparing pole locations; completing 30 s alone does not establish recovery. These results assume unlimited actuation; they do not establish a hardware operating envelope.
 
-| v (m/s) | 终止时间 (s) | 原因 | 峰值 \|r\| (m) | 峰值 \|theta\| (°) | 峰值 \|gamma\| (°) | 结果 |
-|---:|---:|---|---:|---:|---:|---|
-| 0.05 | 1.483969 | 侧倾达到 80° | 1.228017 | 80.00000 | 5.72958 | 未通过 |
-| 0.1 | 1.474342 | 侧倾达到 80° | 1.224735 | 80.00000 | 5.72958 | 未通过 |
-| 0.2 | 1.439010 | 侧倾达到 80° | 1.211592 | 80.00000 | 5.72958 | 未通过 |
-| 0.5 | 1.269356 | 侧倾达到 80° | 1.118580 | 80.00000 | 12.27279 | 未通过 |
-| 1 | 7.905882 | 侧倾达到 80° | 0.848228 | 80.00000 | 97.06907 | 未通过 |
-| 2 | 2.337998 | 侧倾达到 80° | 1.666894 | 80.00000 | 12.34782 | 未通过 |
-| 3 | 0.769075 | 杆位移达到 2 m | 2.000000 | 8.50020 | 7.51121 | 未通过 |
-| 5 | 0.356503 | 杆位移达到 2 m | 2.000000 | 22.04229 | 13.87342 | 未通过 |
+Run [run_report_experiments.m](../../MATLAB/Full/run_report_experiments.m) to regenerate the open-loop figures and the focused closed-loop study. To rerun only the closed-loop study, use [run_pole_tolerance_study.m](../../MATLAB/Full/run_pole_tolerance_study.m). The default is a fresh run; `run_pole_tolerance_study(true)` reuses saved cases and should only be used when the experimental settings have not changed.
 
-这组慢极点在当前配置初值下没有给出可接受的恢复过程。尤其不能把 3、5 m/s 的侧倾暂未达到 80° 解读为稳定，杆位移已经发散到测试终止阈值。
+Data: [Closed-loop summary CSV](figures/pole_tolerance/summary.csv) · [Complete closed-loop MAT file](figures/pole_tolerance/experiments.mat) · [Adaptive search log](figures/pole_tolerance/decisions.txt). The earlier gamma, derivative, and speed-offset figures are no longer included in this report.
 
-![当前配置初值的 r、theta、gamma、chi 曲线](../../MATLAB/Full/results/damping_speed_study/scenario_1.png)
 
-### B. 小航向扰动诊断
+<a id="lean-offset-proof"></a>
+## 13. Why Initial Lean Can Leave a Steady Offset
 
-取 $\vartheta_0=r_0=\gamma_0=0$、$\chi_0=0.1°$，其余初始角速度/杆速度为 0；初始前进速度为对应 v。此时初始线性不变量 I=0。此测试用于确认相容小扰动下的响应，不能代替 A 组初值测试。
+**Notation:** The paper's lean angle is \(\vartheta\) (`theta` in the code), wheel spin angle is \(\varphi\), and heading angle is \(\psi\). For the straight reference along +x, \(\chi=\psi\). The wheel angular-velocity components (in rad/s) are
 
-| v (m/s) | 时长 (s) | 峰值 \|r\| (mm) | 峰值 \|theta\| (°) | 峰值 \|gamma\| (°) | 末段判据 |
-|---:|---:|---:|---:|---:|---|
-| 0.05 | 60 | 1.744166 | 0.116228 | 3.324e-05 | 通过 |
-| 0.1 | 60 | 0.869289 | 0.058100 | 1.659e-05 | 通过 |
-| 0.2 | 60 | 0.429448 | 0.029048 | 8.248e-06 | 通过 |
-| 0.5 | 60 | 0.157299 | 0.011619 | 3.171e-06 | 通过 |
-| 1 | 60 | 0.052798 | 0.005809 | 1.364e-06 | 通过 |
-| 2 | 60 | 0.025310 | 0.002905 | 4.283e-07 | 通过 |
-| 3 | 60 | 0.074321 | 0.001936 | 8.389e-07 | 通过 |
-| 5 | 60 | 0.154873 | 0.001162 | 1.819e-06 | 通过 |
+\[
+\omega_1=\dot{\vartheta},\qquad
+\omega_2=\dot{\varphi}+\dot{\psi}\sin\vartheta,\qquad
+\omega_3=\dot{\psi}\cos\vartheta.
+\]
 
-![小航向扰动的 r、theta、gamma、chi 曲线](../../MATLAB/Full/results/damping_speed_study/scenario_2.png)
+\[\omega_2\approx\dot{\varphi}. \qquad \omega_3\approx\dot{\psi}\]
 
-## 6. 验证与复现
+At the upright straight-rolling operating point, \(\omega_{2*}=\dot{\varphi}_*=v_0/R\) and \(\omega_{3*}=0\). For \(v_0=2.375\) m/s and \(R=0.253\) m, these are approximately 9.39 rad/s and 0 rad/s, respectively. A nonzero but constant heading can still have omega3=0.
 
-MATLAB R2026a 实测。阻尼增益恒等式误差为 2.62e-13。在 0.2 m/s 的 A、B 两组案例中，将最大步长和输出间隔减半、误差容限缩小 10 倍复算：A 组侧倾终止时间差 7.21e-11 s；B 组末端状态无穷范数差 3.88e-12（各状态沿用各自 SI 单位）。这支持代表性结果不是时间步长导致的误判。
+In [the paper](../../paper_src/2507.02700v1.pdf), the lateral state order is given in Eq. (61), p. 7. Rows 4 and 5 of Eq. (63), p. 8, give
 
-运行入口：
+\[
+\dot{\vartheta}=\omega_1,\qquad
+\dot{\omega}_3=a_{51}\omega_1,\qquad
+ a_{51}=-2\dot{\varphi}_* \quad\text{[Eq. (64)]}.
+\]
 
-```matlab
-% 在 MATLAB/Full 目录下
-run_damping_speed_study
-```
+At a fixed linearization speed, a51 is constant. Subtracting these equations and integrating therefore yields
 
-脚本会覆盖本次实验输出目录 `MATLAB/Full/results/damping_speed_study/` 中的同名结果文件。当前初值仍由 `simulation_settings.m` 读取；小扰动组在扫描脚本中显式定义。完整物理参数、设置、轨迹、输入与控制器都保存在 MAT 文件中。
+\[
+\frac{d}{dt}(\omega_3-a_{51}\vartheta)=0,
+\qquad \omega_3-a_{51}\vartheta=C.
+\]
 
-- [summary.csv](../../MATLAB/Full/results/damping_speed_study/summary.csv)：全部 16 组结果、峰值、末值、末段指标、极点误差和初始不变量。
-- [study.mat](../../MATLAB/Full/results/damping_speed_study/study.mat)：完整仿真数据和本次实际参数快照。
-- [designs.json](../../MATLAB/Full/results/damping_speed_study/designs.json)：各速度的完整线性模型与控制器信息。
-- [verification.json](../../MATLAB/Full/results/damping_speed_study/verification.json)：阻尼增益和步长复核结果。
+Near upright motion, sigma3 approximately equals psi_dot. For $\theta(0)=\theta_0$ and $\dot{\psi}(0)=0$,
 
-原控制器/扫描回归检查以及专用 χ 控制器回归检查均通过。χ 回归用固定的旧设计参数作为功能基准；本报告的新慢极点性能由上述 16 组测试评价，不能用旧回归通过替代。
+\[
+C=-a\theta_0,\qquad \dot{\psi}=a(\theta-\theta_0).
+\]
 
-当前代码已保留 b=6.5 和上述慢极点，因此直接运行 `run_chi_simulation.m` 会使用这些新参数及当前配置初值；在默认 0.2 m/s 时预计约 1.439 s 达到 80° 侧倾终止。这是已测到的控制效果，不是仿真入口失效。
-
-若下一步要求从当前初值恢复，应重新评估非零初始不变量、所选反馈结构和极点速度；不能仅凭 9 个负实部极点判断完整系统稳定。
-
-
-## 补充：χ 与侧倾初值不能等同处理
-
-在用户将配置初速改为 0 后复核。控制器参考速度仍为 0.2 m/s；没有在脚本内改写用户初值。下面每组都单独指定初值，gamma0=0，其余未列出的姿态/速率为零；使用 b=6.5 和上述慢极点，仿真上限 60 s。
-
-| 初速 (m/s) | χ0 (°) | theta0 (°) | 结果 |
-|---:|---:|---:|---|
-| 0 | 0.1 | 0 | 跑完 60 s；峰值侧倾 1.237°、gamma 22.934°；末端 χ≈−0.00917° |
-| 0.2 | 0.1 | 0 | 跑完 60 s；峰值侧倾 0.02905°；末端 χ≈−6.03×10⁻⁹° |
-| 0.2 | 0 | 0.01 | 跑完 60 s，但不回零：末端 theta≈0.01001°、χ≈−0.59699°；峰值侧倾 0.77224° |
-| 0.2 | 0 | 0.1 | 约 3.86765 s 达到 80° 侧倾终止 |
-| 0 | 0 | 0 | 横向保持零，但因从静止跟踪 0.2 m/s，gamma 峰值达 22.934° |
-| 0.2 | 0 | 0.1 | 另设 psi_dot0=−0.00115329 rad/s，使初始线性不变量为零；仍在约 3.99756 s 达到侧倾终止 |
-
-最后一组表明，不能把 θ 扰动的失败仅归因于初始不变量不为零。即便初始满足降阶约束，这组慢极点下的非线性恢复范围仍有限；微小扰动可能有较大的瞬态放大。不能通过强行给初始 yaw rate 配值来宣称问题已经解决。
-
-单独 χ 扰动与单独 θ 扰动对应不同状态方向，不能把一个方向上的成功扩展为整个邻域稳定的证明。现有设计也没有完整 12 维渐近稳定性保证。修改初速使其等于设计速度可以分离加速瞬态，但不能单独解决 θ 扰动失败。
-
-配置文件所有角度均为 rad：例如 0.1° 应写 `0.1*pi/180`，直接写 `0.1` 是 5.73°。运行 `run_chi_simulation.m` 时，现在会打印实际初始角度和初速，以及设计/参考速度，便于确认此次究竟在测试什么。
-
-复现函数：`analysis/diagnose_chi_initial_conditions.m`，返回六组指标；数据存于 [initial_condition_diagnostic.csv](../../MATLAB/Full/results/damping_speed_study/initial_condition_diagnostic.csv)。本补充测试没有修改 `simulation_settings.m` 或用户选择的极点。
-
-
-## 补充：初速=目标速度=0.2 m/s，gamma 全程为零
-
-按用户要求，在 `run_chi_simulation.m` 中让设计/目标速度读取初速，并启用 gamma 零约束；本次初速按用户选择设为 0.2 m/s。运行前读取的模型文件已将 BR 改为 0，本次沿用该值，不应与前面 b=6.5 的速度扫描混为同一次实验。横向期望极点仍为 −0.8、−0.9、−1、−1.1、−1.2；仿真时长沿用当前配置的 15 s。
-
-### 约束的实现
-
-完整动力学不变，由
-
-$$
-\dot\gamma=\sigma_g-\sigma_3\tan\theta
-$$
-
-得到
-
-$$
-\ddot\gamma=\dot\sigma_g-\dot\sigma_3\tan\theta
--\sigma_3\sigma_1\sec^2\theta.
-$$
-
-对给定横向力 F，动力学关于 M2 是仿射的，写成 $\ddot\gamma=\alpha(x,F)+\beta(x)M_2$。用完整模型分别计算零力矩、单位力矩的响应，求取 alpha、beta，然后选
-
-$$
-M_2=\frac{-2\omega_c\dot\gamma-\omega_c^2\gamma-\alpha}{\beta},
-\qquad \omega_c=10\ \mathrm{s}^{-1}.
-$$
-
-因此 gamma=gamma_dot=0 的初值在精确模型中保持不变；校正项用于抑制积分数值漂移。没有把 gamma 的积分结果或图线手工改成 0。要求力矩无限幅且 beta 非零；这是理想模型诊断，不是实际执行器能力的验证。
-
-原纵向 pole placement 被这个力矩约束替代，不再做速度调节。设计速度等于初速不代表实际速度始终不变；例如失稳组末端速度约 0.211539 m/s。设计信息中的实际纵向/完整闭环极点已经按新控制律重算，原纵向极点仅作为未启用的设计信息保留。
-
-### 本次脚本测试结果
-
-| 初始状态 | 结束时间 (s) | 末端 theta (°) | 末端 chi (°) | 峰值 abs(gamma) (°) | 观察 |
-|---|---:|---:|---:|---:|---|
-| 当前配置：chi=theta=0 | 15 | 0 | 0 | 0 | 保持直线滚动 |
-| 仅 chi0=0.1° | 15 | 0.000132 | 0.000124 | 4.24e-19 | 已恢复到很小误差 |
-| 仅 theta0=0.01° | 15 | 0.006061 | −0.600268 | 1.10e-15 | 未回到目标零状态 |
-| 仅 theta0=0.1° | 3.849379 | 80 | −19.94467 | 5.91e-10 | 触发侧倾终止 |
-
-因此，限制 gamma 摆动没有消除慢极点设计下的侧倾恢复问题。单独 chi 扰动和单独侧倾扰动仍需区别评价。
-
-`test_initial_perturbations=true` 会在运行脚本中叠加上述三组扰动测试；设为 false 只运行当前配置初值。theta/chi 初值的单位换算都在脚本中明确写为 `*pi/180`。gamma0 和 gamma_dot0 被显式设置为 0；其他配置初值仅在额外隔离扰动组中按注释调整。
-
-验证：`tests/test_gamma_zero.m` 已验证非零姿态/角速度下的约束加速度恒等式，以及静止/滚动积分时 gamma 和 gamma_dot 的误差。
+Thus, if heading settles to a constant, $\dot{\psi}$ tends to zero and $\theta$ tends to $\theta_0$, not necessarily zero. Conversely, $\theta$ tending to zero would require a nonzero limiting heading rate when $a\theta_0$ is nonzero. Moving the assigned poles cannot remove this invariant. The current reduced controller is designed on C=0, whereas a pure initial lean perturbation generally has C nonzero. This explains the observed steady offsets; it is a fixed-speed linear-model limitation, not an exact conservation law or an impossibility result for the full nonlinear system.

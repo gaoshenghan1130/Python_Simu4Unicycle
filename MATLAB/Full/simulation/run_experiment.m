@@ -51,10 +51,17 @@ if strcmp(parts{1},'design') && ~strcmp(mode,'pole_placement')
     error('unicycle:InactiveSweep','design sweeps require pole_placement mode.');
 end
 if strcmp(parts{1},'controller')
+    if strcmp(mode,'lateral_open_loop') && ...
+            ~ismember(parts{2},{'kp_gamma','kd_gamma','gamma_ref','gamma_dot_ref','torque_limit'})
+        error('unicycle:InactiveSweep','Lateral-open-loop mode uses only gamma PD and torque_limit.');
+    end
+    if strcmp(mode,'open_loop')
+        error('unicycle:InactiveSweep','Open loop has zero input; controller parameter sweeps have no effect.');
+    end
     if strcmp(mode,'pole_placement') && ismember(parts{2},{'K','x_ref'})
         error('unicycle:GeneratedSweep','Pole placement regenerates K and x_ref; sweep design poles instead.');
     end
-    if (~strcmp(mode,'pd') && ~ismember(parts{2},{'K','x_ref','force_limit','torque_limit'})) ...
+    if (~ismember(mode,{'pd','lateral_open_loop'}) && ~ismember(parts{2},{'K','x_ref','force_limit','torque_limit'})) ...
        || (strcmp(mode,'pd') && ismember(parts{2},{'K','x_ref'}))
         error('unicycle:InactiveSweep','Selected controller field is unused in this mode.');
     end

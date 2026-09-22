@@ -151,3 +151,30 @@ d.chi_poles=[-2 -2.5 -3 -3.5 -4]; % 5 个横向极点
 脚本里的 `test_initial_perturbations=true` 会在你的配置初值之外，额外运行三组隔离扰动：chi0=0.1°、theta0=0.01°、theta0=0.1°，并在同一批图里叠加。设为 false 则只运行配置初值。所有试验的初速与目标速度相同。
 
 控制器使用理想无限幅力矩，保证零 gamma 的模型约束；不能同时宣称原纵向速度控制器仍在工作。实现公式和本次结果补充在 `Derivation/FullModel/FullModelPolePlacement_withDamping.md`。参数以当前配置文件为准，本次测试时用户文件的 BR 已为 0，未擅自改回上轮实验的 6.5。
+
+
+## 零输入开环
+
+在 `config/experiment_settings.m` 设置 `e.controller.mode='open_loop'`，运行 `run_simulation.m`。该入口现已选择此模式。控制输入始终 F=0、M2=0，跳过增益生成及全部反馈，包括 gamma 零约束；`results(k).U` 应全为零。物理阻尼 BR/BP 和初值仍以模型配置为准，零反馈不代表零阻尼，也不代表速度保持不变。
+
+初速和扰动在 `simulation_settings.m` 设置；要观察侧倾响应可设置 `s.theta0=0.1*pi/180`。仅设置 psi 航向偏角、其余状态位于直线滚动稳态时，并不一定激发侧倾振荡。运行仍保留侧倾终止事件。
+
+`run_chi_simulation.m` 会主动选择 pole_placement 并启用 gamma 零约束，因此不能用它代替零输入开环入口。切回闭环时修改上述 mode 即可。
+
+
+## 当前 run_simulation：Máté 所描述的控制结构
+
+`run_simulation.m` 中的 `mate_test=true` 选择 `lateral_open_loop`：F 始终为零，纵向仅使用 gamma 和 gamma_dot 的 PD 反馈，目标均为零，M2 按当前模型符号约定为 `kp_gamma*gamma + kd_gamma*gamma_dot`。没有速度/位置反馈，也没有 gamma 严格零约束；gamma 可以有小幅运动。
+
+该预设在本次运行中覆盖 BR=BP=0，不改写模型参数文件。PD 增益取自 `controller_parameters.m`（当前 kp_gamma=3、kd_gamma=0.8）；初值取自 `simulation_settings.m`。杆质量及惯量保留当前参数。Máté 尚未给出准确质量和增益，所以这是控制结构的复现，不是其图的精确复现。
+
+设置 `mate_test=false` 可恢复直接读取 `experiment_settings.m` 中的模式，包括原来的全开环 `open_loop`（F=M2=0）。
+
+
+## 已找到的无阻尼振荡预设（2026-09-21）
+
+直接运行 `run_simulation.m`，其中 `mate_test=true`、`mate_case='oscillation_candidate'`：横向 F=0、纵向 gamma PD（3、0.8）、BR=BP=0，脚本显式设置 mr=0.272 kg、初速 2.375 m/s、theta0=1°、gamma0=0、时长 60 s。该候选已独立验证 120 s，实测主频约 0.173 Hz 和 0.991 Hz，最大侧倾约 3.33°、最大 gamma 约 0.011°。
+
+`mate_case='current_mass'` 保留模型文件中的杆质量；`mate_case='configured'` 保留配置文件中的全部初值和 PD 增益。当前预设的初值来自脚本中的显式设置，所以修改 `simulation_settings.m` 后若希望完全按文件初值运行，请选 configured。
+
+这复现了与 Máté 描述相近的振荡现象，尚不是他的准确模型。JR 未随质量缩放，准确参数仍待其源码确认。54 组筛选、120 s 验证、频谱及原因分析见 [MateOpenLoopOscillationStudy.md](../../Derivation/FullModel/MateOpenLoopOscillationStudy.md)。

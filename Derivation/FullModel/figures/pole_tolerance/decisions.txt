@@ -1,0 +1,4 @@
+v=2.375: extended 2 to 4; largest near-zero theta 0.001 to 0.001 deg
+v=1: extended 2 to 4; largest near-zero theta 0.0001 to 0.001 deg
+v=1: extended 4 to 8; largest near-zero theta 0.001 to 0.01 deg
+v=1: extended 8 to 16; largest near-zero theta 0.01 to 0.01 deg

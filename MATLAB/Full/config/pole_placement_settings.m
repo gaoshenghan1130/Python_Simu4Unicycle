@@ -5,7 +5,7 @@ function d = pole_placement_settings()
 % balance feedback: [theta, r, sigma1, sigma_r]
 % balance_chi feedback: [theta, r, sigma1, sigma_r, chi=psi]
 % Longitudinal feedback order: [phi, gamma, sigma2, sigma_g]
-d.lateral      = [-0.8, -0.95, -1.05, -1.2];
+d.lateral      = [-0.8, -0.95, -1.05, -1.2, 0];
 d.longitudinal = [-0.8, -0.95, -1.05, -1.2];
 % Examples (replace either complete vector):
 % d.lateral = [-2+1i, -2-1i, -3, -4]; % conjugate pairs required

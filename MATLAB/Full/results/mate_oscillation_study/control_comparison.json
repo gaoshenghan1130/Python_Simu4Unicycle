@@ -1,0 +1,24 @@
+[
+  {
+    "mode": "open_loop",
+    "mass": 1,
+    "speed": 2,
+    "theta0_deg": 1,
+    "end_time": 15,
+    "peak_theta_deg": 6.9977584899245917,
+    "peak_gamma_deg": 2158.6567204313824,
+    "peak_r": 0.065675939984214463,
+    "peak_torque": 0
+  },
+  {
+    "mode": "lateral_open_loop",
+    "mass": 1,
+    "speed": 2,
+    "theta0_deg": 1,
+    "end_time": 15,
+    "peak_theta_deg": 6.9710655924922644,
+    "peak_gamma_deg": 0.047895121132768365,
+    "peak_r": 0.054978457295313435,
+    "peak_torque": 0.0035319375940436751
+  }
+]
