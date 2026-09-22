@@ -6,7 +6,7 @@ addpath(fullfile(project_root,'config'),fullfile(project_root,'model'), ...
     fullfile(project_root,'analysis'));
 experiment=experiment_settings();
 experiment.controller.mode='pole_placement';
-experiment.controller.hold_gamma_zero=true; % nonlinear torque enforces gamma=0
+experiment.controller.hold_gamma_zero=false; % nonlinear torque enforces gamma=0
 experiment.sweep.enabled=false;
 % Match target/design speed to the configured initial speed; no acceleration command.
 experiment.design.forward_speed=experiment.settings.forward_speed0;
@@ -30,7 +30,7 @@ test_initial_perturbations=true;
 results=run_experiment(experiment);
 results(1).label='Configured initial state';
 if test_initial_perturbations
-    perturbations_deg=[0.1 0;0 0.01;0 0.1]; % [chi0, theta0]
+    perturbations_deg=[0.1 0;0 0.01;0 0.03]; % [chi0, theta0]
     for case_index=1:size(perturbations_deg,1)
         trial=experiment;
         trial.settings.psi0=perturbations_deg(case_index,1)*pi/180;

@@ -5,7 +5,8 @@ e.controller=controller_parameters();
 e.settings=simulation_settings();
 e.design=pole_placement_settings();
 
-% 1) Select 'pd', 'direct', or 'pole_placement'.
+% 1) Select 'open_loop', 'pd', 'direct', or 'pole_placement'.
+% open_loop: F=M2=0; no pole design, no speed control, no gamma hold.
 e.controller.mode='pole_placement';
 % For direct mode set e.controller.K to 2-by-12 gain matrix.
 % e.controller.K=zeros(2,12);

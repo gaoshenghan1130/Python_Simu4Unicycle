@@ -1,7 +1,7 @@
 function c = controller_parameters()
-% Controller mode: 'pd', 'direct', or 'pole_placement'.
+% Controller mode: 'open_loop', 'pd', 'direct', or 'pole_placement'.
 % pd preserves the original physical-derivative PD law and sign convention.
-c.mode='pd';
+c.mode='pole_placement';
 % direct: u=-K*(x-x_ref), with K sized 2-by-12 in the model state order.
 % Fill K before selecting direct; an empty K is intentionally rejected.
 c.K=[];

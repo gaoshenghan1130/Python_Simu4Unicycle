@@ -1,0 +1,17 @@
+[
+  {
+    "case_id": 10,
+    "max_state_difference": 1.9287537587030223E-9,
+    "max_theta_difference_deg": 1.4084220152975988E-8
+  },
+  {
+    "case_id": 11,
+    "max_state_difference": 2.2536908339532147E-8,
+    "max_theta_difference_deg": 6.18977928310289E-8
+  },
+  {
+    "case_id": 26,
+    "max_state_difference": 1.3138988563810017E-8,
+    "max_theta_difference_deg": 5.984287819611552E-8
+  }
+]
