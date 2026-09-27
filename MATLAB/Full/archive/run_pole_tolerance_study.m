@@ -1,7 +1,7 @@
 function run_pole_tolerance_study(reuse_saved)
 if nargin<1,reuse_saved=false;end
 % Recompute the rolling Jacobian at each speed; vary lateral poles only.
-root=fileparts(mfilename('fullpath'));addpath(genpath(root));
+root=fileparts(fileparts(mfilename('fullpath')));addpath(genpath(root));
 out=fullfile(root,'..','..','Derivation','FullModel','figures','pole_tolerance');
 if ~exist(out,'dir'),mkdir(out);end
 % Use the saved report baseline so later global configuration edits cannot

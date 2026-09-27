@@ -12,6 +12,9 @@ for k=1:numel(values)
     if e.sweep.enabled
         run=apply_sweep(run,values(k));
         label=sprintf('%s = %.6g',e.sweep.parameter,values(k));
+        if strcmp(e.sweep.parameter,'speed')
+            label=sprintf('initial = target speed = %.6g m/s',values(k));
+        end
         if ~isempty(e.sweep.index)
             label=sprintf('%s(%d) = %.6g',e.sweep.parameter,e.sweep.index,values(k));
         end
@@ -30,15 +33,36 @@ results=[runs{:}];
 end
 
 function e=apply_sweep(e,value)
+% A single physical speed shared by the initial state and rolling reference.
+if strcmp(e.sweep.parameter,'speed')
+    if ~isempty(e.sweep.index)
+        error('unicycle:SweepIndex','The matched speed sweep is scalar; use index=[].');
+    end
+    if isfield(e.controller,'hold_gamma_zero') && e.controller.hold_gamma_zero
+        error('unicycle:InactiveSweep','Matched target speed requires the longitudinal feedback, not gamma hold.');
+    end
+    validateattributes(value,{'numeric'},{'scalar','real','finite','nonzero'});
+    % Reuse design-field validation: rolling pole placement must be active.
+    trial=e; trial.sweep.parameter='design.forward_speed';
+    trial=apply_sweep(trial,value);
+    e.design=trial.design;
+    e.settings.forward_speed0=value;
+    return;
+end
 parts=strsplit(char(e.sweep.parameter),'.');
 if numel(parts)~=2 || ~ismember(parts{1},{'parameters','controller','settings','design'}) ...
         || ~isfield(e.(parts{1}),parts{2})
     error('unicycle:SweepField','Use an existing parameters/controller/settings/design.field.');
 end
 if strcmp(parts{1},'design') && isfield(e.design,'lateral_states')
-    rolling=strcmpi(e.design.lateral_states,'balance_chi');
-    if (rolling && strcmp(parts{2},'lateral')) || ...
-       (~rolling && ismember(parts{2},{'chi_poles','forward_speed'}))
+    selection=lower(char(e.design.lateral_states));
+    rolling=ismember(selection,{'balance_rolling','balance_chi','balance_chi_epsilon'});
+    unused=(rolling && strcmp(parts{2},'lateral')) || ...
+        (~rolling && strcmp(parts{2},'forward_speed')) || ...
+        (strcmp(parts{2},'rolling_poles') && ~strcmp(selection,'balance_rolling')) || ...
+        (strcmp(parts{2},'chi_poles') && ~strcmp(selection,'balance_chi')) || ...
+        (strcmp(parts{2},'chi_epsilon_poles') && ~strcmp(selection,'balance_chi_epsilon'));
+    if unused
         error('unicycle:InactiveSweep','Selected design field is unused by this lateral state selection.');
     end
 end

@@ -3,7 +3,7 @@ function test_experiment()
 root=fileparts(fileparts(mfilename('fullpath')));
 addpath(fullfile(root,'config'),fullfile(root,'model'),fullfile(root,'controllers'), ...
     fullfile(root,'simulation'),fullfile(root,'analysis'));
-e=experiment_settings(); e.controller.mode='pd'; e.settings.t_end=0.15;
+e=test_settings(); e.controller.mode='pd'; e.settings.t_end=0.15;
 p=e.parameters; c=e.controller; x=initial_state(e.settings,p);
 assert(isequal(pd_controller(0,x,p,c),controller_output(0,x,p,c)));
 r=run_experiment(e);
@@ -55,7 +55,7 @@ u=controller_output(0,ones(12,1),p,c);
 assert(abs(u(1))<=0.1 && abs(u(2))<=0.2);
 
 % Indexed pole and PD-gain sweeps.
-e=experiment_settings(); e.settings.t_end=0.1;
+e=test_settings(); e.settings.t_end=0.1;
 e.controller.mode='pole_placement'; e.sweep.enabled=true;
 e.sweep.parameter='design.lateral'; e.sweep.index=1; e.sweep.values=[-1 -3];
 q=run_experiment(e);
@@ -93,4 +93,12 @@ catch err
     return;
 end
 error('Expected error %s was not raised.',id);
+end
+
+function e=test_settings()
+% Fixed stationary fixture, independent of the user's current rolling preset.
+e=experiment_settings();
+e.design.lateral_states='balance';
+e.design.lateral=[-0.8 -0.95 -1.05 -1.2];
+e.sweep.enabled=false;
 end

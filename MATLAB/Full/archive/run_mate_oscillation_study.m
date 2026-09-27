@@ -1,6 +1,6 @@
 % Reproduce the STRUCTURE described by Mate: F=0, gamma-only PD, BR=BP=0.
 % His exact physical parameters and gains remain unknown.
-root=fileparts(mfilename('fullpath')); addpath(genpath(root));
+root=fileparts(fileparts(mfilename('fullpath'))); addpath(genpath(root));
 output_dir=fullfile(root,'results','mate_oscillation_study');
 if ~exist(output_dir,'dir'), mkdir(output_dir); end
 base_p=model_parameters(); base_p.BR=0; base_p.BP=0;

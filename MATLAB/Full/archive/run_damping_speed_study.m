@@ -1,5 +1,5 @@
 % Reproducible speed study: redesign at each speed, then integrate full model.
-project_root=fileparts(mfilename('fullpath'));
+project_root=fileparts(fileparts(mfilename('fullpath')));
 addpath(fullfile(project_root,'config'),fullfile(project_root,'model'), ...
     fullfile(project_root,'controllers'),fullfile(project_root,'simulation'), ...
     fullfile(project_root,'analysis'));

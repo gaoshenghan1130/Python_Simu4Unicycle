@@ -1,180 +1,119 @@
-# Full nonlinear unicycle：控制器模式与参数扫描
+# Full nonlinear unicycle
 
-在 MATLAB 打开并运行 `run_simulation.m`。控制器模式以 `experiment_settings.m` 的当前设置为准；完整非线性方程未改变。默认和 `acker` 极点配置均无需额外 toolbox。
+日常只使用两个 main，均可直接在 MATLAB 中打开并运行。
 
-## 1. 选择控制器并运行
-
-主要入口：`config/experiment_settings.m`。设置：
-
-```matlab
-e.controller.mode='pd';             % 原来的 PD 增益
-% e.controller.mode='direct';       % 直接输入状态反馈矩阵 K
-% e.controller.mode='pole_placement'; % 每次运行重新生成 K
-```
-
-- `pd`：在 `config/controller_parameters.m` 修改 `kp_theta`、`kd_theta`、`kp_r`、`kd_r`、`kp_gamma`、`kd_gamma`、参考值和限幅。保留原控制律符号：横向为参考值减状态，纵向 gamma 为状态减参考值。
-- `direct`：在入口设置 `e.controller.K`（2×12）和 `e.controller.x_ref`（12×1）。控制律是 `u=-K*(x-x_ref)`，K 必须显式提供；不能把 PD 系数不经转换直接填进去。
-- `pole_placement`：在 `config/pole_placement_settings.m` 修改极点；按本轮物理参数线性化、生成 K，再运行非线性仿真。参考状态固定为静止直立零状态。
-
-直接给分块增益的示例（先把示例变量替换为你的数值）：
-
-```matlab
-e.controller.mode='direct';
-e.controller.K=zeros(2,12);
-e.controller.K(1,[7 9 1 4])=[Ktheta Kr Ksigma1 Ksigma_r];
-e.controller.K(2,[8 10 2 5])=[Kphi Kgamma Ksigma2 Ksigma_g];
-```
-
-`F=-F1` 已在模型内部处理，外部控制器不要再反号。所有模式均使用 `force_limit`、`torque_limit` 限幅。
-
-## 2. 一次扫描一个参数并叠加绘图
-
-在 `experiment_settings.m` 中：
-
-```matlab
-e.controller.mode='pole_placement';
-e.sweep.enabled=true;
-e.sweep.parameter='parameters.mr';
-e.sweep.values=[1.5 2.3 3.0];
-e.sweep.index=[];
-```
-
-每一轮均从同一份基础配置开始，依次执行 **修改参数 → 生成控制器 → 仿真**。因此物理参数扫描在 pole placement 模式下同时改变模型和所生成的 K；若希望固定 K 比较不同模型，请使用 direct 模式。
-
-| 目标字段 | 示例数列 | index | 模式 |
-|---|---|---|---|
-| `parameters.mr` | `[1.5 2.3 3]` | `[]` | 全部 |
-| `parameters.BR` | `[0 0.02 0.05]` | `[]` | 全部 |
-| `settings.theta0` | `[1 2.8 5]*pi/180` | `[]` | 全部 |
-| `controller.kp_gamma` | `[2 3 4]` | `[]` | pd |
-| `design.lateral` | `[-1 -2 -3]` | `1` | pole_placement |
-| `controller.K` | `[-700 -800 -900]` | `13` | direct，K(1,7) |
-
-向量/矩阵元素使用 MATLAB 线性索引；例如 2×12 的 K(1,7) 对应索引 13。数列为空、目标字段不存在、未指定向量索引或扫描未生效的控制器字段会报错。每轮参数值必须符合物理模型；一次只扫描一个实数参数。复极点必须成共轭对，完整复极点组合请在极点文件中编辑。
-
-8 个子图分别叠加 theta、r、theta_dot、r_dot、gamma、gamma_dot、F、M2；图例显示参数和值。每轮使用自己的时间网格，侧倾提前终止会在命令行报告。
-
-## 3. 清晰配置多个极点
-
-在 `config/pole_placement_settings.m`：
-
-```matlab
-d.lateral      = [-2.25 -1.25 -2.00 -1.50];
-d.longitudinal = [-3.00 -3.50 -4.00 -4.50];
-d.method='acker';
-```
-
-横向分块为 `[theta,r,sigma1,sigma_r]`，纵向分块为 `[phi,gamma,sigma2,sigma_g]`，各指定 4 个极点，单位 s⁻¹。极点属于整个分块，**不是每个状态单独对应一个极点**。
-
-- `acker`：内置 SISO Ackermann 公式，无需 toolbox，支持重复极点；如 `[-2 -2 -2 -2]`。
-- `place`：需要 Control System Toolbox；本模型每个分块单输入，因此 4 个极点必须互异。
-- 支持复共轭极点，例如 `[-2+1i -2-1i -3 -4]`；要求所有极点实部为负。
-- 实际闭环极点、请求极点、A/B 和分块增益保存在 `results(k).controller.design_info`。重复根在数值计算中可能轻微分裂，因此同时用特征多项式验证配置结果。
-
-也可以只计算：`[K,info]=pole_placement(model_parameters(),pole_placement_settings());`（先运行入口以添加路径）。无参数、无输出调用 `pole_placement` 会打印默认增益。
-
-## 模型与论文/邮件的关系
-
-本项目保留 12 维旧坐标模型：
-
-`x=[sigma1;sigma2;sigma3;sigma_r;sigma_g;psi;theta;phi;r;gamma;xG;yG]`，输入 `u=[F;M2]`。
-
-物理速度为 `theta_dot=x(1)`、`r_dot=R*x(1)+x(4)`、`gamma_dot=x(5)-x(3)*tan(x(7))`。
-
-附件 PDF 使用 θ 表示路径角误差、ϑ 表示侧倾；邮件用 χ 表示路径角误差。本代码中的 theta 则始终表示侧倾，不能按符号名称直接对照。
-
-按邮件，对于沿 x 轴的直线路径，χ=ψ、ε=y，因此不需要为此次整理扩展到 15 维路径坐标系统。附件论文第 IV 节围绕直线滚动状态设计控制器，使用路径误差和冗余状态消除后的控制输出；它和这里的静止直立分块不是同一个设计。
-
-`lateral_states='balance'` 的 pole placement 沿用原脚本的 **零速度平衡点**，8 个可控状态，另外 4 个零极点不被配置（含偏航积分链）。它不是整个 12 维状态的渐近稳定或路径跟踪控制器。仿真初速度默认仍为原值 0.2 m/s，这只是非线性初值，并不改变线性化设计速度；该控制器会尝试停车。需要从静止测试时设置 `e.settings.forward_speed0=0`。
-
-论文式 (36) 后的重复 −12 极点不能直接视作本模型的验证参数。默认极点为原脚本的示例值，未做实验调参。原 PD 的纵向只控制 gamma，不控制前进速度。默认无限幅、无杆行程约束，80 度侧倾终止；`output_dt` 是输出间隔，控制器连续求值。
-
-## 文件和结果
-
-| 文件 | 职责 |
+| 入口 | 用法 |
 |---|---|
-| `config/experiment_settings.m` | 控制器模式、单参数扫描和本次运行覆盖值 |
-| `config/controller_parameters.m` | 原 PD 增益、直接反馈设置、限幅 |
-| `config/pole_placement_settings.m` | 全部期望极点与算法选择 |
-| `config/model_parameters.m` / `simulation_settings.m` | 物理参数 / 仿真初值及精度 |
-| `analysis/pole_placement.m` | 线性化、可控性检查、分块配置及验证 |
-| `controllers/generate_controller.m` / `controller_output.m` | 生成控制器 / 统一求值 |
-| `simulation/run_experiment.m` | 参数覆盖、生成、仿真的循环 |
-| `simulation/plot_simulation.m` | 多次运行叠加绘图 |
-| `model/` / `docs/model.md` | 原非线性方程 / 符号与推导 |
+| `run_simulation.m` | 在 `parameter_groups` 中选择一个或多个参数组，依次运行并叠加曲线 |
+| `run_parameter_sweep.m` | 选择一个 `parameter_group`，填写 `parameter` 和 `values`，依次尝试 |
 
-`results(k)` 保存 t、X、U、本轮参数、控制器、仿真设置、极点设置、标签和终止事件；`result=results(1)` 保留旧的单结果使用方式。不自动保存数据或图片。
-
-回归验证：在 Full 目录中运行 `addpath('tests'); test_experiment`，检查原 PD 求值一致性、三种极点组合、参数变化后重新设计、直接增益复现、限幅、索引扫描、输入错误和多曲线绘图。
-
-实测（MATLAB R2026a）：默认 PD 跑完 15 s。原脚本的示例极点在默认初值下，杆质量 `[1.5 2.3 3]` kg 扫描分别约在 `[1.906 1.594 1.436]` s 触发 80° 侧倾终止；示例极点不是已验证稳定的非线性控制参数。
-
-
-## 新增：加入 χ 的直线滚动示例
-
-直接运行 `run_chi_simulation.m`。它使用现有完整非线性模型，沿 +x 轴的参考航向为零，χ=psi；这里 theta 仍表示侧倾角。初始条件统一来自 `simulation_settings.m`（通过 `experiment_settings.m` 读取），脚本不再覆盖 theta0、gamma0、psi0 或 forward_speed0。脚本关闭扫描。设计速度 `d.forward_speed` 是参考速度，与初始速度独立。
-
-`config/pole_placement_settings.m` 中：
+## 1. 按参数组运行
 
 ```matlab
-d.lateral_states='balance_chi'; % 常规入口启用 χ；示例脚本自动覆盖此项
-d.forward_speed=0.2;            % 必须非零，直线滚动参考速度
-d.chi_poles=[-2 -2.5 -3 -3.5 -4]; % 5 个横向极点
+parameter_groups={'mate_open_loop'};
+% parameter_groups={'mate_open_loop','mate_current_mass','chi_balance'};
 ```
 
-`balance_chi` 的反馈状态顺序是 `[theta,r,sigma1,sigma_r,chi]`；`d.lateral` 仅供静止 `balance` 模式使用。纵向仍使用 `d.longitudinal` 的 4 个极点，但参考 phi 和 xG 随时间前进，从而跟踪滚动状态而非停车。χ 是反馈状态，不存在一个仅属于 χ 的独立极点；5 个极点共同决定横向动态。
+所有参数组集中在 `config/simulation_preset.m`，两个入口共用。每组从 `config/experiment_settings.m` 及其调用的配置文件重新加载默认值，再应用组内覆盖值。
 
-对当前 full model 在指定滚动速度下数值线性化，检查并在设计中消去不变量 `sigma3-a*theta`，其中 `a=A(3,1)`，不能直接照搬简化论文的系数。仿真保留全部 12 个状态。全系统仍有 3 个未配置零极点；不保证任意初值下全状态收敛，也不控制横向位置 epsilon。尤其初始不变量不为零时，不应把降阶极点稳定等同于完整状态回零。
+| 参数组 | 设置 |
+|---|---|
+| `configured` | 使用 config 中的控制器、物理参数和初值 |
+| `rolling_balance` | 非零速度下仅配置前四个横向变量；当前默认 |
+| `chi_epsilon_balance` | 在 chi_balance 的基础上加入 epsilon=yG，横向配置 6 个极点 |
+| `chi_balance` | 含 chi 的极点配置；mr=2.3、BR=6.5、设计/初速=2.375、theta0=1°、psi0=0、30 s |
+| `mate_open_loop` | F=0，gamma PD；mr=0.272、BR=BP=0、初速=2.375、theta0=1°、15 s |
+| `mate_current_mass` | 与上一组相同，但保留模型配置中的 mr |
+| `mate_configured` | F=0，gamma PD，BR=BP=0；初值、质量和 PD 增益来自配置 |
 
-先前专用初值测试（theta0=0、gamma0=0、psi0=5°、forward_speed0=0.2 m/s；并非当前配置初值）的实测结果（MATLAB R2026a，15 s）：χ 从 5° 降至约 0.000267°，最大侧倾约 4.526°，最大杆位移约 0.06769 m，末端速度 0.2 m/s，无侧倾终止。会额外显示 χ、omega3、前进速度曲线。
+`mate_open_loop` 保留此前的参数值；质量变化不会自动缩放 JR。参数组中显式设置的值优先于基础配置。此入口始终关闭扫描。
 
-扫描 χ 设计极点可在常规入口设 `e.design.lateral_states='balance_chi'`、`e.sweep.parameter='design.chi_poles'`、`e.sweep.index=1`，再给出 `e.sweep.values`。扫描 `design.forward_speed` 改变设计和参考速度，不会自动修改 `settings.forward_speed0`。
+## 2. 单参数数列扫描
 
-验证：`addpath('tests'); test_chi_controller`。
+在 `run_parameter_sweep.m` 顶部修改：
 
+```matlab
+parameter_group='mate_open_loop';
+parameter='parameters.mr';
+values=[0.272 1 2.3];
+parameter_index=[];
+```
 
-## 杆阻尼与近原点极点速度扫描（当前配置）
+只想为本次扫描修改基础组，可在 `experiment=simulation_preset(...)` 后添加覆盖值。每轮从同一个基础组开始，按数列顺序执行「修改参数 → 生成控制器 → 仿真」，不累积上一轮的参数。
 
-`BR` 已设为 **6.5 N·s/m**，对应物理阻尼力 `-BR*r_dot`；模型原本已有该项。当前可配置极点已调整至 **−0.8 至 −1.2 s⁻¹**，具体以 `pole_placement_settings.m` 为准，前文的极点数值仅作为编辑示例。
+| 参数 | 数列示例 | index |
+|---|---|---|
+| `parameters.BR` | `[0 3 6.5]` | `[]` |
+| `settings.theta0` | `[0.1 1 5]*pi/180` | `[]` |
+| `settings.forward_speed0` | `[1.5 2 2.375 3]` | `[]` |
+| `controller.kp_gamma` | `[2 3 6]` | `[]` |
+| `design.chi_poles` | `[-1.4 -1.6 -1.8]` | `1`，使用 chi_balance |
 
-运行 `run_damping_speed_study.m` 可复现 8 个速度、两组初值的 60 s 扫描，每个速度重新设计控制器并同步设置初始速度。当前配置初值（theta0=2.8°、gamma0=0.1 rad）全部未通过；相容的 0.1° 小航向扰动组全部通过末段收敛判据。线性闭环仍有 3 个零极点，不能声称完整状态渐近稳定。
+角度输入使用弧度。向量/矩阵元素使用 MATLAB 线性索引。扫描 design 需要 pole_placement 模式；未生效的控制器字段会报错。普通字段扫描只改变指定字段；特殊参数 `speed` 同时改变初始速度与目标／设计速度。极点配置模式会按每轮参数重新生成 K；固定 K 的比较应使用 direct 模式。
 
-完整推导、增益表、稳定性结果、测试条件及曲线见 [FullModelPolePlacement_withDamping.md](../../Derivation/FullModel/FullModelPolePlacement_withDamping.md)。数据输出至 `results/damping_speed_study/`。扫描额外设有 |r|=2 m 的数值发散终止条件，这不是硬件限位；普通仿真仍采用原有侧倾终止。
+## 结果与文件
 
+两个入口均生成 `results(k)`（各轮时间、状态、输入、实际参数、控制器、初值、设计参数及终止事件），并保留 `result=results(1)`。统一显示八项动力学曲线以及航向、omega3、前进速度；不自动保存文件。
 
-## run_chi_simulation：匹配初速并保持 gamma 为零
+- `config/`：基础配置与共享参数组。
+- `simulation/`：扫描、积分、绘图。
+- `controllers/`、`model/`、`analysis/`：控制器、完整非线性模型及分析函数。
+- `tests/`：回归检查。在 Full 目录运行 `addpath('tests'); test_experiment`。
+- `archive/`：旧专题实验和 [历史说明](archive/historical_notes.md)，用于复现历史报告，不作为日常 main。旧脚本的项目根路径已调整，结果仍写入原目录。
 
-当前 `run_chi_simulation.m` 将设计/目标速度设置为 `simulation_settings.m` 的 `forward_speed0`（本次按用户选择设为 0.2 m/s），并显式将 gamma0、gamma_dot0 设为 0。它启用 `controller.hold_gamma_zero=true`，通过完整非线性动力学计算所需 M2，保持 gamma 为零到积分误差范围内；没有把状态轨迹或绘图数据强制清零。
+状态为 `x=[sigma1;sigma2;sigma3;sigma_r;sigma_g;psi;theta;phi;r;gamma;xG;yG]`。theta 表示侧倾；直线 +x 参考下 chi=psi。降阶极点配置不代表完整状态渐近稳定，具体推导见 [模型报告](../../Derivation/FullModel/FullModelPolePlacement_withDamping.md)。
 
-这会替代原纵向极点反馈，`d.longitudinal` 的极点不再代表实际纵向闭环极点。实际速度不被强制锁定，可能随横向运动变化。横向仍按含 chi 的配置生成控制器；若以后把初速设为 0，脚本明确退回静止 balance 模式，因为静止时 chi 不可控。
+## epsilon 路径反馈
 
-脚本里的 `test_initial_perturbations=true` 会在你的配置初值之外，额外运行三组隔离扰动：chi0=0.1°、theta0=0.01°、theta0=0.1°，并在同一批图里叠加。设为 false 则只运行配置初值。所有试验的初速与目标速度相同。
+`run_simulation.m` 选择 `chi_epsilon_balance` 时，反馈状态为
+`[theta,r,sigma1,sigma_r,chi,epsilon]`，直线 +x 参考下 `chi=psi`、`epsilon=yG`。
+在 `config/simulation_preset.m` 中修改该组的 `design.chi_epsilon_poles`（6 个极点）。
+初始 epsilon 通过 `settings.yG0` 设置；`run_parameter_sweep.m` 当前扫描匹配的初始／目标速度。
+航向图增加 epsilon 曲线。原来的 chi_balance 五极点模式仍可选。
 
-控制器使用理想无限幅力矩，保证零 gamma 的模型约束；不能同时宣称原纵向速度控制器仍在工作。实现公式和本次结果补充在 `Derivation/FullModel/FullModelPolePlacement_withDamping.md`。参数以当前配置文件为准，本次测试时用户文件的 BR 已为 0，未擅自改回上轮实验的 6.5。
+加入 epsilon 后完整 12 状态仍有两个零极点，不能据此声称所有初值都收敛到零误差。
+`addpath('analysis'); report=verify_epsilon_equilibria();` 可验证精确非线性相对平衡族，
+并比较纯 epsilon 扰动、纯 theta 扰动及平衡族上的初值。
+推导及数值结果见 [epsilon 平衡验证](../../Derivation/FullModel/EpsilonPolePlacementEquilibria.md)。
 
+## 初始速度与目标速度同步扫描
 
-## 零输入开环
+同步速度扫描的设置示例：
 
-在 `config/experiment_settings.m` 设置 `e.controller.mode='open_loop'`，运行 `run_simulation.m`。该入口现已选择此模式。控制输入始终 F=0、M2=0，跳过增益生成及全部反馈，包括 gamma 零约束；`results(k).U` 应全为零。物理阻尼 BR/BP 和初值仍以模型配置为准，零反馈不代表零阻尼，也不代表速度保持不变。
+```matlab
+parameter_group='chi_epsilon_balance';
+parameter='speed';
+values=[0.5 1 1.5 2 2.375 3]; % m/s
+parameter_index=[];
+```
 
-初速和扰动在 `simulation_settings.m` 设置；要观察侧倾响应可设置 `s.theta0=0.1*pi/180`。仅设置 psi 航向偏角、其余状态位于直线滚动稳态时，并不一定激发侧倾振荡。运行仍保留侧倾终止事件。
+每轮同时设置 `settings.forward_speed0` 和 `design.forward_speed`，再重新计算 K，
+因此初始速度和目标速度始终取同一个扫描值。实际运动速度仍由动力学决定，不会被强行锁定。
+保留该参数组的 theta0=1° 等其余参数，每轮仿真 30 s。
+此脚本显式使用项目内置 `acker`，不依赖 Control System Toolbox，也不改动全局算法设置。
+`speed` 仅适用于滚动极点配置且纵向反馈启用的情况，数列不能包含 0。
+若只想扫描初速或目标速度，分别使用 `settings.forward_speed0` 或 `design.forward_speed`。
 
-`run_chi_simulation.m` 会主动选择 pole_placement 并启用 gamma 零约束，因此不能用它代替零输入开环入口。切回闭环时修改上述 mode 即可。
+## 仿真过程中在线重新线性化
 
+运行 `run_mate_speed_relinearization.m` 可按 Máté 之前采用的流程进行在线 gain scheduling。ODE 每次计算控制输入时，都读取当前模拟状态的实际纵向速度 `v(t)=R*sigma2(t)`，在该速度对应的直线滚动状态重新线性化完整模型，重新进行 pole placement 得到 `K(t)`，然后计算本次控制输入。它不是只在每轮仿真开始前重新设计一次。
 
-## 当前 run_simulation：Máté 所描述的控制结构
+每轮初始速度与固定目标速度相等；仿真过程中目标速度保持不变，但线性化速度和 K 随实际速度变化。期望极点保持不变。默认比较 `theta0=0 deg` 和 `theta0=1 deg`，两者的初始偏航角速度均为零，并扫描多个临界速度以下的目标速度。
 
-`run_simulation.m` 中的 `mate_test=true` 选择 `lateral_open_loop`：F 始终为零，纵向仅使用 gamma 和 gamma_dot 的 PD 反馈，目标均为零，M2 按当前模型符号约定为 `kp_gamma*gamma + kd_gamma*gamma_dot`。没有速度/位置反馈，也没有 gamma 严格零约束；gamma 可以有小幅运动。
+滚动路径状态在零速度处失去可控性，因此脚本在实际速度降至 `min_design_speed` 时停止该轮，而不会静默切换为静止控制器。这里仍使用本仓库的完整模型和当前物理参数，并不声称数值参数与 Máté 的模型完全相同。结果保存到 `results/mate_online_relinearization/`。
 
-该预设在本次运行中覆盖 BR=BP=0，不改写模型参数文件。PD 增益取自 `controller_parameters.m`（当前 kp_gamma=3、kd_gamma=0.8）；初值取自 `simulation_settings.m`。杆质量及惯量保留当前参数。Máté 尚未给出准确质量和增益，所以这是控制结构的复现，不是其图的精确复现。
+## 仅配置前四个横向变量
 
-设置 `mate_test=false` 可恢复直接读取 `experiment_settings.m` 中的模式，包括原来的全开环 `open_loop`（F=M2=0）。
+两个 main 当前选择 `rolling_balance`，使用 `design.lateral_states='balance_rolling'`。
+横向反馈状态仅为 `[theta,r,sigma1,sigma_r]`；psi、epsilon 和 sigma3 的直接反馈增益为零。
+在 `config/simulation_preset.m` 的 rolling_balance 分支修改：
 
+```matlab
+experiment.design.rolling_poles=[-1.6 -1.8 -2 -2.2];
+```
 
-## 已找到的无阻尼振荡预设（2026-09-21）
-
-直接运行 `run_simulation.m`，其中 `mate_test=true`、`mate_case='oscillation_candidate'`：横向 F=0、纵向 gamma PD（3、0.8）、BR=BP=0，脚本显式设置 mr=0.272 kg、初速 2.375 m/s、theta0=1°、gamma0=0、时长 60 s。该候选已独立验证 120 s，实测主频约 0.173 Hz 和 0.991 Hz，最大侧倾约 3.33°、最大 gamma 约 0.011°。
-
-`mate_case='current_mass'` 保留模型文件中的杆质量；`mate_case='configured'` 保留配置文件中的全部初值和 PD 增益。当前预设的初值来自脚本中的显式设置，所以修改 `simulation_settings.m` 后若希望完全按文件初值运行，请选 configured。
-
-这复现了与 Máté 描述相近的振荡现象，尚不是他的准确模型。JR 未随质量缩放，准确参数仍待其源码确认。54 组筛选、120 s 验证、频谱及原因分析见 [MateOpenLoopOscillationStudy.md](../../Derivation/FullModel/MateOpenLoopOscillationStudy.md)。
+纵向极点配置保留。此模式仍在当前非零设计速度处线性化，并沿用
+`sigma3=a*theta` 的降阶设计关系，不是原来的静止 `balance` 模式。
+速度扫描继续同步设置初始与目标速度，并保留入口中的速度数列。
+使用内置 Ackermann 实现，无需 Control System Toolbox。五阶、六阶模式仍可通过参数组选择。
+本次按要求仅修改代码，未运行验证。

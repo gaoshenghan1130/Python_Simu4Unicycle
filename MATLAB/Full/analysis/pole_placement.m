@@ -6,10 +6,10 @@ root=fileparts(fileparts(mfilename('fullpath')));
 addpath(fullfile(root,'model'),fullfile(root,'config'));
 if nargin<1, p=model_parameters(); end
 if nargin<2, d=pole_placement_settings(); end
-if isfield(d,'lateral_states') && ~ismember(lower(char(d.lateral_states)),{'balance','balance_chi'})
-    error('unicycle:LateralStates','Use balance or balance_chi for lateral_states.');
+if isfield(d,'lateral_states') && ~ismember(lower(char(d.lateral_states)),{'balance','balance_rolling','balance_chi','balance_chi_epsilon'})
+    error('unicycle:LateralStates','Use balance, balance_rolling, balance_chi, or balance_chi_epsilon for lateral_states.');
 end
-if isfield(d,'lateral_states') && strcmpi(d.lateral_states,'balance_chi')
+if isfield(d,'lateral_states') && ismember(lower(char(d.lateral_states)),{'balance_rolling','balance_chi','balance_chi_epsilon'})
     [K,info]=rolling_chi_placement(p,d);
     return;
 end

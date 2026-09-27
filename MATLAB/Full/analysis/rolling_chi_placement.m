@@ -14,25 +14,38 @@ end
 for j=1:2
     u=zeros(2,1); u(j)=1i*h; B(:,j)=imag(model_rhs(0,x,u,p))/h;
 end
-idx=[7 9 1 4 6]; % [theta r sigma1 sigma_r chi]
+switch lower(char(d.lateral_states))
+    case 'balance_rolling'
+        idx=[7 9 1 4]; % [theta r sigma1 sigma_r], no heading/position feedback
+        poles=d.rolling_poles;
+    case 'balance_chi'
+        idx=[7 9 1 4 6];
+        poles=d.chi_poles;
+    case 'balance_chi_epsilon'
+        idx=[7 9 1 4 6 12]; % epsilon=yG for the straight +x reference
+        poles=d.chi_epsilon_poles;
+    otherwise
+        error('unicycle:LateralStates','Unknown rolling lateral state selection.');
+end
+n=numel(idx);
 a=A(3,1);
 constraint=zeros(1,12); constraint(3)=1; constraint(7)=-a;
 assert(norm(constraint*A,inf)<1e-9 && norm(constraint*B,inf)<1e-9, ...
     'The assumed rolling invariant does not hold for these parameters.');
-E=zeros(12,5); E(idx,:)=eye(5); E(3,1)=a;
+E=zeros(12,n); E(idx,:)=eye(n); E(3,1)=a;
 Al=A(idx,:)*E; Bl=B(idx,1);
 lon=[8 10 2 5]; An=A(lon,lon); Bn=B(lon,2);
 % Check selected dynamics are closed apart from the retained invariant.
 omitted=setdiff(1:12,[idx 3]);
 assert(norm(A(idx,omitted),inf)<1e-9 && norm(B(idx,2),inf)<1e-9);
 assert(norm(A(lon,setdiff(1:12,lon)),inf)<1e-9 && norm(B(lon,1),inf)<1e-9);
-Kl=assign(Al,Bl,d.chi_poles,d.method);
+Kl=assign(Al,Bl,poles,d.method);
 Kn=assign(An,Bn,d.longitudinal,d.method);
 K=zeros(2,12); K(1,idx)=Kl; K(2,lon)=Kn;
 info.A=A; info.B=B; info.x_eq=x; info.reference_rate=rate;
 info.u_eq=zeros(2,1); info.idx_lateral=idx; info.idx_longitudinal=lon;
 info.K_lateral=Kl; info.K_longitudinal=Kn;
-info.requested_lateral=d.chi_poles; info.requested_longitudinal=d.longitudinal;
+info.requested_lateral=poles; info.requested_longitudinal=d.longitudinal;
 info.actual_lateral=eig(Al-Bl*Kl); info.actual_longitudinal=eig(An-Bn*Kn);
 info.full_poles=eig(A-B*K); info.invariant=constraint;
 info.method=d.method; info.forward_speed=d.forward_speed;

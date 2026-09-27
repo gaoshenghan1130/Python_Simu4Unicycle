@@ -1,6 +1,6 @@
 function run_report_experiments()
 % Comparable figures for FullModelPolePlacement_withDamping.md.
-root=fileparts(mfilename('fullpath'));addpath(genpath(root));
+root=fileparts(fileparts(mfilename('fullpath')));addpath(genpath(root));addpath(fullfile(root,'archive'));
 out=fullfile(root,'..','..','Derivation','FullModel','figures','pole_placement_report');
 if ~exist(out,'dir'),mkdir(out);end
 p=model_parameters();p.BR=0;p.BP=0;

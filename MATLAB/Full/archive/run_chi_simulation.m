@@ -1,6 +1,6 @@
 % Straight rolling demo with chi (heading error) in lateral feedback.
 % Chi=psi for the straight reference along +x; theta is the lean angle.
-project_root=fileparts(mfilename('fullpath'));
+project_root=fileparts(fileparts(mfilename('fullpath')));
 addpath(fullfile(project_root,'config'),fullfile(project_root,'model'), ...
     fullfile(project_root,'controllers'),fullfile(project_root,'simulation'), ...
     fullfile(project_root,'analysis'));
