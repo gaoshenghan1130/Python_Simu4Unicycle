@@ -4,6 +4,10 @@ labels={'theta [deg]','r [m]','theta dot [deg/s]','r dot [m/s]', ...
         'gamma [deg]','gamma dot [deg/s]','F [N]','M2 [N m]'};
 fig=figure('Name','Full nonlinear unicycle - controller comparison');
 colors=lines(numel(results));
+if isfield(results,'sweep_parameter') && ...
+        all(strcmp({results.sweep_parameter},'speed'))
+    colors=speed_colors([results.sweep_value]);
+end
 for j=1:numel(results)
     r=results(j); X=r.X; U=r.U;
     data=[X(:,7)*180/pi,X(:,9),X(:,1)*180/pi, ...

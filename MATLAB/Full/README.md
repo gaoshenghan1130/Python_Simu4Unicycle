@@ -96,11 +96,21 @@ parameter_index=[];
 
 ## 仿真过程中在线重新线性化
 
-运行 `run_mate_speed_relinearization.m` 可按 Máté 之前采用的流程进行在线 gain scheduling。ODE 每次计算控制输入时，都读取当前模拟状态的实际纵向速度 `v(t)=R*sigma2(t)`，在该速度对应的直线滚动状态重新线性化完整模型，重新进行 pole placement 得到 `K(t)`，然后计算本次控制输入。它不是只在每轮仿真开始前重新设计一次。
+运行 `run_mate_speed_relinearization.m` 可按 Máté 之前采用的流程进行在线 gain scheduling。脚本先在速度网格上分别重新线性化完整模型并进行 pole placement，得到 `K(v)` 表。固定时间步循环每一步读取当前模拟速度 `v(t)=R*sigma2(t)`，在相邻设计点之间插值得到 `K(t)`，然后用 forward Euler 更新完整非线性状态。该入口不使用 `ode45`。
 
 每轮初始速度与固定目标速度相等；仿真过程中目标速度保持不变，但线性化速度和 K 随实际速度变化。期望极点保持不变。默认比较 `theta0=0 deg` 和 `theta0=1 deg`，两者的初始偏航角速度均为零，并扫描多个临界速度以下的目标速度。
 
 滚动路径状态在零速度处失去可控性，因此脚本在实际速度降至 `min_design_speed` 时停止该轮，而不会静默切换为静止控制器。这里仍使用本仓库的完整模型和当前物理参数，并不声称数值参数与 Máté 的模型完全相同。结果保存到 `results/mate_online_relinearization/`。
+
+速度表间隔由 `gain_schedule_step` 设置，默认 `0.01 m/s`。减小它可更精细地逼近每次按当前速度重新设计的结果，但会增加启动时的预计算时间。若用于诊断并确实需要在每次控制器求值时重新计算 Jacobian，可将脚本中的 `gain_schedule.exact` 改为 `true`；该模式会非常慢。
+
+固定积分步长由脚本中的 `fixed_step` 设置，默认 `0.001 s`，与 `MATLAB/Lat/simulation/timeConstantSimu.m` 一样采用显式 forward Euler。增大步长会加快运行，但也会降低数值精度和稳定性。
+
+## 初始侧倾允许范围随速度变化
+
+运行 `run_allowable_theta_vs_speed.m`。脚本对每个速度重新线性化一次并计算固定 K，然后从 `theta0=0` 分别向正、负方向搜索能完成 30 s 仿真的最大初始侧倾，绘制允许区间。初始速度始终等于设计／参考速度，初始偏航角速度为零。大量边界试验使用固定步长 forward Euler；步长由 `fixed_step` 设置。
+
+当前“allowable”要求未触发 80° 侧倾终止、完成整个仿真，并在最后5秒满足 theta、r、psi、gamma 的速度及前进速度误差阈值。阈值集中在脚本顶部的 `acceptance` 中。该定义仍不包含杆行程或执行器饱和。搜索上限和角度精度分别由 `maximum_test_angle` 和 `angle_tolerance` 设置；若边界达到搜索上限，结果表中的 `*_limit_capped` 会标记该值只是下界。结果保存在 `results/allowable_theta_vs_speed/`。
 
 ## 仅配置前四个横向变量
 

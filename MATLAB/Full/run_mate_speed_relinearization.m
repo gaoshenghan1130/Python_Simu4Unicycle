@@ -2,9 +2,10 @@
 %
 % During each nonlinear simulation, EVERY controller evaluation:
 %   1. reads the current signed longitudinal speed v(t)=R*sigma2(t);
-%   2. linearizes the full nonlinear model at straight rolling with v(t);
-%   3. performs pole placement again to obtain K(t);
-%   4. applies u(t)=-K(t)*(x(t)-x_ref(t)).
+%   2. interpolates K(t) from pole-placement designs precomputed at nearby
+%      straight-rolling speeds;
+%   3. applies u(t)=-K(t)*(x(t)-x_ref(t));
+%   4. advances the nonlinear state with one fixed forward-Euler step.
 %
 % Initial speed equals target speed in each run. The target remains fixed;
 % the linearization speed and K follow the simulated speed.
@@ -26,12 +27,21 @@ theta0_deg=[0 1];
 % reaching zero instead of silently switching to a stationary controller.
 min_design_speed=0.02; % m/s
 
+% Fixed-step integration, equivalent to the project's timeConstantSimu.
+fixed_step=0.001; % s
+
+% Pole placement is precomputed on this speed grid. A smaller step follows
+% the exact K(v) curve more closely but takes longer to initialize.
+gain_schedule_step=0.01; % m/s
+max_schedule_speed=max(target_speeds)+1; % allow transient overspeed
+
 %% Common model, poles, and initial-state settings
 base=simulation_preset('chi_epsilon_balance');
 base.design.method='acker'; % local implementation; no toolbox required
 base.design.chi_epsilon_poles=[-1.4 -1.6 -1.8 -2 -2.2 -2.4];
 base.design.longitudinal=[-0.8 -0.95 -1.05 -1.2];
 base.settings.t_end=30;
+base.settings.fixed_step=fixed_step;
 base.settings.psi0=0;
 base.settings.psi_dot0=0;
 base.settings.r0=0;
@@ -41,6 +51,15 @@ base.settings.gamma0=0;
 base.settings.gamma_dot0=0;
 base.settings.yG0=0;
 base.sweep.enabled=false;
+
+%% Precompute K(v) once, outside the fixed-step simulation
+fprintf('Precomputing pole-placement gain schedule...\n');
+gain_schedule=build_pole_gain_schedule(base.parameters,base.design, ...
+    min_design_speed,max_schedule_speed,gain_schedule_step);
+gain_schedule.exact=false;
+fprintf('  %d designs from %.3g to %.3g m/s, step %.3g m/s.\n', ...
+    numel(gain_schedule.speeds),gain_schedule.min_speed, ...
+    gain_schedule.max_speed,gain_schedule.speed_step);
 
 %% Run all target speeds and both initial-lean cases
 num_cases=numel(case_names);
@@ -60,7 +79,7 @@ for speed_index=1:num_speeds
 
         result=simulate_online_pole_placement( ...
             base.parameters,base.controller,base.design,settings, ...
-            target_speed,min_design_speed);
+            target_speed,min_design_speed,gain_schedule);
         result.label=sprintf('%s, target=%.6g m/s', ...
             case_names{case_index},target_speed);
         runs{case_index,speed_index}=result;
@@ -129,7 +148,7 @@ if ~exist(output_dir,'dir'), mkdir(output_dir); end
 writetable(summary,fullfile(output_dir,'summary.csv'));
 save(fullfile(output_dir,'study.mat'), ...
     'runs','summary','target_speeds','case_names','theta0_deg', ...
-    'min_design_speed','base');
+    'min_design_speed','fixed_step','gain_schedule','base');
 fprintf('\nSaved study data to %s\n',output_dir);
 
 function name=event_name(indices)
@@ -147,7 +166,7 @@ end
 function plot_online_case(case_runs,target_speeds,case_name)
 figure('Name',['Online relinearization: ' case_name], ...
     'Position',[80 80 1100 950]);
-colors=turbo(numel(target_speeds));
+colors=speed_colors(target_speeds);
 labels={'theta [deg]','r [m]','epsilon=yG [m]', ...
     'actual speed [m/s]','||K(t)||_inf'};
 for speed_index=1:numel(target_speeds)

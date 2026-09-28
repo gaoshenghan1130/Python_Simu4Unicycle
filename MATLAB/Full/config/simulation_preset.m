@@ -27,7 +27,7 @@ if ismember(run_mode,{'rolling_balance','chi_balance','chi_epsilon_balance'})
     experiment.settings.t_end=30;
     % Initial perturbations: angles in degrees here, r in metres.
     % Independent nonzero theta can leave an offset in this reduced design.
-    experiment.settings.theta0=1*pi/180;
+    experiment.settings.theta0=0.1*pi/180;
     experiment.settings.r0=0;
     experiment.settings.psi0=0*pi/180; % chi=psi for the straight +x path
     experiment.settings.gamma0=0;

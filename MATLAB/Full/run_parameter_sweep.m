@@ -6,7 +6,7 @@ addpath(fullfile(project_root,'config'),fullfile(project_root,'model'), ...
 
 parameter_group='chi_epsilon_balance';
 parameter='speed'; % matched initial AND target/design speed [m/s]
-values=[2.125 2.25 2.375 2.5 2.625 2.750];
+values=[0.25 0.5 0.75 1 1.25 1.5 1.75 2 2.25 2.5];
 parameter_index=[]; % [] for a scalar; MATLAB linear index for a vector/matrix.
 % Examples:
 % parameter='settings.theta0'; values=[0.1 1 5]*pi/180;
