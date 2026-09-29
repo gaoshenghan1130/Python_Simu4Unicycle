@@ -36,3 +36,5 @@ velocity_comparison.png
 *.gz
 *.bbl
 *.blg
+
+MATLAB/Full/results/allowable_theta_vs_speed/study.mat
