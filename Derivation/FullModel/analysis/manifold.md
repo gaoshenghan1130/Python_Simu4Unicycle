@@ -20,6 +20,35 @@ $$
 \end{aligned}}
 $$
 
+The same constraint can be factorized to keep the repeated $r\tan\theta$
+terms visible:
+
+$$
+\boxed{
+\begin{aligned}
+0={}&22.563r-19.388\tan\theta\\
+&-\dot\phi\dot\psi
+\left(0.591+0.582r\tan\theta\right)\\
+&+\dot\psi^2\Big\{
+-0.523\sin\theta\\
+&\qquad+r\cos\theta
+\left[0.582-0.582\tan^2\theta+2.3r\tan\theta\right]
+\Big\}.
+\end{aligned}}
+$$
+
+The two repeated structures are therefore
+
+$$
+0.591+0.582r\tan\theta,
+$$
+
+and
+
+$$
+0.582-0.582\tan^2\theta+2.3r\tan\theta.
+$$
+
 For $\dot{x}=0$, one has $\dot{\sigma}=0$ and therefore
 $M(q)\dot{\sigma}=0$. The dynamic equations reduce to
 
@@ -245,15 +274,7 @@ $$
 
 
 
-## $\gamma=0$ branch in $(t_s,t_c)$ coordinates
-
-Define
-
-$$
-t_s=\dot\psi\sin\theta,
-\qquad
-t_c=\dot\psi\cos\theta.
-$$
+## $\gamma=0$ branch
 
 On the branch $\gamma=0$,
 
@@ -261,11 +282,11 @@ $$
 s_\gamma=0,
 \qquad c_\gamma=1,
 \qquad
-\sigma_2=\dot\phi+t_s,
+\sigma_2=\dot\phi+\dot\psi\sin\theta,
 \qquad
-\sigma_3=t_c,
+\sigma_3=\dot\psi\cos\theta,
 \qquad
-\sigma_g=t_s.
+\sigma_g=\dot\psi\sin\theta.
 $$
 
 The two constraints containing the factor $s_\gamma$ are then identically
@@ -276,13 +297,19 @@ $$
 \boxed{
 \begin{aligned}
 0={}&-g[R(m_p+m_w+m_r)+hm_p]\sin\theta\\
-&-[J_{W1}+R^2(m_p+m_w+m_r)+b]
-(\dot\phi+t_s)t_c\\
-&+[b+a+c]\tan\theta\,t_c^2\\
-&+[J_{Px}-J_{Py}-J_{Pz}-2b-2a]t_st_c\\
-&+r\left[m_rg\cos\theta+Rm_rt_c^2
--Rm_r\tan\theta(\dot\phi+t_s)t_c\right]\\
-&+m_rr^2\tan\theta\,t_c^2.
+&+g m_r r\cos\theta\\
+&-\dot\phi\dot\psi\cos\theta
+\left[J_{W1}+R^2(m_p+m_w+m_r)+R m_p h+R m_r r\tan\theta\right]\\
+&+\dot\psi^2\Big\{
+-\left[J_{W1}+R^2(m_p+m_w+m_r)+R m_p h\right]\sin\theta\cos\theta\\
+&\qquad+[J_{Px}+J_R+J_{W2}+m_p h^2+R m_p h]
+\tan\theta\cos^2\theta\\
+&\qquad+[-J_{Px}-J_{Py}+J_{Pz}-2R m_p h-2m_p h^2]
+\sin\theta\cos\theta\\
+&\qquad+R m_r r\cos^2\theta
+-R m_r r\tan\theta\sin\theta\cos\theta\\
+&\qquad+m_r r^2\tan\theta\cos^2\theta
+\Big\}.
 \end{aligned}}
 $$
 
@@ -294,9 +321,64 @@ $$
 \qquad
 \sigma_r=0,
 \qquad
-\sigma_2=\dot\phi+t_s,
+\sigma_2=\dot\phi+\dot\psi\sin\theta,
 \qquad
-\sigma_3=t_c,
+\sigma_3=\dot\psi\cos\theta,
 \qquad
-\sigma_g=t_s.
+\sigma_g=\dot\psi\sin\theta.
 $$
+
+Using the parameter values
+
+$$
+\begin{aligned}
+g[R(m_p+m_w+m_r)+hm_p]&=19.388,\\
+gm_r&=22.563,\\
+J_{W1}+R^2(m_p+m_w+m_r)+Rm_ph&=0.591,\\
+J_{Px}+J_R+J_{W2}+m_ph^2+Rm_ph&=0.130,\\
+-J_{Px}-J_{Py}+J_{Pz}-2Rm_ph-2m_ph^2&=-0.0615,\\
+Rm_r&=0.582,
+\end{aligned}
+$$
+
+the remaining constraint becomes
+
+$$
+\boxed{
+\begin{aligned}
+0={}&-19.388\sin\theta+22.563 r\cos\theta\\
+&-\dot\phi\dot\psi\cos\theta
+\left(0.591+0.582 r\tan\theta\right)\\
+&+\dot\psi^2\Big\{
+-0.653\sin\theta\cos\theta\\
+&\qquad+0.130\tan\theta\cos^2\theta\\
+&\qquad+0.582 r\cos^2\theta\\
+&\qquad-0.582 r\tan\theta\sin\theta\cos\theta\\
+&\qquad+2.3 r^2\tan\theta\cos^2\theta
+\Big\}.
+\end{aligned}}
+$$
+
+Dividing the constraint by $\cos\theta$, assuming $\cos\theta\neq0$, and
+using $\tan\theta\cos\theta=\sin\theta$ gives
+
+$$
+\boxed{
+\begin{aligned}
+0={}&-19.388\tan\theta+22.563 r\\
+&-\dot\phi\dot\psi
+\left(0.591+0.582 r\tan\theta\right)\\
+&+\dot\psi^2\Big[
+-0.523\sin\theta
++0.582 r\cos\theta\\
+&\qquad-0.582 r\tan\theta\sin\theta
++2.3 r^2\sin\theta
+\Big].
+\end{aligned}}
+$$
+
+Or extract the repeated $r\tan\theta$ terms to give:
+
+\[ 
+\boxed{ \begin{aligned} 0={}&22.563\left(r-0.859274\tan\theta\right)\\ &-0.5819\dot\phi\dot\psi \left(1.015657+r\tan\theta\right)\\ &+\dot\psi^2\Big[ 2.3r\cos\theta\left(0.253+r\tan\theta\right)\\ &\qquad-0.5819\sin\theta \left(0.897923+r\tan\theta\right) \Big]. \end{aligned}} 
+\]
