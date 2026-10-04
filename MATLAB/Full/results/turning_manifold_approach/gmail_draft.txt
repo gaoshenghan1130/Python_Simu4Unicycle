@@ -1,0 +1,30 @@
+Subject: Turning-manifold simulation result
+
+Dear Gabor and Mate,
+
+I found that, starting from a nonzero theta, the full model can be moved onto a General Turning-Rolling equilibrium manifold with nonzero yaw rate (psi_dot).
+
+For the current example, the target is theta = 1 degree, r = 0.04568 m, psi_dot = 0.12473 rad/s, and forward speed = 2.375 m/s. The full nonlinear steady-state residual is about 4.9e-16. Starting from theta = 2 degrees and psi_dot = 0, the simulation approaches theta = 1.0548 degrees, r = 0.04650 m, and psi_dot = 0.12473 rad/s after 25 s.
+
+The steady-turning feedforward inputs used here are:
+
+F = mr * [R * (V + Omega*sin(theta)) * Omega*cos(theta)
+          + g*sin(theta) - r*Omega^2*cos(theta)^2]
+
+M2 = -b*sin(gamma)*Omega^2 + BP*V
+
+For this simulation gamma = 0 and BP = 0, so M2 = 0 and F = 1.0735 N at the target point.
+
+This does not yet solve the theta-to-zero problem. The nonzero psi_dot absorbs part of the straight-rolling theta/psi_dot invariant, so the system can reach a nearby turning manifold. However, with the current branch and local controller, we do not yet have a trajectory from that manifold back to the trivial equilibrium theta = 0 and psi_dot = 0. The straight-rolling invariant is only a local linear diagnostic, but it still identifies the missing degree of freedom in the current return design.
+
+I attached:
+
+1. theta-psi_dot-r state-space trajectory with the turning-equilibrium surface
+2. Other full-model states and inputs, including gamma, psi_dot, phi, phi_dot, F, and M2
+
+Best,
+Shenghan
+
+Attachments:
+theta_psidot_r_state_space.png
+other_states_and_inputs.png

@@ -1,0 +1,22 @@
+Subject: Full-model general turning-rolling manifold simulation
+
+Hi Professor Gábor and Máté,
+
+As a follow-up to our discussion, I tested the general turning-rolling equilibrium in the full nonlinear unicycle model. Starting from theta = 0.2 degrees, psi_dot = 0, and r = 0, the closed-loop simulation approaches a steady turn. At 25 s, theta = 0.100069 degrees, psi_dot = 0.0136802 rad/s, and r = 0.0048646 m. The relative-state rate norm at the end is 5.36e-8, and the steady-turning target satisfies the full-model equations to a residual of 6.4e-15.
+
+The target is a nonzero-lean, nonzero-yaw-rate relative equilibrium at a forward speed of 2.375 m/s. I selected its yaw rate by matching the local uncontrollable mode at the target. Its steady inputs are F = 0.114105 N and M2 = 0. With Omega = psi_dot and V = phi_dot, the input formulas are:
+
+F = mr * [R*(V + Omega*sin(theta))*Omega*cos(theta)
+          + g*sin(theta) - r*Omega^2*cos(theta)^2]
+M2 = -R*h*mp*sin(gamma)*Omega^2 + BP*V
+
+Here gamma = 0 and BP = 0 in the simulation. The result shows that this initial state can reach the general turning-rolling manifold. Theta remains nonzero, so this is not yet a return to upright straight rolling. I also tested a direct local controller for nontilted turning from psi_dot = 0 and r = 0; it did not converge. That failure does not establish global impossibility, but it shows that a separate transition strategy is needed for that branch.
+
+I attached the time response and the theta-psi_dot-r state-space trajectory.
+
+Best,
+Shenghan
+
+Attachments:
+general_turning_time.png
+theta_psidot_r_state_space.png

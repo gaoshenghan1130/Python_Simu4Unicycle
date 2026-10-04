@@ -1,0 +1,19 @@
+Subject: Follow-up on the full-model manifold approach
+
+Hi Professor Gábor and Máté,
+
+As a follow-up to our meeting on Tuesday, I derived the steady-state expressions for F and M and tried to apply the manifold method to the full model. In the expressions below, b and B_p are constants, Omega is the steady yaw rate (psi dot), and V is the steady wheel rate (phi dot).
+
+[Insert image of the F and M equations here]
+
+The essay "Steering Control of an Autonomous Unicycle" classifies several steady motions of a rolling wheel with a moving point mass under zero input to the mass. In our full-model simulation, which allows a steady actuator force, I can first move the system onto a general turning-rolling manifold and then reach a zero-lean turning equilibrium. I also tried to reach the essay's nontilted turning state, where F = 0. The current controller did not converge to the specific mass position and yaw rate at which the inertial effects balance and the required F vanishes; the zero-lean state it reaches still needs a nonzero F.
+
+The lean angle reaches zero, but the yaw rate remains nonzero, so this does not yet return the system to straight rolling. I suspect this may be close to the limit of the current manifold approach. I am also concerned that selecting the target through the local invariant could make the method sensitive to sensor noise and bias, although I have not tested that yet. Do you have any suggestions for next steps? I have attached plots of the two stages.
+
+Best,
+Shenghan
+
+Attachments:
+image of steady-state F and M equations
+two_stage_time.png
+two_stage_theta_psidot_r.png
