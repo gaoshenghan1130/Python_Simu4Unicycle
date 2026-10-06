@@ -1,4 +1,4 @@
-function report = verify_turning_manifold_approach(theta_target_deg,initial_state)
+function report = verify_turning_manifold_approach(theta_target_deg,initial_state,make_plots,theta0_deg,t_end)
 %VERIFY_TURNING_MANIFOLD_APPROACH Reach an input-supported turning state.
 % Run: addpath('MATLAB/Full'); report = verify_turning_manifold_approach();
 % Pass 0.1 to reproduce the earlier nonzero-lean general-turning run.
@@ -10,8 +10,16 @@ function report = verify_turning_manifold_approach(theta_target_deg,initial_stat
 
 root = fileparts(mfilename('fullpath'));
 if nargin<1, theta_target_deg = 0; end
+if nargin<3, make_plots = true; end
+if nargin<4 || isempty(theta0_deg), theta0_deg = 0.25; end
+if nargin<5 || isempty(t_end), t_end = 25; end
+assert(isscalar(make_plots),'make_plots must be a scalar logical flag.');
 assert(isscalar(theta_target_deg) && isfinite(theta_target_deg), ...
     'theta_target_deg must be a finite scalar.');
+assert(isscalar(theta0_deg) && isfinite(theta0_deg), ...
+    'theta0_deg must be a finite scalar.');
+assert(isscalar(t_end) && isfinite(t_end) && t_end>0, ...
+    't_end must be a positive finite scalar.');
 addpath(fullfile(root,'config'),fullfile(root,'model'));
 p = model_parameters();
 p.mr = 2.3;
@@ -20,7 +28,7 @@ p.BP = 0;
 s = simulation_settings();
 
 cfg.speed = 2.375;                 % R*phi_dot [m/s]
-cfg.theta0 = 0.2*pi/180;          % current nonzero initial lean
+cfg.theta0 = theta0_deg*pi/180;    % initial lean
 cfg.theta_target = theta_target_deg*pi/180;
 if theta_target_deg==0
     branch_name = 'upright turning';
@@ -29,15 +37,15 @@ else
 end
 cfg.psi_dot0 = 0;
 cfg.r0 = 0;
-cfg.t_end = 25;
+cfg.t_end = t_end;
 cfg.dt = 0.01;
-cfg.force_limit = 15;
+cfg.force_limit = 30;
 cfg.torque_limit = 15;
 cfg.tilt_limit = 45*pi/180;
 
 % The target yaw rate is selected on the exact steady-turning branch so
 % the initial state matches the single uncontrollable linear mode.
-if nargin<2
+if nargin<2 || isempty(initial_state)
     x0 = zeros(12,1);
     x0(2) = cfg.speed/p.R;
     x0(3) = cfg.psi_dot0*cos(cfg.theta0);
@@ -117,7 +125,7 @@ reached_turning_manifold = isempty(te) && ...
     abs(theta_deg(end)-theta_target_deg)<0.001;
 
 if theta_target_deg==0
-    if nargin<2
+    if nargin<2 || isempty(initial_state)
         output_dir = fullfile(root,'results','upright_turning_approach');
     else
         output_dir = fullfile(root,'results','upright_turning_from_general');
@@ -125,8 +133,9 @@ if theta_target_deg==0
 else
     output_dir = fullfile(root,'results','general_turning_manifold_approach');
 end
-if ~isfolder(output_dir), mkdir(output_dir); end
+if make_plots && ~isfolder(output_dir), mkdir(output_dir); end
 
+if make_plots
 fig_time = figure('Name',['Approach to ',branch_name],'Color','w');
 tiledlayout(2,3,'Padding','compact','TileSpacing','compact');
 nexttile;
@@ -223,6 +232,8 @@ nexttile; plot(t,shape_error_norm,'b');
 grid on; xlabel('t [s]'); ylabel('reference shape error norm');
 sgtitle('Other full-model states and inputs (dashed: reference)');
 
+end
+
 report.t = t;
 report.X = X;
 report.U = Uhist;
@@ -248,10 +259,12 @@ report.time_plot_path = fullfile(output_dir,'general_turning_time.png');
 report.phase_plot_path = fullfile(output_dir,'theta_r_psi_state_space.png');
 report.shape_plot_path = fullfile(output_dir,'theta_psidot_r_state_space.png');
 report.other_plot_path = fullfile(output_dir,'other_states_and_inputs.png');
+if make_plots
 exportgraphics(fig_time,report.time_plot_path,'Resolution',180);
 exportgraphics(fig_phase,report.phase_plot_path,'Resolution',180);
 exportgraphics(fig_shape,report.shape_plot_path,'Resolution',180);
 exportgraphics(fig_other,report.other_plot_path,'Resolution',180);
+end
 
 fprintf('Initial: theta=%.6g deg, r=%.6g m, psi_dot=%.6g rad/s\n', ...
     x0(7)*180/pi,x0(9),x0(3)/cos(x0(7)));

@@ -1,0 +1,5 @@
+theta0_deg,stage1_omega_rad_s,stage2_omega_rad_s,stage1_final_theta_deg,stage2_final_theta_deg,stage1_reached,stage2_reached,status,message
+0.25,0.0205015741553875,0.0341906583185736,0.100191101316686,5.87577079680188e-05,1,1,success,Both stages reached their target manifolds.
+0.3,0.0273034310056376,0.0410076008831383,0.100405345070615,7.17796832837466e-05,1,1,success,Both stages reached their target manifolds.
+0.35,0.0340804792659147,0.0478130840447419,0.100736260475036,8.49307243302124e-05,1,1,success,Both stages reached their target manifolds.
+0.4,0.0408276995649787,NaN,0.101207361989923,NaN,0,0,stage1_failed_to_reach_manifold,General-turning stage did not meet its convergence checks.
