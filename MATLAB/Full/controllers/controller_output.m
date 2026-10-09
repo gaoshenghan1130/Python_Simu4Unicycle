@@ -8,8 +8,14 @@ if isfield(c,'mode') && strcmpi(c.mode,'lateral_open_loop')
     gamma_dot=x(5)-x(3)*tan(x(7));
     M2=c.kp_gamma*(x(10)-c.gamma_ref) ...
         +c.kd_gamma*(gamma_dot-c.gamma_dot_ref);
-    u=[0;max(-c.torque_limit,min(c.torque_limit,M2))];
-    return; % Only gamma PD: no lateral feedback, speed loop, or gamma lock.
+    F=0;
+    if isfield(c,'center_rod') && c.center_rod
+        r_dot=p.R*x(1)+x(4);
+        F=c.kp_r*(c.r_ref-x(9))+c.kd_r*(c.r_dot_ref-r_dot);
+    end
+    u=[max(-c.force_limit,min(c.force_limit,F)); ...
+       max(-c.torque_limit,min(c.torque_limit,M2))];
+    return; % Optional rod-r PD; no tilt, yG, speed, or gamma-lock feedback.
 end
 if ~isfield(c,'mode') || strcmpi(c.mode,'pd')
     u=pd_controller(t,x,p,c);

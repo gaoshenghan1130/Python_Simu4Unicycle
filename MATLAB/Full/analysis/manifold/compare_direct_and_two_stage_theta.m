@@ -5,8 +5,8 @@ function results = compare_direct_and_two_stage_theta(theta0_values)
 % The direct run lasts 50 s; the two-stage run uses two 25 s legs, so both
 % methods have the same total simulation time, model parameters and criteria.
 
-root = fileparts(mfilename('fullpath'));
-addpath(root);
+root = fileparts(fileparts(fileparts(mfilename('fullpath'))));
+addpath(root,fullfile(root,'analysis','manifold'));
 custom_grid = nargin >= 1 && ~isempty(theta0_values);
 if ~custom_grid
     theta0_values = (0.25:0.25:5.0)';

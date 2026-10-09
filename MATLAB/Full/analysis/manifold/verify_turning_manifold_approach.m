@@ -1,6 +1,7 @@
 function report = verify_turning_manifold_approach(theta_target_deg,initial_state,make_plots,theta0_deg,t_end)
 %VERIFY_TURNING_MANIFOLD_APPROACH Reach an input-supported turning state.
-% Run: addpath('MATLAB/Full'); report = verify_turning_manifold_approach();
+% Run the public entry point: addpath('MATLAB/Full'); verify_direct_upright_turning();
+% To call this helper directly, also addpath('MATLAB/Full/analysis/manifold').
 % Pass 0.1 to reproduce the earlier nonzero-lean general-turning run.
 % For a second leg from that equilibrium:
 % leg1 = verify_turning_manifold_approach(0.1);
@@ -8,10 +9,10 @@ function report = verify_turning_manifold_approach(theta_target_deg,initial_stat
 % Full nonlinear 12-state plant, local LQR on the controllable relative
 % states. Requires Control System Toolbox.
 
-root = fileparts(mfilename('fullpath'));
+root = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 if nargin<1, theta_target_deg = 0; end
 if nargin<3, make_plots = true; end
-if nargin<4 || isempty(theta0_deg), theta0_deg = 0.25; end
+if nargin<4 || isempty(theta0_deg), theta0_deg = 5; end
 if nargin<5 || isempty(t_end), t_end = 25; end
 assert(isscalar(make_plots),'make_plots must be a scalar logical flag.');
 assert(isscalar(theta_target_deg) && isfinite(theta_target_deg), ...
@@ -123,17 +124,6 @@ reached_turning_manifold = isempty(te) && ...
     final_relative_rate_norm<1e-4 && tail_theta_range<0.01 && ...
     tail_r_range<1e-3 && tail_yaw_rate_range<1e-3 && ...
     abs(theta_deg(end)-theta_target_deg)<0.001;
-
-if theta_target_deg==0
-    if nargin<2 || isempty(initial_state)
-        output_dir = fullfile(root,'results','upright_turning_approach');
-    else
-        output_dir = fullfile(root,'results','upright_turning_from_general');
-    end
-else
-    output_dir = fullfile(root,'results','general_turning_manifold_approach');
-end
-if make_plots && ~isfolder(output_dir), mkdir(output_dir); end
 
 if make_plots
 fig_time = figure('Name',['Approach to ',branch_name],'Color','w');
@@ -255,16 +245,10 @@ report.reached_turning_manifold = reached_turning_manifold;
 report.event_time = te;
 report.event_state = xe_event;
 report.event_index = ie;
-report.time_plot_path = fullfile(output_dir,'general_turning_time.png');
-report.phase_plot_path = fullfile(output_dir,'theta_r_psi_state_space.png');
-report.shape_plot_path = fullfile(output_dir,'theta_psidot_r_state_space.png');
-report.other_plot_path = fullfile(output_dir,'other_states_and_inputs.png');
-if make_plots
-exportgraphics(fig_time,report.time_plot_path,'Resolution',180);
-exportgraphics(fig_phase,report.phase_plot_path,'Resolution',180);
-exportgraphics(fig_shape,report.shape_plot_path,'Resolution',180);
-exportgraphics(fig_other,report.other_plot_path,'Resolution',180);
-end
+report.time_plot_path = '';
+report.phase_plot_path = '';
+report.shape_plot_path = '';
+report.other_plot_path = '';
 
 fprintf('Initial: theta=%.6g deg, r=%.6g m, psi_dot=%.6g rad/s\n', ...
     x0(7)*180/pi,x0(9),x0(3)/cos(x0(7)));

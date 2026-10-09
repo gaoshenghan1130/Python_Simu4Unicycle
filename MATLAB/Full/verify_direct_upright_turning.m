@@ -4,7 +4,7 @@ function report = verify_direct_upright_turning()
 % targets theta = 0 in one stage, without the intermediate 0.1-degree turn.
 
 root = fileparts(mfilename('fullpath'));
-addpath(root);
+addpath(root,fullfile(root,'analysis','manifold'));
 report = verify_turning_manifold_approach(0);
 
 fprintf('Direct upright target: Omega=%.8g rad/s, reached=%s\n', ...

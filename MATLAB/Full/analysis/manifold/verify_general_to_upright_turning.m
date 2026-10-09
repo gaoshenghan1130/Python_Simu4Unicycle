@@ -1,12 +1,13 @@
 function report = verify_general_to_upright_turning()
 %VERIFY_GENERAL_TO_UPRIGHT_TURNING Transfer from a general to upright turn.
 % The first segment is used to initialize the compatible general-turn orbit;
-% only the upright-turn simulation is plotted and saved by this entry point.
+% only the upright-turn simulation is plotted by this entry point.
 
-root = fileparts(mfilename('fullpath'));
-leg1 = verify_turning_manifold_approach(0.1);
+root = fileparts(fileparts(fileparts(mfilename('fullpath'))));
+addpath(fullfile(root,'analysis','manifold'));
+leg1 = verify_turning_manifold_approach(0.1,[],false);
 assert(leg1.reached_turning_manifold,'First leg did not settle.');
-leg2 = verify_turning_manifold_approach(0,leg1.X(end,:)');
+leg2 = verify_turning_manifold_approach(0,leg1.X(end,:)',false);
 assert(leg2.reached_turning_manifold,'Second leg did not settle.');
 
 t = leg2.t;
@@ -15,9 +16,6 @@ theta_deg = X(:,7)*180/pi;
 psi_dot = X(:,3)./cos(X(:,7));
 r_m = X(:,9);
 psi_deg = unwrap(X(:,6))*180/pi;
-
-output_dir = fullfile(root,'results','upright_turning_from_general');
-if ~isfolder(output_dir), mkdir(output_dir); end
 
 fig_time = figure('Name','Upright turn from general turn','Color','w');
 tiledlayout(2,2,'Padding','compact','TileSpacing','compact');
@@ -54,10 +52,8 @@ report.stage1 = leg1;
 report.stage2 = leg2;
 report.t = t;
 report.X = X;
-report.time_plot_path = fullfile(output_dir,'upright_turn_time.png');
-report.shape_plot_path = fullfile(output_dir,'upright_turn_theta_psidot_r.png');
-exportgraphics(fig_time,report.time_plot_path,'Resolution',180);
-exportgraphics(fig_shape,report.shape_plot_path,'Resolution',180);
+report.time_plot_path = '';
+report.shape_plot_path = '';
 
 fprintf(['Two-stage final: theta=%.8g deg, psi_dot=%.8g rad/s, ' ...
     'r=%.8g m, stage-2 relative-rate norm=%.3e\n'], ...
