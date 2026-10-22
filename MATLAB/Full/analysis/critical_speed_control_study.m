@@ -167,7 +167,7 @@ cases(1) = base; cases(1).name = 'gamma PD only';
 cases(2) = base; cases(2).name = 'gamma PD + r PD';
 cases(2).kp_r = 854.34418; cases(2).kd_r = 105.568949;
 cases(3) = cases(2); cases(3).name = 'gamma PD + r PD + lean PD';
-cases(3).kp_theta = 20; cases(3).kd_theta = 4;
+cases(3).kp_theta = -20; cases(3).kd_theta = -4;
 cases(4) = cases(2); cases(4).name = 'Case 3a: reduce rod stiffness';
 cases(4).kp_r = 0.75*cases(2).kp_r;
 cases(5) = cases(2); cases(5).name = 'Case 3b: increase rod damping';

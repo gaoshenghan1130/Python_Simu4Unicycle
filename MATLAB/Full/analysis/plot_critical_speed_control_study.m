@@ -10,10 +10,10 @@ function validation = plot_critical_speed_control_study(input_speeds, test_durat
 
 if nargin < 1 || isempty(input_speeds)
     % Edit this column to try your own initial speeds (m/s).
-    input_speeds = [0.5; 0.8; 1.4; 1.6; 1.8; 2.2; 2.4; 2.8];
+    input_speeds = [1.8];
 end
 if nargin < 2 || isempty(test_duration)
-    test_duration = 25; % seconds
+    test_duration = 250; % seconds
 end
 validateattributes(input_speeds, {'numeric'}, {'vector','real','finite','positive'});
 validateattributes(test_duration, {'numeric'}, {'scalar','real','finite','positive'});
@@ -26,7 +26,7 @@ addpath(genpath(model_root));
 p = model_parameters();
 controller = struct('mode','pd', ...
     'kp_theta',0, 'kd_theta',0, ...
-    'kp_r',854.34418, 'kd_r',105.568949, ...
+    'kp_r',8540.34418, 'kd_r',1050.568949, ... %'kp_r',854.34418, 'kd_r',105.568949, ...
     'kp_gamma',3, 'kd_gamma',0.8, ...
     'theta_ref',0, 'theta_dot_ref',0, ...
     'r_ref',0, 'r_dot_ref',0, ...
@@ -37,7 +37,7 @@ settings = simulation_settings();
 settings.t_end = test_duration;
 settings.output_dt = 0.1;
 settings.max_step = 0.005;
-settings.theta0 = 0.1*pi/180;
+settings.theta0 = 1*pi/180;
 settings.tilt_limit = 80*pi/180;
 
 % Give each speed a distinct blue shade, ordered from light (slow) to dark.
@@ -90,8 +90,8 @@ for k = 1:numel(speeds)
     plot(ax1, validation(k).time, validation(k).theta_deg, ...
         'Color',colors(k,:), 'LineWidth',1.2);
 end
-yline(ax1, 80, 'k--', '80 deg event');
-yline(ax1,-80, 'k--', 'HandleVisibility','off');
+yline(ax1, 20, 'k--', '80 deg event');
+yline(ax1,-20, 'k--', 'HandleVisibility','off');
 xlabel(ax1,'Time (s)'); ylabel(ax1,'Tilt angle (deg)');
 title(ax1,'Lean angle');
 legend(ax1, compose('v_0 = %.6g m/s', speeds), 'Location','best');

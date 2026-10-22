@@ -1,11 +1,11 @@
 function report = verify_general_to_upright_turning()
-%VERIFY_GENERAL_TO_UPRIGHT_TURNING Transfer from a general to upright turn.
-% The first segment is used to initialize the compatible general-turn orbit;
-% only the upright-turn simulation is plotted by this entry point.
+%VERIFY_GENERAL_TO_UPRIGHT_TURNING Two consecutive zero-lean target stages.
+% Legacy entry-point name retained. Both stages now target theta=0;
+% the second stage rematches the first stage's terminal state.
 
 root = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 addpath(fullfile(root,'analysis','manifold'));
-leg1 = verify_turning_manifold_approach(0.1,[],false);
+leg1 = verify_turning_manifold_approach(0,[],false);
 assert(leg1.reached_turning_manifold,'First leg did not settle.');
 leg2 = verify_turning_manifold_approach(0,leg1.X(end,:)',false);
 assert(leg2.reached_turning_manifold,'Second leg did not settle.');

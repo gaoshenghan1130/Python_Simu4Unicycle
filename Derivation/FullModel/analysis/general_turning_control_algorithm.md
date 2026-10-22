@@ -1,143 +1,114 @@
-# General turning manifold control algorithm
+# General turning manifold control
 
-This note records the manifold and feedback law used by
-`verify_turning_manifold_approach.m`. The MATLAB state and input conventions
-are
+## 1. Steady-turning manifold
 
-$$
-x=\begin{bmatrix}
-\sigma_1&\sigma_2&\sigma_3&\sigma_r&\sigma_g&
-\psi&\theta&\phi&r&\gamma&x_G&y_G
-\end{bmatrix}^{T},\qquad
-u=\begin{bmatrix}F&M_2\end{bmatrix}^{T}.
-$$
-
-Here \(\sigma_1=\dot\theta\),
-\(\sigma_2=\dot\phi+\dot\psi\sin\theta\),
-\(\sigma_3=\dot\psi\cos\theta\),
-\(\sigma_r=\dot r-R\dot\theta\), and
-\(\sigma_g=\dot\gamma+\dot\psi\sin\theta\).
-
-## 1. General turning relative-equilibrium manifold
-
-Let \(\theta\) be the constant lean angle, \(\Omega=\dot\psi\ne0\) the
-constant yaw rate, and \(\nu=\dot\phi\) the constant wheel-phase rate. The
-simulation sets the rolling-speed parameter to \(v=R\nu\). A steady-turning
-relative equilibrium satisfies
+The state and input conventions are
 
 $$
-\dot\theta=\dot r=\dot\gamma=\dot\sigma=0,
+x=[\sigma_1,\sigma_2,\sigma_3,\sigma_r,\sigma_g,\psi,\theta,\phi,r,\gamma,x_G,y_G]^T,
+\qquad u=[F,M_2]^T,
 $$
 
-and therefore
+$$
+\sigma_1=\dot\theta,\quad
+\sigma_2=\dot\phi+\dot\psi\sin\theta,\quad
+\sigma_3=\dot\psi\cos\theta,\quad
+\sigma_r=\dot r-R\dot\theta,\quad
+\sigma_g=\dot\gamma+\dot\psi\sin\theta.
+$$
+
+For constant lean \(\theta\), yaw rate \(\Omega=\dot\psi\ne0\), and wheel-phase
+rate \(\nu=\dot\phi\), the controller uses the \(\gamma=0\) branch:
 
 $$
 \boxed{
-\sigma_e(\theta,\Omega,\nu)=
-\begin{bmatrix}
-0\\
-\nu+\Omega\sin\theta\\
-\Omega\cos\theta\\
-0\\
-\Omega\sin\theta
-\end{bmatrix}.}
+x_e=[0,\nu+\Omega\sin\theta,\Omega\cos\theta,0,\Omega\sin\theta,
+\psi_e,\theta,\phi_e,r_e,0,x_{Ge},y_{Ge}]^T.
+}
 $$
 
-For the \(\gamma=0\) branch used by the controller, parameterize the full
-state by
-
-$$
-x_e=
-\begin{bmatrix}
-0&\nu+\Omega\sin\theta&\Omega\cos\theta&0&\Omega\sin\theta&
-\psi_e&\theta&\phi_e&r_e&0&x_{Ge}&y_{Ge}
-\end{bmatrix}^{T}.
-$$
-
-The phase coordinates \(\psi_e,\phi_e,x_{Ge},y_{Ge}\) locate the orbit; they
-do not change its shape. The feedforward input is
+The rolling-speed parameter is \(v=R\nu\). The steady inputs are
 
 $$
 \boxed{
-F_e=m_r\!\left[R(\nu+\Omega\sin\theta)\Omega\cos\theta
-+g\sin\theta-r_e\Omega^2\cos^2\theta\right],\qquad
-M_{2e}=B_P\nu.}
+F_e=m_r\left[R(\nu+\Omega\sin\theta)\Omega\cos\theta
++g\sin\theta-r_e\Omega^2\cos^2\theta\right],
+\qquad M_{2e}=B_P\nu.
+}
 $$
 
-The value \(r_e\) is determined from the full model compatibility equation.
-In the implementation it is the root of the first residual component,
-\(C_1(x_e,u_e)=0\), with \((F_e,M_{2e})\) as above. The resulting point is
-accepted only if
+Solve the first full-model residual \(C_1(x_e,u_e)=0\) for \(r_e\), then verify
 
 $$
-\boxed{C(x_e,u_e)=0,\qquad
-f(x_e,u_e)=\begin{bmatrix}0_{5\times1}\\k(x_e)\end{bmatrix},}
+C(x_e,u_e)=0,\qquad
+f(x_e,u_e)=\begin{bmatrix}0_{5\times1}\\k(x_e)\end{bmatrix}.
 $$
 
-where \(C\) is `model_residual`, \(f\) is the full state derivative, and
-\(k\) contains the nonzero phase and position rates. Thus the manifold is a
-family of relative equilibria: its shape is constant while the phase
-coordinates move.
+## 2. Local target selection
 
-## 2. Selecting the reachable member of the manifold
-
-The local controller uses the 9 relative coordinates
+Use the nine relative coordinates
 
 $$
-y=x_I,\qquad I=(1,2,3,4,5,6,7,9,10),
+y=x_I=[\sigma_1,\sigma_2,\sigma_3,\sigma_r,\sigma_g,\psi,\theta,r,\gamma]^T,
+\qquad I=(1,2,3,4,5,6,7,9,10).
 $$
 
-or, explicitly,
+At each candidate equilibrium, form
 
 $$
-y=\begin{bmatrix}
-\sigma_1&\sigma_2&\sigma_3&\sigma_r&\sigma_g&\psi&\theta&r&\gamma
-\end{bmatrix}^{T}.
+A=\left.\frac{\partial f_I}{\partial y}\right|_e,\qquad
+B=\left.\frac{\partial f_I}{\partial u}\right|_e,\qquad
+\mathscr C=[B\;AB\;\cdots\;A^8B]\in\mathbb R^{9\times18}.
 $$
 
-For each candidate \(\Omega\), form the relative linearization
+On the accepted branch, \(\mathscr C\) has numerical rank eight. Let \(w\)
+span its one-dimensional left nullspace:
 
 $$
-A=\left.\frac{\partial f_I}{\partial y}\right|_{(x_e,u_e)},\qquad
-B=\left.\frac{\partial f_I}{\partial u}\right|_{(x_e,u_e)},\qquad
-\mathscr C=[B\;AB\;\cdots\;A^8B].
+w^T\mathscr C=0,\qquad \|w\|=1.
 $$
 
-Its rank is 8 (out of 9). Since \(\mathscr C\in\mathbb R^{9\times18}\),
-rank-nullity gives a one-dimensional left nullspace:
+For prescribed \(\theta\) and \(\nu\), choose the yaw rate from the initial state:
 
 $$
-\dim\ker(\mathscr C^T)=9-\operatorname{rank}(\mathscr C)=1.
+\boxed{g(\Omega)=w(\Omega)^T[y_0-y_e(\theta,\Omega,\nu)]=0.}
 $$
 
-Thus there is one uncontrollable direction, unique up to sign. Let
-\(w(\Omega)\) be its unit vector, chosen so that
+Keep the sign of \(w\) consistent during root finding. This places the initial
+error in the local controllable subspace; it does not establish an exact
+nonlinear invariant or guarantee nonlinear reachability.
+
+## 3. SVD basis and transverse LQR
+
+The singular value decomposition is
 
 $$
-\boxed{w(\Omega)^T\mathscr C(\Omega)=0,\qquad
-\|w(\Omega)\|=1.}
+\mathscr C=U\Sigma V^T,\qquad
+\mathscr C\mathscr C^Tu_i=s_i^2u_i,\qquad
+s_1\ge\cdots\ge s_9\ge0.
 $$
 
-The sign is fixed consistently because \(w\) and \(-w\) describe the same
-direction, but a sign flip would make the scalar root function jump. The
-initial condition selects the yaw rate by solving
+Thus the columns \(u_i\) of \(U\) are orthonormal eigenvectors of
+\(\mathscr C\mathscr C^T\), and the singular values \(s_i\) are square roots
+of its eigenvalues. They identify the output directions and stretching
+factors of \(\mathscr C\). Signs are arbitrary; repeated singular values
+allow different bases within the same subspace.
+
+For rank eight, take
 
 $$
-\boxed{g(\Omega)=w(\Omega)^T
-\left[y_0-y_e(\theta,\Omega,\nu)\right]=0.}
+\boxed{T=[u_1,\ldots,u_8]\in\mathbb R^{9\times8},\qquad w=u_9,}
 $$
 
-The scalar \(g(\Omega)\) is the signed component of the initial error along
-the unit vector \(w(\Omega)\). Therefore \(g(\Omega)=0\) means that this
-error has no component in the uncontrollable direction. This zero-mode
-condition chooses the member of the manifold compatible with the initial
-state; the remaining error lies in the controllable subspace.
+$$
+T^TT=I_8,\qquad T^Tw=0,\qquad e=TT^Te+ww^Te.
+$$
 
-## 3. Transverse LQR and nonlinear control law
+MATLAB uses `[U,S,~]=svd(ctrb(A,B))`, counts \(s_i>10^{-9}s_1\), and
+sets `T=U(:,1:8)`. Numerical rank depends on scaling and tolerance;
+the basis is recomputed at each new target.
 
-Take an SVD of \(\mathscr C\), and let \(T\in\mathbb R^{9\times8}\) contain
-an orthonormal basis for its controllable subspace. Project the linear model
-and cost into this subspace:
+For \(z=T^Te\), project the model and cost:
 
 $$
 A_c=T^TAT,\qquad B_c=T^TB,\qquad Q_c=T^TQT,
@@ -145,93 +116,32 @@ $$
 
 $$
 Q=\operatorname{diag}(2,1,1,2,1,0.5,20,20,5),\qquad
-R_u=\operatorname{diag}(0.1,0.1).
+R_u=\operatorname{diag}(0.1,0.1),
 $$
-
-The continuous-time LQR gain is
 
 $$
 K_c=\operatorname{LQR}(A_c,B_c,Q_c,R_u),\qquad K=K_cT^T.
 $$
 
-The moving reference follows the selected orbit. Its heading and wheel phase
-are \(\psi_r(t)=\psi_e+\Omega t\) and \(\phi_r(t)=\phi_e+\nu t\); the wheel
-center follows
-
-$$
-x_{G,r}(t)=x_{Ge}+\frac{v}{\Omega}
-\left[\sin(\psi_e+\Omega t)-\sin\psi_e\right],
-$$
-
-$$
-y_{G,r}(t)=y_{Ge}-\frac{v}{\Omega}
-\left[\cos(\psi_e+\Omega t)-\cos\psi_e\right].
-$$
-
-With \(e(t)=y(t)-y_r(t)\), wrap the heading component into \((-\pi,\pi]\):
+The relative reference keeps the equilibrium shape and rates, with
+\(\psi_r(t)=\psi_e+\Omega t\). Set \(e=y-y_r\) and wrap its heading component:
 
 $$
 e_6\leftarrow\operatorname{atan2}(\sin e_6,\cos e_6).
 $$
 
-The implemented saturated nonlinear feedback law is
+Apply the saturated feedback
 
 $$
 \boxed{
-u(t)=\operatorname{sat}_{[-u_{\max},u_{\max}]}
-\left(u_e-Ke(t)\right),\qquad
-u_{\max}=\begin{bmatrix}30\;\mathrm{N}\\15\;\mathrm{N\,m}\end{bmatrix}.}
+u(t)=\operatorname{sat}_{[-u_{\max},u_{\max}]}(u_e-Ke(t)),
+\qquad
+u_{\max}=\begin{bmatrix}30\,\mathrm N\\15\,\mathrm{N\,m}\end{bmatrix}.
+}
 $$
 
-The feedforward term maintains the target turning motion; feedback reduces
-the controllable displacement from its moving orbit.
+The target and gain remain fixed during each stage. Wheel phase and global
+position are excluded from feedback. Local decay rates follow the eigenvalues
+of \(A_c-B_cK_c\), not the singular values of \(\mathscr C\).
 
-## 4. Second stage: transfer from general turning to upright turning
 
-The two-stage entry point first settles on the general-turning branch at
-\(\theta_1=0.1^\circ\). It then passes that terminal state directly into a
-new controller-design and simulation call:
-
-$$
-x_0^{(2)}=x^{(1)}(T_1),\qquad \theta_2^*=0.
-$$
-
-The second call repeats the target-orbit selection for \(\theta_2^*=0\). It
-searches for a new yaw rate \(\Omega_2\) satisfying
-
-$$
-w(\Omega_2)^T\left[y_0^{(2)}-y_e(0,\Omega_2,\nu)\right]=0,
-$$
-
-then recomputes the upright relative equilibrium \((x_e^{(2)},u_e^{(2)})\),
-its local matrices \((A_2,B_2)\), the controllable subspace, and the LQR gain
-\(K_2\). In particular, the new reference has
-
-$$
-\theta_r^{(2)}(t)=0,\qquad
-e_{\theta}(t)=\theta(t)-\theta_r^{(2)}(t)=\theta(t).
-$$
-
-The second-stage input is therefore
-
-$$
-u_2(t)=\operatorname{sat}\!\left(
-u_e^{(2)}-K_2 e_2(t)
-\right),
-$$
-
-where \(e_2\) contains the lean error together with the other relative-state
-errors. The lean is brought back by this coupled feedback around the upright
-turning orbit; the code does not overwrite \(\theta\) or command an
-instantaneous reset. The feedforward input supports the new turning motion,
-while LQR feedback drives the initial lean and associated transverse errors
-toward that orbit. The yaw rate is reselected because the neutral direction
-and target equilibrium change with the target lean.
-
-## 5. Manifold convergence criteria
-
-The simulation declares convergence only if the lean limit is not hit and
-the final relative rate, tail-window ranges of \(\theta\), \(r\), and yaw
-rate, and lean-target error all fall below their specified tolerances. The
-absolute heading and position continue to evolve along the orbit and are not
-required to converge to constants.

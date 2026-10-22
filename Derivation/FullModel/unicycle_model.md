@@ -1,5 +1,7 @@
 # Unicycle: Notation and Nonlinear Model
 
+For subsequent derivations, use [Full Model and Conventions](full_model_conventions.md), which retains these equations and specifies speed, reference, and linearization conventions.
+
 $\theta$ corresponds to $\vartheta$ in the notebook. All parameters use SI units. The MATLAB model input is $u=[F,M_2]^T$.
 
 ## States

@@ -1,10 +1,9 @@
-function report = verify_turning_manifold_approach(theta_target_deg,initial_state,make_plots,theta0_deg,t_end)
+function report = verify_turning_manifold_approach(theta_target_deg,initial_state,make_plots,theta0_deg,t_end,options)
 %VERIFY_TURNING_MANIFOLD_APPROACH Reach an input-supported turning state.
 % Run the public entry point: addpath('MATLAB/Full'); verify_direct_upright_turning();
 % To call this helper directly, also addpath('MATLAB/Full/analysis/manifold').
-% Pass 0.1 to reproduce the earlier nonzero-lean general-turning run.
-% For a second leg from that equilibrium:
-% leg1 = verify_turning_manifold_approach(0.1);
+% Target theta=0; for a second matching leg from the terminal state:
+% leg1 = verify_turning_manifold_approach(0);
 % leg2 = verify_turning_manifold_approach(0,leg1.X(end,:)');
 % Full nonlinear 12-state plant, local LQR on the controllable relative
 % states. Requires Control System Toolbox.
@@ -14,6 +13,7 @@ if nargin<1, theta_target_deg = 0; end
 if nargin<3, make_plots = true; end
 if nargin<4 || isempty(theta0_deg), theta0_deg = 5; end
 if nargin<5 || isempty(t_end), t_end = 25; end
+if nargin<6 || isempty(options), options = struct(); end
 assert(isscalar(make_plots),'make_plots must be a scalar logical flag.');
 assert(isscalar(theta_target_deg) && isfinite(theta_target_deg), ...
     'theta_target_deg must be a finite scalar.');
@@ -25,10 +25,14 @@ addpath(fullfile(root,'config'),fullfile(root,'model'));
 p = model_parameters();
 p.mr = 2.3;
 p.BR = 6.5;
+if isfield(options,'rod_damping'), p.BR=options.rod_damping; end
+validateattributes(p.BR,{'numeric'},{'scalar','real','finite','nonnegative'});
 p.BP = 0;
 s = simulation_settings();
 
-cfg.speed = 2.375;                 % R*phi_dot [m/s]
+cfg.speed = 2.375;                 % forward speed [m/s]
+if isfield(options,'speed'), cfg.speed=options.speed; end
+validateattributes(cfg.speed,{'numeric'},{'scalar','real','finite','positive'});
 cfg.theta0 = theta0_deg*pi/180;    % initial lean
 cfg.theta_target = theta_target_deg*pi/180;
 if theta_target_deg==0
@@ -60,10 +64,15 @@ else
 end
 idx = [1:7 9 10];               % five sigma, psi, theta, r, gamma
 match = @(om) zero_mode_mismatch(om,x0,cfg,p,idx);
-grid_omega = linspace(-0.8,0.8,33);
+% A finer omega grid avoids skipping a narrow rank-8 interval near the
+% high-speed end of the compatible turning branch.
+grid_omega = linspace(-0.8,0.8,161);
 values = arrayfun(match,grid_omega);
-bracket = find(values(1:end-1).*values(2:end)<=0,1,'first');
-assert(~isempty(bracket),'No compatible turning equilibrium in search range.');
+valid_pair = isfinite(values(1:end-1)) & isfinite(values(2:end)) & ...
+    values(1:end-1).*values(2:end)<=0;
+bracket = find(valid_pair,1,'first');
+assert(~isempty(bracket), ...
+    'No compatible turning equilibrium on a rank-8 branch in the search range.');
 omega = fzero(match,grid_omega(bracket:bracket+1));
 [xe,ue,rate] = general_turning_state(cfg.theta_target,omega,cfg.speed,p);
 xe([6 8 11 12]) = x0([6 8 11 12]);
@@ -85,6 +94,23 @@ Kc = lqr(T'*A*T,T'*B,T'*Q*T,R);
 K = Kc*T';
 closed_poles = eig(T'*(A-B*K)*T);
 assert(all(real(closed_poles)<-1e-5),'Transverse closed loop is unstable.');
+
+% Allow parameter sweeps to evaluate local manifold stability without
+% integrating a nonlinear trajectory at every operating speed.
+if isfield(options,'linearize_only') && options.linearize_only
+    report.rod_damping=p.BR;
+    report.speed=cfg.speed;
+    report.theta_target=cfg.theta_target;
+    report.x_equilibrium=xe;
+    report.u_equilibrium=ue;
+    report.relative_rate=rate;
+    report.omega=omega;
+    report.equilibrium_residual=equilibrium_residual;
+    report.controllable_rank=rank_c;
+    report.initial_zero_mode_mismatch=w'*(x0(idx)-xe(idx));
+    report.closed_poles=closed_poles;
+    return
+end
 
 control = @(t,x) turning_control(t,x,xe,ue,rate,K,idx,cfg);
 rhs = @(t,x) model_rhs(t,x,control(t,x),p);
@@ -225,6 +251,7 @@ sgtitle('Other full-model states and inputs (dashed: reference)');
 end
 
 report.t = t;
+report.rod_damping=p.BR;
 report.X = X;
 report.U = Uhist;
 report.initial_state = x0;
@@ -276,7 +303,10 @@ xe(6) = x0(6);
 [A,B] = relative_jacobian(xe,ue,p,idx);
 [U,S,~] = svd(ctrb(A,B));
 sv = diag(S);
-assert(sum(sv>1e-9*sv(1))==8,'Controllability rank changed on branch.');
+if sum(sv>1e-9*sv(1))~=8
+    mismatch = NaN;
+    return
+end
 w = U(:,end);
 if w(7)<0, w=-w; end
 mismatch = w'*(x0(idx)-xe(idx));

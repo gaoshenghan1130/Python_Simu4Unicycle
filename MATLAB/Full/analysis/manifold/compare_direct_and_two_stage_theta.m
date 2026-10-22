@@ -1,7 +1,8 @@
 function results = compare_direct_and_two_stage_theta(theta0_values)
 %COMPARE_DIRECT_AND_TWO_STAGE_THETA Compare direct and indirect upright control.
 % Sweeps theta0 = 0.25:0.25:5 degrees. Direct: target theta=0 in one leg.
-% Two-stage: target 0.1 degrees, then transfer its terminal state to target 0.
+% Two-stage: target 0 degrees, then redesign at its terminal state for target 0.
+% Both targets are zero; this now tests repeated matching, not a tilted waypoint.
 % The direct run lasts 50 s; the two-stage run uses two 25 s legs, so both
 % methods have the same total simulation time, model parameters and criteria.
 
@@ -58,9 +59,9 @@ for k = 1:n
         direct_message(k) = string(err.message);
     end
 
-    % Indirect method: general-turning target, then upright target.
+    % Two-stage method: upright target, then rematch at the terminal state.
     try
-        evalc('leg1 = verify_turning_manifold_approach(0.1,[],false,theta0);');
+        evalc('leg1 = verify_turning_manifold_approach(0,[],false,theta0);');
         stage1_omega(k) = leg1.omega;
         stage1_final_theta_deg(k) = leg1.X(end,7)*180/pi;
         stage1_reached(k) = leg1.reached_turning_manifold;
