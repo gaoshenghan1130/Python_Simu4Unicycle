@@ -44,7 +44,7 @@ cfg.psi_dot0 = 0;
 cfg.r0 = 0;
 cfg.t_end = t_end;
 cfg.dt = 0.01;
-cfg.force_limit = 30;
+cfg.force_limit = 27.5;            % firmware LM2070 peak-force limit [N]
 cfg.torque_limit = 15;
 cfg.tilt_limit = 45*pi/180;
 
@@ -90,6 +90,12 @@ T = U(:,1:rank_c);
 w = U(:,end);
 Q = diag([2 1 1 2 1 0.5 20 20 5]);
 R = diag([0.1 0.1]);
+if isfield(options,'Q'), Q=options.Q; end
+if isfield(options,'R'), R=options.R; end
+validateattributes(Q,{'numeric'},{'size',[9 9],'real','finite'});
+validateattributes(R,{'numeric'},{'size',[2 2],'real','finite'});
+assert(norm(Q-Q','fro')<1e-12 && min(eig(Q))>=0,'Q must be positive semidefinite.');
+assert(norm(R-R','fro')<1e-12 && min(eig(R))>0,'R must be positive definite.');
 Kc = lqr(T'*A*T,T'*B,T'*Q*T,R);
 K = Kc*T';
 closed_poles = eig(T'*(A-B*K)*T);
@@ -254,6 +260,8 @@ report.t = t;
 report.rod_damping=p.BR;
 report.X = X;
 report.U = Uhist;
+report.Q=Q; report.R=R; report.K=K;
+report.force_limit=cfg.force_limit; report.torque_limit=cfg.torque_limit;
 report.initial_state = x0;
 report.x_equilibrium = xe;
 report.u_equilibrium = ue;
