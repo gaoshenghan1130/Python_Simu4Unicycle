@@ -1,0 +1,10 @@
+Modeling and Control of a Moving Mass Unicycle Robot
+
+Shenghan Gao
+ME490 | University of Michigan
+
+Abstract
+
+This project investigates the modeling, implementation, and control of an autonomous unicycle robot that uses a driven wheel for longitudinal motion and a laterally translating mass for balance. The objective is to understand the coupled system dynamics and develop balancing strategies that account for actuator and sensing limitations. During this semester, a reduced lateral model and a full nonlinear model were developed and analyzed using MATLAB. Equilibrium configurations, controllability, eigenvalues, and eigenvectors were examined to explain the relationship between controller design and transient response. Linear quadratic regulation, pole placement, and alternative control strategies were evaluated through simulations. Hardware development included linear motor integration, inertial sensor processing, motor communication, and embedded feedback control. The analysis shows that stability of the linearized system alone does not guarantee physically feasible balancing. Limited actuator force and mass travel constrain disturbance recovery, while transient amplification can produce excessive displacement even when the closed loop poles are stable. Sensor uncertainty and feedback delay further complicate implementation. Parameter studies examined how moving mass and system geometry influence balancing capability. Recent work extended the investigation to equilibrium manifold control in the full nonlinear model. Simulations demonstrated recovery toward near upright rolling under selected operating conditions, although residual turning remained and straight line recovery was not achieved. Overall, this project identifies the mechanical and control limitations of the current platform and provides a foundation for experimental validation, controller refinement, and future hardware improvements, including increased moving mass and a possible hybrid actuator combining mass translation with reaction wheel torque.
+
+Keywords: autonomous unicycle; moving mass; nonlinear dynamics; lateral balance; feedback control; equilibrium manifolds

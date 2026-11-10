@@ -1,0 +1,430 @@
+\documentclass[10pt]{article}
+\usepackage[a4paper,margin=20mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,amsmath,amssymb,booktabs}
+\usepackage[hidelinks]{hyperref}
+\setcounter{MaxMatrixCols}{20}
+\setlength{\arraycolsep}{3.5pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\allowdisplaybreaks
+\numberwithin{equation}{section}
+\title{Full Unicycle Model and Turning Control}
+\author{}
+\date{}
+\begin{document}
+\maketitle
+\vspace{-2em}
+
+\section{Conventions}
+SI units; angles in radians; ideal rolling; $\cos\theta\ne0$.
+\begin{equation}
+\begin{aligned}
+q&=(\psi,\theta,\phi,r,\gamma,x_G,y_G)^T,\\
+\sigma&=(\sigma_1,\sigma_2,\sigma_3,\sigma_r,\sigma_g)^T,
+\qquad x=(\sigma^T,q^T)^T,\qquad u=(F,M_2)^T.
+\end{aligned}
+\end{equation}
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Symbol & Meaning\\\midrule
+$\psi,\theta,\phi$ & Heading, lean, wheel spin\\
+$r,\gamma$ & Rod COM displacement along axle, body tilt about axle\\
+$x_G,y_G$ & Wheel-center position in the global frame\\
+$F=-F_1$ & Force on rod; opposite to notebook force on wheel\\
+$M_2$ & Wheel drive torque; opposite reaction on body\\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{equation}
+\begin{aligned}
+\sigma_1&=\dot\theta,&\sigma_2&=\dot\phi+\dot\psi\sin\theta,&
+\sigma_3&=\dot\psi\cos\theta,\\
+\sigma_r&=\dot r-R\dot\theta,&\sigma_g&=\dot\gamma+\dot\psi\sin\theta.
+\end{aligned}
+\end{equation}
+\textbf{Parameters.} $R$: wheel radius; $h$: wheel-center to body-COM distance;
+$m_w,m_r,m_p$: wheel, rod, body masses. Inertias are about each component's COM:
+$J_{W1}$ about the wheel axle, $J_{W2}$ about wheel $x,z$ axes,
+$J_R$ about rod $x,z$ axes, and $J_{Px},J_{Py},J_{Pz}$ about body axes.
+$B_R,B_P$ are rod and wheel--body viscous damping coefficients.
+\begin{equation}
+\begin{aligned}
+(g,R,h)&=(9.81,0.253,0.025),& (m_w,m_r,m_p)&=(2.436,2.3,2.799),\\
+(J_{W1},J_{W2},J_R)&=(0.09099921839,0.04591427768,0.0517629),\\
+(J_{Px},J_{Py},J_{Pz})&=(0.01290418213,0.02090219895,0.01118711607),\\
+(B_R,B_P)&=(0,0)\quad\text{(baseline)}.
+\end{aligned}
+\end{equation}
+
+\input{accelerationEnergy}
+
+\section{Full nonlinear model}
+\begin{equation}
+\boxed{M(q)\dot\sigma+n(q,\sigma)+D\sigma=Q_u u,\qquad \dot q=k(q,\sigma).}
+\end{equation}
+\begin{equation}
+Q_u=\begin{bmatrix}R&0\\0&1\\0&0\\1&0\\0&-1\end{bmatrix},\qquad
+D=\begin{bmatrix}
+B_RR^2&0&0&B_RR&0\\0&B_P&0&0&-B_P\\0&0&0&0&0\\
+B_RR&0&0&B_R&0\\0&-B_P&0&0&B_P
+\end{bmatrix}.
+\end{equation}
+The residual notation used in the turning calculations is
+\begin{equation}
+\mathcal R(x,u)=n(q,\sigma)+D\sigma-Q_u u,\qquad
+f(x,u)=\begin{bmatrix}-M(q)^{-1}\mathcal R(x,u)\\k(q,\sigma)\end{bmatrix}.
+\end{equation}
+Here $\mathcal R$ is the vector denoted by $C(x,u)$ in the earlier notes;
+$D$ remains the damping matrix and $Q_u$ the input matrix.
+\subsection*{Mass matrix}
+\begin{equation}a=J_{Px}-J_{Pz}+m_ph^2,\qquad b=Rm_ph,\qquad c=J_{Pz}+J_R+J_{W2},\end{equation}
+
+\begin{equation}s_\gamma=\sin\gamma,\quad c_\gamma=\cos\gamma,\quad t_\theta=\tan\theta.\end{equation}
+
+\begin{equation}
+\boxed{M=\begin{bmatrix}
+M_{11}&0&M_{13}&0&0\\
+0&M_{22}&-Rm_rr&0&bc_\gamma\\
+M_{13}&-Rm_rr&M_{33}&0&0\\
+0&0&0&m_r&0\\
+0&bc_\gamma&0&0&J_{Py}+m_ph^2
+\end{bmatrix}}
+\end{equation}
+
+\begin{equation}
+\begin{aligned}
+M_{11}&=c+R^2(m_p+m_w)+2bc_\gamma+m_rr^2+ac_\gamma^2,\\
+M_{13}&=-(b+ac_\gamma)s_\gamma,\\
+M_{22}&=J_{W1}+R^2(m_p+m_r+m_w),\\
+M_{33}&=c+m_rr^2+as_\gamma^2.
+\end{aligned}
+\end{equation}
+\subsection*{Gravity and inertial terms}
+\begin{equation}
+\begin{aligned}
+n_1={}&-g\left[R(m_p+m_w)+hm_pc_\gamma\right]\sin\theta
+       +gm_rr\cos\theta\\
+&+Rm_rr\sigma_1^2+2m_rr\sigma_1\sigma_r\\
+&+(b+ac_\gamma)s_\gamma t_\theta\sigma_1\sigma_3
+ -2(b+ac_\gamma)s_\gamma\sigma_1\sigma_g\\
+&-\left[J_{W1}+R^2(m_p+m_w)+bc_\gamma+Rm_rrt_\theta\right]\sigma_2\sigma_3\\
+&+\left[bc_\gamma+m_rr^2+ac_\gamma^2+c\right]t_\theta\sigma_3^2\\
+&+\left[J_{Px}-J_{Py}-J_{Pz}-2bc_\gamma-2ac_\gamma^2\right]\sigma_3\sigma_g.
+\end{aligned}
+\end{equation}
+
+\begin{equation}
+\begin{aligned}
+n_2={}&-bs_\gamma(\sigma_3^2+\sigma_g^2)-2Rm_r\sigma_3\sigma_r\\
+&+\left[R^2(m_p-m_r+m_w)+bc_\gamma+Rm_rrt_\theta\right]\sigma_1\sigma_3.
+\end{aligned}
+\end{equation}
+
+\begin{equation}
+\begin{aligned}
+n_3={}&J_{W1}\sigma_1\sigma_2+bs_\gamma\sigma_2\sigma_3
+       +ghm_ps_\gamma\sin\theta+2m_rr\sigma_3\sigma_r\\
+&+\left[Rm_rr-(m_rr^2+as_\gamma^2+c)t_\theta\right]\sigma_1\sigma_3\\
+&+\left[-J_{Px}+J_{Py}+J_{Pz}+2as_\gamma^2\right]\sigma_1\sigma_g\\
+&-as_\gamma c_\gamma t_\theta\sigma_3^2
+ +2as_\gamma c_\gamma\sigma_3\sigma_g.
+\end{aligned}
+\end{equation}
+
+\begin{equation}n_4=Rm_r\sigma_2\sigma_3+gm_r\sin\theta-m_rr(\sigma_1^2+\sigma_3^2).\end{equation}
+
+\begin{equation}
+\begin{aligned}
+n_5={}&bs_\gamma t_\theta\sigma_2\sigma_3-ghm_ps_\gamma\cos\theta\\
+&+(b+ac_\gamma)s_\gamma\sigma_1^2
+ +(a+bc_\gamma-2as_\gamma^2)\sigma_1\sigma_3
+ -as_\gamma c_\gamma\sigma_3^2.
+\end{aligned}
+\end{equation}
+\subsection*{Kinematics}
+\begin{equation}
+\boxed{
+\begin{aligned}
+\dot\psi&=\frac{\sigma_3}{\cos\theta},\\
+\dot\theta&=\sigma_1,\\
+\dot\phi&=\sigma_2-\sigma_3\tan\theta,\\
+\dot r&=R\sigma_1+\sigma_r,\\
+\dot\gamma&=\sigma_g-\sigma_3\tan\theta,\\
+\dot x_G&=R\sigma_1\sin\psi\cos\theta+R\sigma_2\cos\psi,\\
+\dot y_G&=-R\sigma_1\cos\psi\cos\theta+R\sigma_2\sin\psi.
+\end{aligned}}
+\end{equation}
+
+\section{Linearized model}
+Upright straight rolling along $+x$: $V=v/R$ is constant,
+$\sigma_e=(0,V,0,0,0)^T$, $\theta_e=r_e=\gamma_e=\psi_e=0$,
+$\dot\phi_e=V$, $\dot x_{Ge}=RV$, $u_e=(0,B_PV)^T$.
+All variables below are perturbations; $V=0$ gives the rest linearization.
+\begin{equation}
+\begin{aligned}
+I_\ell&=J_{Px}+J_R+J_{W2}+R^2(m_p+m_w)+2b+m_ph^2,\\
+G_\ell&=g[R(m_p+m_w)+m_ph],& I_w^*&=J_{W1}+R^2(m_p+m_r+m_w),\\
+I_g&=J_{Py}+m_ph^2,&G_g&=gm_ph,\\
+L&=J_{W1}+R^2(m_p+m_w)+b,&\kappa&=J_{W1}V/c.
+\end{aligned}
+\end{equation}
+\begin{equation}
+\begin{aligned}
+I_\ell\dot\sigma_1&=G_\ell\theta-gm_r r+LV\sigma_3-B_RR(R\sigma_1+\sigma_r)+RF,\\
+I_w^*\dot\sigma_2+b\dot\sigma_g&=-B_P(\sigma_2-\sigma_g)+M_2,\\
+c\dot\sigma_3&=-J_{W1}V\sigma_1,\\
+\dot\sigma_r&=-g\theta-RV\sigma_3-\frac{B_R}{m_r}(R\sigma_1+\sigma_r)+\frac{F}{m_r},\\
+b\dot\sigma_2+I_g\dot\sigma_g&=G_g\gamma+B_P(\sigma_2-\sigma_g)-M_2.
+\end{aligned}
+\end{equation}
+\begin{equation}
+\begin{aligned}
+\dot\psi&=\sigma_3,&\dot\theta&=\sigma_1,&\dot\phi&=\sigma_2,\\
+\dot r&=R\sigma_1+\sigma_r,&\dot\gamma&=\sigma_g,\\
+\dot x_G&=R\sigma_2,&\dot y_G&=-R\sigma_1+RV\psi.
+\end{aligned}
+\end{equation}
+These equations specify $\delta\dot x=A(V)\delta x+B\delta u$ in the stated 12-state order.
+
+\section{Lean--yaw-rate invariant}
+At the upright straight-rolling reference, $n_{3e}=0$. Taking partial
+ derivatives with respect to the states gives
+\begin{equation}
+\delta n_3=\left.\frac{\partial n_3}{\partial x}\right|_e\delta x
+=J_{W1}V\,\delta\sigma_1,
+\end{equation}
+since only $\partial n_3/\partial\sigma_1$ is nonzero at this reference.
+This is a first-order variation, not a time derivative. The third dynamic
+row and lean kinematics give
+\begin{equation}
+c\,\delta\dot\sigma_3+J_{W1}V\,\delta\sigma_1=0,\qquad
+\delta\dot\theta=\delta\sigma_1,\qquad
+\frac{d}{dt}(\delta\sigma_3+\kappa\delta\theta)=0.
+\end{equation}
+Suppressing perturbation symbols, for the fixed-speed linear model only:
+\begin{equation}
+\boxed{C=\sigma_3+\kappa\theta=\text{constant},\qquad
+\dot\psi=C-\kappa\theta.}
+\end{equation}
+\begin{equation}
+w^T=(0,0,1,0,0,0,\kappa,0,0,0,0,0),\qquad
+w^TA=w^TB=w^T(A-BK)=0.
+\end{equation}
+\begin{equation}
+\sigma_3(0)=0\ \Longrightarrow\ C=\kappa\theta_0,\qquad
+\sigma_{3\infty}+\kappa\theta_\infty=C.
+\end{equation}
+This relates lean to yaw \emph{rate}, not heading. For $V\ne0$, zero terminal yaw rate requires
+$\theta_\infty=\theta_0$ for the initial condition above. It is not an exact nonlinear conservation law.
+
+\section{Equilibrium manifolds}
+\subsection*{General relative equilibrium}
+Let $V=\dot\phi_e$ and $\Omega=\dot\psi_e$ be constant, with fixed $\theta_e,r_e,\gamma_e$.
+\begin{equation}
+\sigma_e=(0,V+\Omega\sin\theta_e,\Omega\cos\theta_e,0,\Omega\sin\theta_e)^T.
+\end{equation}
+Writing $n_{ie}=n_i(q_e,\sigma_e)$, the complete dynamic conditions are
+\begin{equation}
+\boxed{n_{1e}-Rn_{4e}=0,\quad n_{3e}=0,\quad n_{2e}+n_{5e}=0,\qquad
+F_e=n_{4e},\quad M_{2e}=n_{2e}+B_PV.}
+\end{equation}
+A stationary equilibrium additionally has $V=\Omega=0$; rolling and turning references generally have $\dot x_e\ne0$.
+
+\subsection*{Upright-body branch: $\gamma_e=0$}
+Suppressing equilibrium subscripts, define
+\begin{equation}
+G_T=g[R(m_p+m_w+m_r)+hm_p],\quad
+H=J_{W1}+R^2(m_p+m_w+m_r)+b,\quad
+K_T=c-J_{Py}-m_ph^2-b-H.
+\end{equation}
+\begin{equation}
+\begin{aligned}
+0={}&-G_T\sin\theta+gm_r r\cos\theta\\
+&-V\Omega(H\cos\theta+Rm_r r\sin\theta)\\
+&+\Omega^2[(K_T+m_r r^2)\sin\theta\cos\theta+Rm_r r\cos(2\theta)].
+\end{aligned}
+\end{equation}
+\begin{equation}
+\begin{aligned}
+F_e&=m_r[R(V+\Omega\sin\theta)\Omega\cos\theta+g\sin\theta-r\Omega^2\cos^2\theta],\\
+M_{2e}&=B_PV.
+\end{aligned}
+\end{equation}
+\textbf{Straight rolling} ($\Omega=0$; stationary if also $V=0$):
+\begin{equation}
+\boxed{r_e=\frac{G_T}{gm_r}\tan\theta_e,\qquad
+F_e=m_rg\sin\theta_e,\qquad M_{2e}=B_PV.}
+\end{equation}
+\textbf{Upright turning} ($\theta_e=0$):
+\begin{equation}
+\boxed{r_e=\frac{HV\Omega_e}{m_r(g+R\Omega_e^2)},\qquad
+F_e=m_r(RV\Omega_e-r_e\Omega_e^2),\qquad M_{2e}=B_PV.}
+\end{equation}
+\textbf{Local manifold tangent} at $(\theta,r,\Omega)=(0,0,0)$ for fixed $V$:
+\begin{equation}
+gm_r r-G_T\theta-HV\Omega=0.
+\end{equation}
+
+
+\section{General turning manifold control}
+\subsection{Steady-turning residual equations}
+Use the $\gamma_e=0$ branch. The wheel-phase rate $\nu$ in the earlier
+notes is denoted by $V=\dot\phi_e=v/R$ here; $\Omega=\dot\psi_e$ is the yaw rate.
+The equilibrium shape and pseudovelocities are
+\begin{equation}
+\begin{aligned}
+\sigma_e&=(0,V+\Omega\sin\theta_e,\Omega\cos\theta_e,0,\Omega\sin\theta_e)^T,\\
+q_e(t)&=(\psi_e+\Omega t,\theta_e,\phi_e+Vt,r_e,0,x_{Ge}(t),y_{Ge}(t))^T.
+\end{aligned}
+\end{equation}
+The wheel-center coordinates follow the kinematics. With
+$\mathcal R_{ie}=\mathcal R_i(x_e,u_e)$ and the previously defined
+$a=J_{Px}-J_{Pz}+m_ph^2$, $b=Rhm_p$, $c=J_{Pz}+J_R+J_{W2}$,
+the five residual equations in the supplied calculations become
+\begin{align}
+0=\mathcal R_{1e}={}&-RF_e-g[R(m_p+m_w)+hm_p]\sin\theta_e
++gm_r r_e\cos\theta_e\notag\\
+&-\sigma_{2e}\sigma_{3e}
+[J_{W1}+R^2(m_p+m_w)+b+Rm_r r_e\tan\theta_e]\notag\\
+&+\sigma_{3e}^2(b+m_r r_e^2+a+c)\tan\theta_e\notag\\
+&+\sigma_{3e}\sigma_{ge}(J_{Px}-J_{Py}-J_{Pz}-2b-2a),\\
+0=\mathcal R_{2e}={}&B_P(\sigma_{2e}-\sigma_{ge})-M_{2e},\\
+0=\mathcal R_{3e}={}&0,\\
+0=\mathcal R_{4e}={}&-F_e+Rm_r\sigma_{2e}\sigma_{3e}
++gm_r\sin\theta_e-m_r r_e\sigma_{3e}^2,\\
+0=\mathcal R_{5e}={}&-\mathcal R_{2e}.
+\end{align}
+Thus $\mathcal R_{4e}=0$ gives $F_e$ as a function of $r_e$;
+$\mathcal R_{2e}=0$ gives $M_{2e}=B_PV$. Substituting these into
+$\mathcal R_{1e}=0$ determines $r_e$. Select the desired continuous solution
+branch and verify all five residuals:
+\begin{equation}
+\boxed{\mathcal R(x_e,u_e)=0,\qquad
+f(x_e,u_e)=\begin{bmatrix}0_{5\times1}\\k(q_e,\sigma_e)\end{bmatrix}.}
+\end{equation}
+The identity $\mathcal R_{3e}=0$ holds on this equilibrium branch;
+its partial derivatives need not vanish for perturbations away from the branch.
+
+\subsection{Nine-state linearization}
+Remove wheel phase and global position from the feedback state:
+\begin{equation}
+y=x_I=(\sigma_1,\sigma_2,\sigma_3,\sigma_r,\sigma_g,\psi,\theta,r,\gamma)^T,
+\qquad I=(1,2,3,4,5,6,7,9,10).
+\end{equation}
+Let $y_r(t)$ retain the equilibrium shape and rates, with
+$\psi_r(t)=\psi_e+\Omega t$. For $e=y-y_r(t)$ and $\delta u=u-u_e$,
+\begin{equation}
+\dot e=A_e e+B_e\delta u+O((\|e\|+\|\delta u\|)^2),\qquad
+A_e=\left.\frac{\partial f_I}{\partial y}\right|_e,\quad
+B_e=\left.\frac{\partial f_I}{\partial u}\right|_e.
+\end{equation}
+Since $\mathcal R_e=0$, differentiation of $-M^{-1}\mathcal R$ yields
+\begin{equation}
+\boxed{A_e=\begin{bmatrix}-M_e^{-1}\mathcal R_y|_e\\H_e\end{bmatrix}
+\in\mathbb R^{9\times9},\qquad
+B_e=\begin{bmatrix}M_e^{-1}Q_u\\0_{4\times2}\end{bmatrix}
+\in\mathbb R^{9\times2}.}
+\end{equation}
+The derivatives in $\mathcal R_y$ are evaluated at fixed input $u_e$;
+they are not derivatives along the equilibrium manifold.
+\begin{equation}
+\mathcal R_y|_e=
+[\mathcal R_{\sigma_1}\ \mathcal R_{\sigma_2}\ \mathcal R_{\sigma_3}\
+\mathcal R_{\sigma_r}\ \mathcal R_{\sigma_g}\ 0_{5\times1}\
+\mathcal R_\theta\ \mathcal R_r\ \mathcal R_\gamma]_e.
+\end{equation}
+The kinematic block is
+\begin{equation}
+H_e=\begin{bmatrix}
+0&0&\sec\theta_e&0&0&0&\sigma_{3e}\sec\theta_e\tan\theta_e&0&0\\
+1&0&0&0&0&0&0&0&0\\
+R&0&0&1&0&0&0&0&0\\
+0&0&-\tan\theta_e&0&1&0&-\sigma_{3e}\sec^2\theta_e&0&0
+\end{bmatrix}.
+\end{equation}
+These matrices are constant along the reference because $f_I$ is independent
+of heading and the omitted coordinates.
+
+\subsection{Local target selection}
+At each candidate equilibrium form the controllability matrix
+\begin{equation}
+\mathcal C_e=[B_e\ A_eB_e\ \cdots\ A_e^8B_e]\in\mathbb R^{9\times18}.
+\end{equation}
+The supplied design uses a branch with numerical rank eight. Let the unit
+vector $w_e$ span its left nullspace:
+\begin{equation}
+w_e^T\mathcal C_e=0,\qquad \|w_e\|_2=1.
+\end{equation}
+For prescribed $\theta_e,V$, choose $\Omega$ by solving
+\begin{equation}
+\boxed{h(\Omega)=w_e(\Omega)^T[y_0-y_e(\theta_e,\Omega,V)]=0,}
+\end{equation}
+where $y_e=y_r(0)$. Recompute the equilibrium and Jacobians for each candidate
+and keep the sign of $w_e$ consistent during root finding. This matches the
+initial error to the local controllable subspace; it is not an exact nonlinear
+conservation law or a guarantee of nonlinear reachability.
+
+\subsection{SVD basis and transverse LQR}
+Take the full singular value decomposition
+\begin{equation}
+\mathcal C_e=U\Sigma W^T,\qquad
+\mathcal C_e\mathcal C_e^T u_i=s_i^2u_i,\qquad
+s_1\ge\cdots\ge s_9\ge0.
+\end{equation}
+The left singular vectors $u_i$ form an orthonormal basis. For numerical rank eight,
+\begin{equation}
+T=[u_1,\ldots,u_8]\in\mathbb R^{9\times8},\qquad w_e=u_9,\qquad
+T^TT=I_8,\quad T^Tw_e=0,\quad e=TT^Te+w_ew_e^Te.
+\end{equation}
+The reported implementation counts $s_i>10^{-9}s_1$. Rank depends on scaling
+and tolerance; recompute the basis at every new target.
+For $z=T^Te$, use
+\begin{equation}
+A_c=T^TA_eT,\qquad B_c=T^TB_e,\qquad Q_c=T^TQT,
+\end{equation}
+\begin{equation}
+Q=\operatorname{diag}(2,1,1,2,1,0.5,20,20,5),\qquad
+R_u=\operatorname{diag}(0.1,0.1).
+\end{equation}
+The reduced LQR gain and lifted feedback gain are
+\begin{equation}
+K_c=R_u^{-1}B_c^TP,\qquad K=K_cT^T,\qquad
+A_c^TP+PA_c-PB_cR_u^{-1}B_c^TP+Q_c=0,
+\end{equation}
+where $P$ is the stabilizing Riccati solution. The projected model applies on
+$w_e^Te=0$; otherwise its dynamics also include
+$T^TA_ew_e(w_e^Te)$. The unactuated component must therefore be matched in
+reference selection rather than discarded.
+
+\subsection{Feedback implementation}
+Wrap the heading error and apply componentwise actuator saturation:
+\begin{equation}
+e_6\leftarrow\operatorname{atan2}(\sin e_6,\cos e_6),\qquad
+\boxed{u(t)=\operatorname{sat}_{[-u_{\max},u_{\max}]}(u_e-Ke(t)),}
+\end{equation}
+\begin{equation}
+u_{\max}=\begin{bmatrix}30\,\mathrm N\\15\,\mathrm{N\,m}\end{bmatrix}.
+\end{equation}
+The target and gain remain fixed during each stage. Wheel phase and global
+position are excluded from feedback. Local transverse decay rates are given
+by the eigenvalues of $A_c-B_cK_c$, not by the singular values of $\mathcal C_e$.
+These local unsaturated rates do not establish nonlinear stability under saturation.
+
+\subsection*{Calculation sequence}
+\begin{enumerate}
+\item Specify $V$, $\theta_e$, and the initial state $y_0$.
+\item For each candidate $\Omega$, solve for $r_e,F_e,M_{2e}$ and check
+$\mathcal R_e=0$.
+\item Form $A_e,B_e$, check rank eight, and compute $w_e$.
+\item Solve $h(\Omega)=0$; construct $T$ and the LQR gain at the selected target.
+\end{enumerate}
+
+
+\input{reducedController}
+
+
+\end{document}
+
+

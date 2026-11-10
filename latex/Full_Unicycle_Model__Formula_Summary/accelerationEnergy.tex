@@ -1,0 +1,76 @@
+\section{Acceleration energy and pseudo forces}
+\label{sec:appell-energy-forces}
+
+\begin{equation}
+\begin{gathered}
+a=J_{Px}-J_{Pz}+m_ph^2,\qquad b=Rm_ph,\qquad c=J_{Pz}+J_R+J_{W2},\\
+s_\gamma=\sin\gamma,\qquad c_\gamma=\cos\gamma,\qquad t_\theta=\tan\theta.
+\end{gathered}
+\end{equation}
+
+\subsection*{Acceleration energy}
+Up to terms independent of $\dot\sigma$,
+\begin{align}
+\mathcal S={}&\tfrac12\left[c+R^2(m_p+m_w)+2bc_\gamma+m_rr^2+ac_\gamma^2\right]\dot\sigma_1^2\\
+&+\tfrac12\left[J_{W1}+R^2(m_p+m_r+m_w)\right]\dot\sigma_2^2
++\tfrac12\left[c+m_rr^2+as_\gamma^2\right]\dot\sigma_3^2\\
+&+\tfrac12m_r\dot\sigma_r^2
++\tfrac12(J_{Py}+m_ph^2)\dot\sigma_g^2\\
+&-(b+ac_\gamma)s_\gamma\dot\sigma_1\dot\sigma_3
+-Rm_rr\dot\sigma_2\dot\sigma_3
++bc_\gamma\dot\sigma_2\dot\sigma_g\notag\\
+&+\dot\sigma_1\Bigl\{\begin{aligned}[t]
+&Rm_rr\sigma_1^2+2m_rr\sigma_1\sigma_r\\
+&+(b+ac_\gamma)s_\gamma t_\theta\sigma_1\sigma_3
+-2(b+ac_\gamma)s_\gamma\sigma_1\sigma_g\\
+&-\left[J_{W1}+R^2(m_p+m_w)+bc_\gamma+Rm_rrt_\theta\right]\sigma_2\sigma_3\\
+&+\left[bc_\gamma+m_rr^2+ac_\gamma^2+c\right]t_\theta\sigma_3^2\\
+&+\left[J_{Px}-J_{Py}-J_{Pz}-2bc_\gamma-2ac_\gamma^2\right]\sigma_3\sigma_g
+\end{aligned}\Bigr\}\notag\\
+&+\dot\sigma_2\Bigl\{\begin{aligned}[t]
+&-bs_\gamma(\sigma_3^2+\sigma_g^2)-2Rm_r\sigma_3\sigma_r\\
+&+\left[R^2(m_p-m_r+m_w)+bc_\gamma+Rm_rrt_\theta\right]\sigma_1\sigma_3
+\end{aligned}\Bigr\}\notag\\
+&+\dot\sigma_3\Bigl\{\begin{aligned}[t]
+&J_{W1}\sigma_1\sigma_2+bs_\gamma\sigma_2\sigma_3
++2m_rr\sigma_3\sigma_r\\
+&+\left[Rm_rr-(m_rr^2+as_\gamma^2+c)t_\theta\right]\sigma_1\sigma_3\\
+&+\left[-J_{Px}+J_{Py}+J_{Pz}+2as_\gamma^2\right]\sigma_1\sigma_g\\
+&-as_\gamma c_\gamma t_\theta\sigma_3^2
++2as_\gamma c_\gamma\sigma_3\sigma_g
+\end{aligned}\Bigr\}\notag\\
+&+\dot\sigma_r\left[Rm_r\sigma_2\sigma_3-m_rr(\sigma_1^2+\sigma_3^2)\right]\notag\\
+&+\dot\sigma_g\Bigl\{\begin{aligned}[t]
+&bs_\gamma t_\theta\sigma_2\sigma_3
++(b+ac_\gamma)s_\gamma\sigma_1^2\\
+&+(a+bc_\gamma-2as_\gamma^2)\sigma_1\sigma_3
+-as_\gamma c_\gamma\sigma_3^2
+\end{aligned}\Bigr\}.
+\end{align}
+
+\subsection*{Pseudo forces}
+In the order $(\sigma_1,\sigma_2,\sigma_3,\sigma_r,\sigma_g)$,
+\begin{equation}
+\boxed{\begin{aligned}
+\mathcal Q_1={}&RF-B_RR(R\sigma_1+\sigma_r)
++g[R(m_p+m_w)+hm_p\cos\gamma]\sin\theta-gm_rr\cos\theta,\\
+\mathcal Q_2={}&M_2-B_P(\sigma_2-\sigma_g),\\
+\mathcal Q_3={}&-ghm_p\sin\gamma\sin\theta,\\
+\mathcal Q_r={}&F-B_R(R\sigma_1+\sigma_r)-gm_r\sin\theta,\\
+\mathcal Q_g={}&-M_2+B_P(\sigma_2-\sigma_g)+ghm_p\sin\gamma\cos\theta.
+\end{aligned}}
+\end{equation}
+
+At fixed $(q,\sigma)$, apply
+\begin{equation}
+\frac{\partial\mathcal S}{\partial\dot\sigma_i}=\mathcal Q_i,
+\qquad i\in\{1,2,3,r,g\}.
+\end{equation}
+
+Collecting all five equations in the same way, the coefficients of
+$\dot\sigma$ form $M$, the remaining gravity and inertial terms form $n$,
+and the damping and actuator terms form $D\sigma$ and $Q_u u$:
+\begin{equation}
+\boxed{M(q)\dot\sigma+n(q,\sigma)+D\sigma=Q_u u,
+\qquad \dot q=k(q,\sigma).}
+\end{equation}

@@ -15,7 +15,7 @@ addpath(fullfile(root,'config'),fullfile(root,'model'), ...
     fullfile(root,'analysis','manifold'));
 
 if nargin<1 || isempty(speed_sequence)
-    speed_sequence=1.3:0.1:4.7;
+    speed_sequence=1.0:0.2:2.0;
 end
 if nargin<2 || isempty(simulation_speeds)
     simulation_speeds=speed_sequence;
@@ -34,7 +34,7 @@ simulation_speeds=sort(unique(simulation_speeds(:).'));
 
 % Analyze an upright turning branch. The helper picks the yaw rate
 % on the branch that matches the initial state's uncontrollable mode.
-theta0_deg=5;
+theta0_deg=1;
 theta_target_deg=0;
 t_end=5;
 n=numel(speed_sequence);

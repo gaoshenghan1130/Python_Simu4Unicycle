@@ -1,0 +1,403 @@
+\par\medskip
+\noindent\rule{\linewidth}{0.2pt}
+
+\textbf{Below we assume fully linearized system and design controllers}
+
+\noindent\rule{\linewidth}{0.2pt}
+\par\medskip
+
+\section{Fully linearized lateral reduced controller}
+
+Consider the first-order model about upright straight rolling
+at fixed wheel-phase rate $V=v/R\ne0$.
+The lateral and longitudinal subsystems decouple to first order
+at this reference; speed-dependent lean--yaw coupling remains within
+the lateral subsystem. The lateral input is the rod force $F$.
+All equations in this section refer to this fixed linear model;
+the turning target is a relative equilibrium of the linear model.
+
+\subsection{Lateral dynamics and invariant}
+
+The lateral state vector is ordered as
+\begin{equation}
+x_{\rm lat}
+=(\sigma_1,\sigma_r,r,\theta,\sigma_3,\psi)^T,
+\end{equation}
+with the linearized kinematic relations
+\begin{equation}
+\dot\theta=\sigma_1,\qquad
+\dot r=R\sigma_1+\sigma_r,\qquad
+\dot\psi=\sigma_3.
+\end{equation}
+
+The six-state lateral model is
+\begin{equation}
+\begin{aligned}
+I_\ell\dot\sigma_1
+  &=G_\ell\theta-gm_r r+LV\sigma_3
+    -B_RR(R\sigma_1+\sigma_r)+RF,\\
+\dot\sigma_r
+  &=-g\theta-RV\sigma_3
+    -\frac{B_R}{m_r}(R\sigma_1+\sigma_r)
+    +\frac{F}{m_r},\\
+\dot r&=R\sigma_1+\sigma_r,\\
+\dot\theta&=\sigma_1,\\
+\dot\sigma_3&=-\kappa\sigma_1,
+\qquad \kappa=\frac{J_{W1}V}{c},\\
+\dot\psi&=\sigma_3.
+\end{aligned}
+\end{equation}
+
+\subsection{Lateral model and SVD reduction}
+
+Use the lateral state ordering
+\begin{equation}
+x_{\rm lat}
+=(\sigma_1,\sigma_r,r,\theta,\sigma_3,\psi)^T.
+\end{equation}
+At the upright straight-rolling reference with fixed $V$,
+the linearized lateral dynamics are
+\begin{equation}
+\dot x_{\rm lat}=A_{\rm lat}x_{\rm lat}+B_{\rm lat}F,
+\end{equation}
+where
+\begin{equation}
+A_{\rm lat}=
+\begin{bmatrix}
+-\dfrac{B_RR^2}{I_\ell}
+&-\dfrac{B_RR}{I_\ell}
+&-\dfrac{gm_r}{I_\ell}
+&\dfrac{G_\ell}{I_\ell}
+&\dfrac{LV}{I_\ell}&0\\
+-\dfrac{B_RR}{m_r}
+&-\dfrac{B_R}{m_r}
+&0&-g&-RV&0\\
+R&1&0&0&0&0\\
+1&0&0&0&0&0\\
+-\kappa&0&0&0&0&0\\
+0&0&0&0&1&0
+\end{bmatrix},
+\qquad
+B_{\rm lat}=
+\begin{bmatrix}
+R/I_\ell\\
+1/m_r\\
+0\\
+0\\
+0\\
+0
+\end{bmatrix},
+\qquad
+\kappa=\frac{J_{W1}V}{c}.
+\end{equation}
+
+\subsection{Constructing the left-null vector and identifying it with SVD}
+
+For this fixed linearization, set $A_e=A_{\rm lat}(V)$ and
+$B_e=B_{\rm lat}$. Form
+\begin{equation}
+\mathcal C_e=[B_e\ A_eB_e\ \cdots\ A_e^5B_e]
+=U_e\Sigma_eW_e^T.
+\end{equation}
+Assume that the selected operating speed gives
+$\operatorname{rank}(\mathcal C_e)=5$. The SVD then supplies
+\begin{equation}
+T_{\rm svd}=[u_1,\ldots,u_5],\qquad
+w_{\rm svd}=u_6,\qquad
+\ker(\mathcal C_e^T)=\operatorname{span}\{w_{\rm svd}\}.
+\end{equation}
+
+We first construct an analytic candidate from the model equations,
+rather than assuming an expression for the singular vector:
+\begin{equation}
+\widetilde w=(0,0,0,\kappa,1,0)^T,
+\qquad
+\widetilde w^Ty=\kappa\theta+\sigma_3,
+\qquad y=x_{\rm lat}.
+\end{equation}
+Since $\kappa$ is constant and
+$\dot\sigma_3+\kappa\dot\theta=0$, direct multiplication gives
+\begin{equation}
+\widetilde w^TA_e=0,\qquad \widetilde w^TB_e=0,
+\qquad \widetilde w^T\mathcal C_e=0.
+\end{equation}
+Normalize this candidate by defining
+\begin{equation}
+\eta=\sqrt{1+\kappa^2},\qquad
+\boxed{w_e=\frac{\widetilde w}{\eta}
+=\frac{1}{\eta}(0,0,0,\kappa,1,0)^T.}
+\end{equation}
+
+Since $\widetilde w^T\mathcal C_e=0$ should only have one solution $\widetilde w_e$ direction for the assumed rank-four controllability, this analytic candidate must be correct up to a sign. 
+
+\subsection{Explicit initial state and target selection}
+
+Fix $V$, the desired lean $\theta_e$, and the initial reference heading
+$\psi_{e0}$ (for example, $\psi_{e0}=\psi(0)$).
+For each candidate yaw rate $\Omega$, define
+\begin{equation}
+G_T=G_\ell+Rm_rg,\qquad H=L+R^2m_r,\qquad
+r_e(\Omega)=\frac{G_T\theta_e+HV\Omega}{gm_r},\qquad
+F_e(\Omega)=m_r(g\theta_e+RV\Omega).
+\end{equation}
+The initial state and the initial point of the reference trajectory are
+\begin{equation}
+y_0=\begin{bmatrix}
+\sigma_1(0)\\\sigma_r(0)\\r(0)\\\theta(0)\\\sigma_3(0)\\\psi(0)
+\end{bmatrix},\qquad
+y_e(\theta_e,\Omega,V)=\begin{bmatrix}
+0\\0\\r_e(\Omega)\\\theta_e\\\Omega\\\psi_{e0}
+\end{bmatrix}.
+\end{equation}
+Thus, explicitly,
+\begin{equation}
+\boxed{y_0-y_e=\begin{bmatrix}
+\sigma_1(0)\\
+\sigma_r(0)\\
+r(0)-\dfrac{G_T\theta_e+HV\Omega}{gm_r}\\
+\theta(0)-\theta_e\\
+\sigma_3(0)-\Omega\\
+\psi(0)-\psi_{e0}
+\end{bmatrix}.}
+\end{equation}
+Choose $\Omega$ by solving the SVD compatibility condition
+\begin{equation}
+\boxed{h(\Omega)=w_e(\Omega)^T
+[y_0-y_e(\theta_e,\Omega,V)]=0.}
+\end{equation}
+Here the notation $w_e(\Omega)$ follows the general turning design.
+For the present fixed straight-rolling linearization, however,
+$A_e$, $B_e$, and $w_e$ are independent of the candidate $\Omega$.
+Substitution therefore gives
+\begin{equation}
+h(\Omega)=\frac{\kappa[\theta(0)-\theta_e]+\sigma_3(0)-\Omega}{\eta},
+\qquad
+\boxed{\Omega_e=\sigma_3(0)+\kappa[\theta(0)-\theta_e].}
+\end{equation}
+The other initial components do not enter this compatibility condition
+because their coefficients in $w_e$ vanish; they still enter the feedback.
+
+At the selected root, let $r_e=r_e(\Omega_e)$ and $F_e=F_e(\Omega_e)$.
+Define
+\begin{equation}
+\psi_r(t)=\psi_{e0}+\Omega_e t,\qquad
+y_r(t)=\begin{bmatrix}0&0&r_e&\theta_e&\Omega_e&\psi_r(t)\end{bmatrix}^T,
+\qquad e=y-y_r(t),\qquad \delta F=F-F_e.
+\end{equation}
+This is a relative equilibrium, not a constant state when $\Omega_e\ne0$.
+It satisfies the linear dynamics, so
+\begin{equation}
+\dot e=A_e e+B_e\delta F,\qquad
+w_e^Te(t)=w_e^Te(0)=0.
+\end{equation}
+
+\subsection{An analytic orthonormal basis for the controllable subspace}
+
+An explicit orthonormal complement of $w_e$ is
+\begin{equation}
+\boxed{
+T=\begin{bmatrix}
+1&0&0&0&0\\
+0&1&0&0&0\\
+0&0&1&0&0\\
+0&0&0&1/\eta&0\\
+0&0&0&-\kappa/\eta&0\\
+0&0&0&0&1
+\end{bmatrix}.}
+\end{equation}
+Direct calculation verifies
+\begin{equation}
+T^TT=I_5,\qquad T^Tw_e=0,\qquad
+TT^T=I_6-w_ew_e^T=T_{\rm svd}T_{\rm svd}^T.
+\end{equation}
+Thus $T$ spans the same controllable subspace as $T_{\rm svd}$.
+It is an analytic choice of basis, not generally the individual left
+singular vectors. There exists an orthogonal $O\in\mathbb R^{5\times5}$
+such that $T=T_{\rm svd}O$. Using either basis with consistently
+transformed cost weights gives the same lifted LQR feedback.
+
+The projected errors are explicitly
+\begin{equation}
+\boxed{z=T^Te=\begin{bmatrix}
+\sigma_1\\\sigma_r\\r-r_e\\
+\bigl[(\theta-\theta_e)-\kappa(\sigma_3-\Omega_e)\bigr]/\eta\\
+\psi-\psi_r(t)
+\end{bmatrix}.}
+\end{equation}
+On the compatible subspace,
+\begin{equation}
+\sigma_3-\Omega_e=-\kappa(\theta-\theta_e),\qquad
+e=Tz,\qquad z_4=\eta(\theta-\theta_e).
+\end{equation}
+Define $\alpha=(G_\ell-LV\kappa)/I_\ell$. The reduced model is
+\begin{equation}
+\dot z=A_cz+B_c\delta F.
+\end{equation}
+\begin{equation}
+A_c=T^TA_eT=
+\begin{bmatrix}
+-B_RR^2/I_\ell&-B_RR/I_\ell&-gm_r/I_\ell&\alpha/\eta&0\\
+-B_RR/m_r&-B_R/m_r&0&(-g+RV\kappa)/\eta&0\\
+R&1&0&0&0\\
+\eta&0&0&0&0\\
+0&0&0&-\kappa/\eta&0
+\end{bmatrix},\qquad
+B_c=\begin{bmatrix}R/I_\ell\\1/m_r\\0\\0\\0\end{bmatrix}.
+\end{equation}
+If compatibility is not imposed, write $e=Tz+w_e\zeta$, where
+$\zeta=w_e^Te$ is constant. The projected equation then also contains
+$T^TA_ew_e\zeta$; dropping this term does not remove the tracking mismatch.
+
+\subsection{LQR and explicit feedback force}
+
+Use the original lateral cost in the stated six-state order:
+\begin{equation}
+Q_{\rm lat}=\operatorname{diag}(2,2,20,20,1,0.5),\qquad \rho_F=0.1.
+\end{equation}
+For the analytic orthonormal basis above,
+\begin{equation}
+\boxed{Q_c=T^TQ_{\rm lat}T
+=\operatorname{diag}\left(2,2,20,
+\frac{20+\kappa^2}{1+\kappa^2},0.5\right).}
+\end{equation}
+Minimize $\int_0^\infty(z^TQ_cz+\rho_F\delta F^2)\,dt$.
+Compute the continuous-time LQR gain for the reduced model:
+\begin{equation}
+K_c=\operatorname{lqr}(A_c,B_c,Q_c,\rho_F)
+=(k_1,k_2,k_3,k_4,k_5).
+\end{equation}
+The lifted gain is explicitly
+\begin{equation}
+K_{\rm lat}=K_cT^T
+=\begin{bmatrix}k_1&k_2&k_3&k_4/\eta&-\kappa k_4/\eta&k_5\end{bmatrix}.
+\end{equation}
+Consequently,
+\begin{equation}
+\boxed{\begin{aligned}
+F(t)={}&m_r(g\theta_e+RV\Omega_e)
+-k_1\sigma_1-k_2\sigma_r-k_3(r-r_e)\\
+&-\frac{k_4}{\eta}
+\bigl[(\theta-\theta_e)-\kappa(\sigma_3-\Omega_e)\bigr]
+-k_5[\psi-\psi_{e0}-\Omega_e t].
+\end{aligned}}
+\end{equation}
+On the compatible subspace this simplifies to
+\begin{equation}
+\boxed{\begin{aligned}
+F(t)={}&m_r(g\theta_e+RV\Omega_e)
+-k_1\sigma_1-k_2\sigma_r\\
+&-k_3\left(r-\frac{G_T\theta_e+HV\Omega_e}{gm_r}\right)
+-\eta k_4(\theta-\theta_e)
+-k_5[\psi-\psi_{e0}-\Omega_e t].
+\end{aligned}}
+\end{equation}
+The gains $k_j$ are computed numerically from LQR.
+
+
+\section{Balancing control without $\psi$ feedback}
+\label{sec:balance-no-heading}
+
+For balancing only, omit the heading $\psi$ from the feedback state.
+
+\subsection{Five-state model and controllability}
+Define
+\begin{equation}
+y_b=(\sigma_1,\sigma_r,r,\theta,\sigma_3)^T,\qquad
+\dot y_b=A_b y_b+B_bF,
+\end{equation}
+where
+\begin{equation}
+A_b=\begin{bmatrix}
+-B_RR^2/I_\ell&-B_RR/I_\ell&-gm_r/I_\ell&G_\ell/I_\ell&LV/I_\ell\\
+-B_RR/m_r&-B_R/m_r&0&-g&-RV\\
+R&1&0&0&0\\
+1&0&0&0&0\\
+-\kappa&0&0&0&0
+\end{bmatrix},\qquad
+B_b=\begin{bmatrix}R/I_\ell\\1/m_r\\0\\0\\0\end{bmatrix}.
+\end{equation}
+
+\begin{equation}
+w_b=\frac{1}{\eta}(0,0,0,\kappa,1)^T,\qquad
+w_b^TA_b=0,\qquad w_b^TB_b=0.
+\end{equation}
+The controllability matrix still has rank four.
+
+\subsection{Compatible balancing target}
+For a prescribed lean $\theta_e$, write the initial and candidate target
+states explicitly:
+\begin{equation}
+y_{b0}=\begin{bmatrix}
+\sigma_1(0)\\\sigma_r(0)\\r(0)\\\theta(0)\\\sigma_3(0)
+\end{bmatrix},\qquad
+y_{be}(\Omega)=\begin{bmatrix}
+0\\0\\(G_T\theta_e+HV\Omega)/(gm_r)\\\theta_e\\\Omega
+\end{bmatrix}.
+\end{equation}
+Use the same left-nullspace target-selection condition:
+\begin{equation}
+\begin{aligned}
+0=h_b(\Omega)
+&=w_b^T[y_{b0}-y_{be}(\Omega)]\\
+&=\frac{\kappa[\theta(0)-\theta_e]+\sigma_3(0)-\Omega}{\eta}.
+\end{aligned}
+\end{equation}
+Thus
+\begin{equation}
+\begin{aligned}
+\Omega_e&=\sigma_3(0)+\kappa[\theta(0)-\theta_e],\\
+r_e&=\frac{G_T\theta_e+HV\Omega_e}{gm_r},\\
+F_e&=m_r(g\theta_e+RV\Omega_e).
+\end{aligned}
+\end{equation}
+
+
+\subsection{Analytic four-state reduction}
+Let $e_b=y_b-y_{be}(\Omega_e)$ and $\delta F=F-F_e$.
+An analytic orthonormal basis of $w_b^\perp$ is
+\begin{equation}
+T_b=\begin{bmatrix}
+1&0&0&0\\0&1&0&0\\0&0&1&0\\
+0&0&0&1/\eta\\0&0&0&-\kappa/\eta
+\end{bmatrix},\qquad
+T_b^TT_b=I_4,\qquad T_bT_b^T=I_5-w_bw_b^T.
+\end{equation}
+
+Transformation though $T_b$ gives the four-state reduced model with full rank controllability.
+
+\subsection{Balancing LQR and force input}
+
+After transformation, the reduced model is
+\begin{equation}
+\dot z_b=A_{bc}z_b+B_{bc}\delta F,\qquad
+A_{bc}=T_b^TA_bT_b,\qquad B_{bc}=T_b^TB_b.
+\end{equation}
+The reduced cost is
+\begin{equation}
+Q_{bc}=T_b^TQ_bT_b=\operatorname{diag}\left(2,2,20,\frac{20+\kappa^2}{1+\kappa^2}\right),\qquad
+Q_b=\operatorname{diag}(2,2,20,20,1).
+\end{equation}
+
+Recompute the four-state LQR gain:
+\begin{equation}
+K_{bc}=\operatorname{lqr}(A_{bc},B_{bc},Q_{bc},\rho_F)
+=(\ell_1,\ell_2,\ell_3,\ell_4).
+\end{equation}
+
+\begin{equation}
+\begin{aligned}
+F(t)=F_e-K_{bc}z_b
+={}&F_e-\ell_1\sigma_1-\ell_2\sigma_r-\ell_3(r-r_e)\\
+&-\frac{\ell_4}{\eta}
+[(\theta-\theta_e)-\kappa(\sigma_3-\Omega_e)].
+\end{aligned}
+\end{equation}
+Replace the terms, it becomes
+\begin{equation}
+\begin{aligned}
+F(t)={}&m_r(g\theta_e+RV\Omega_e)
+-\ell_1\sigma_1-\ell_2\sigma_r\\
+&-\ell_3\left(r-\frac{G_T\theta_e+HV\Omega_e}{gm_r}\right)
+-\eta\ell_4(\theta-\theta_e).
+\end{aligned}
+\end{equation}
