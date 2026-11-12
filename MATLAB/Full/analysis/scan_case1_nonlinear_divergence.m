@@ -1,4 +1,6 @@
-function study = scan_case1_nonlinear_divergence()
+function study = scan_case1_nonlinear_divergence(save_figures)
+% Figures stay in MATLAB unless export is explicitly enabled.
+if nargin<1, save_figures=false; end
 % Scan initial forward speeds for actual nonlinear tilt-stop divergence.
 % A run is classified as divergent only if it reaches the 80 deg tilt event.
 root = fileparts(fileparts(mfilename('fullpath')));
@@ -110,13 +112,16 @@ legend(ax,{'minimum speed','maximum speed'},'Location','best');
 out=fullfile(root,'analysis','case1_nonlinear_divergence_scan.mat');
 save(out,'study');
 figFile=fullfile(root,'analysis','case1_nonlinear_divergence_scan.png');
-exportgraphics(fig,figFile,'Resolution',200);
+if save_figures
+    exportgraphics(fig,figFile,'Resolution',200);
+end
 if any([summary.diverged])
     fprintf('At least one nonlinear run reached the 80 deg tilt event.\n');
 else
     fprintf('No run reached the 80 deg tilt event in the scanned range and duration.\n');
 end
-fprintf('Saved data: %s\nSaved plot: %s\n',out,figFile);
+fprintf('Saved data: %s\n',out);
+if save_figures, fprintf('Saved plot: %s\n',figFile); end
 end
 
 function row=run_one(v0,p,c,cfg)

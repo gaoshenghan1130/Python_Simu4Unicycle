@@ -1,4 +1,6 @@
-function results = critical_speed_control_study()
+function results = critical_speed_control_study(save_figures)
+% Figures stay in MATLAB unless export is explicitly enabled.
+if nargin<1, save_figures=false; end
 % Critical-speed comparison for progressively added lateral feedback.
 % The linearization is evaluated at upright straight rolling.
 
@@ -97,16 +99,16 @@ end
 plot_control_pair(results(1), results(2), ...
     'Effect of rod-centering feedback', ...
     fullfile(root,'analysis','critical_speed_rod_unfixed_vs_centered.png'), ...
-    [1.2 5.0],[-0.02 0.04]);
+    [1.2 5.0],[-0.02 0.04],save_figures);
 plot_control_pair(results(2), results(3), ...
     'Effect of adding lean-angle feedback', ...
     fullfile(root,'analysis','critical_speed_theta_feedback_comparison.png'), ...
-    [1.2 8.0],[-0.35 0.35]);
+    [1.2 8.0],[-0.35 0.35],save_figures);
 save(fullfile(root,'analysis','critical_speed_control_results.mat'),'results','cfg','p');
 
 end
 
-function plot_control_pair(a,b,figure_title,output_file,x_limits,y_limits)
+function plot_control_pair(a,b,figure_title,output_file,x_limits,y_limits,save_figures)
 fig=figure('Color','w','Position',[120 120 950 620]);
 ax=axes(fig); hold(ax,'on'); grid(ax,'on'); box(ax,'on');
 plot(ax,a.speed_grid,a.alpha_grid,'LineWidth',1.8,'DisplayName',a.name);
@@ -120,8 +122,10 @@ ylabel(ax,'Dominant dynamic Re(\lambda) (1/s)');
 title(ax,figure_title);
 subtitle(ax,'Zoomed near the boundary; larger positive growth rates are clipped.');
 legend(ax,'Location','best');
-exportgraphics(fig,output_file,'Resolution',200);
-fprintf('Saved comparison plot: %s\n',output_file);
+if save_figures
+    exportgraphics(fig,output_file,'Resolution',200);
+    fprintf('Saved comparison plot: %s\n',output_file);
+end
 end
 
 function mark_boundaries(ax,row)

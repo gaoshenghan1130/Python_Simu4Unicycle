@@ -1,4 +1,6 @@
-function plot_pole_tolerance_summary(out)
+function plot_pole_tolerance_summary(out,save_figures)
+% Figures stay in MATLAB unless export is explicitly enabled.
+if nargin<2, save_figures=false; end
 % Finite-horizon screening map; no assertion of asymptotic stability.
 z=load(fullfile(out,'experiments.mat'),'summary','p');T=z.summary;
 for speed=unique(T.speed)'
@@ -13,12 +15,14 @@ for speed=unique(T.speed)'
    else,C(i,j)=1;labels{i,j}='Residual at 30 s';end
   end
  end
- fig=figure('Visible','off','Position',[50 50 1150 650]);imagesc(C,[0 2]);
+ fig=figure('Position',[50 50 1150 650]);imagesc(C,[0 2]);
  colormap([0.97 0.70 0.68;1 0.91 0.63;0.69 0.88 0.76]);
  for i=1:numel(values),for j=1:numel(scales),text(j,i,labels{i,j},'HorizontalAlignment','center','FontSize',10);end,end
  set(gca,'XTick',1:numel(scales),'XTickLabel',compose('-%g',scales),'YTick',1:numel(values),'YTickLabel',compose('%g',values),'FontSize',11);
  xlabel('Lateral pole center [1/s]');ylabel('Initial theta [deg]');
  title(sprintf('Initial lean tolerance | v = %g m/s | mr = %g kg | b = %g',speed,z.p.mr,z.p.BR));
- exportgraphics(fig,fullfile(out,sprintf('v_%g_tolerance.png',speed)),'Resolution',150);close(fig);
+ if save_figures
+     exportgraphics(fig,fullfile(out,sprintf('v_%g_tolerance.png',speed)),'Resolution',150);
+ end
 end
 end

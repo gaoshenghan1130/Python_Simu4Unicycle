@@ -1,6 +1,8 @@
 % Ideal centered locked rod: nonlinear vs exact linear solution.
 % Run this file directly. No Symbolic/Control System Toolbox is needed.
 clear; clc;
+save_figures=false; % Set true to export PNG files.
+
 here=fileparts(mfilename('fullpath')); addpath(here);
 p=fixed_rod_setup();
 p.BP=0; % Closed-form spectrum assumes no wheel/body viscous damping.
@@ -48,7 +50,9 @@ for k=1:4, subplot(2,2,k); xlabel('Time [s]'); grid on; legend('show','Location'
 fprintf('\nCritical speed = %.9f m/s (lateral oscillatory threshold only).\n',s0.critical_speed);
 out=fullfile(here,'results'); if ~exist(out,'dir'), mkdir(out); end
 save(fullfile(out,'fixed_rod_results.mat'),'results');
-exportgraphics(gcf,fullfile(out,'fixed_rod_simulation.png'),'Resolution',160);
+if save_figures
+    exportgraphics(gcf,fullfile(out,'fixed_rod_simulation.png'),'Resolution',160);
+end
 function [value,isterminal,direction]=stop_at_lean(~,z,limit)
 value=limit-abs(z(6)); isterminal=1; direction=-1;
 end

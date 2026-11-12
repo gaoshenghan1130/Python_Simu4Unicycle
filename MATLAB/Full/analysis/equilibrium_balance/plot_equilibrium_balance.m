@@ -1,4 +1,5 @@
-function plot_equilibrium_balance(report,showFigures)
+function plot_equilibrium_balance(report,showFigures,save_figures)
+if nargin<3,save_figures=false;end
 % One figure per speed; includes all requested initial cases and models.
 if nargin<2,showFigures=true;end
 visibility='off';if showFigures,visibility='on';end
@@ -25,7 +26,9 @@ for speed=unique(report.metrics.speed)'
  legend(ax(1),'Location','best','Interpreter','none');
  title(tl,sprintf('Equilibrium feedback: v=%g m/s, initial lean=%g deg, rho_F=%g', ...
        speed,report.leanDeg,report.rho));
- exportgraphics(f,fullfile(report.output_dir,sprintf('comparison_v_%g.png',speed)),'Resolution',160);
+ if save_figures
+     exportgraphics(f,fullfile(report.output_dir,sprintf('comparison_v_%g.png',speed)),'Resolution',160);
+ end
  if ~showFigures,close(f);end
 end
 end

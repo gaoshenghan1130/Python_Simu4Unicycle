@@ -1,4 +1,6 @@
-function validation = plot_critical_speed_control_study(input_speeds, test_duration)
+function validation = plot_critical_speed_control_study(input_speeds, test_duration, save_figures)
+% Figures stay in MATLAB unless export is explicitly enabled.
+if nargin<3, save_figures=false; end
 %PLOT_CRITICAL_SPEED_CONTROL_STUDY Simulate and plot Case 1 at chosen speeds.
 %
 % Quick start (speed column in m/s):
@@ -121,6 +123,8 @@ end
 xlabel(ax4,'Time (s)'); ylabel(ax4,'Forward speed (m/s)'); title(ax4,'Forward speed');
 
 output_png = fullfile(analysis_dir, 'critical_speed_control_study.png');
-exportgraphics(fig, output_png, 'Resolution',200);
-fprintf('Plot saved to: %s\n', output_png);
+if save_figures
+    exportgraphics(fig, output_png, 'Resolution',200);
+    fprintf('Plot saved to: %s\n', output_png);
+end
 end

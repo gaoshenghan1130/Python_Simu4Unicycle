@@ -1,4 +1,6 @@
-function run_pole_tolerance_study(reuse_saved)
+function run_pole_tolerance_study(reuse_saved,save_figures)
+% Figures stay in MATLAB unless export is explicitly enabled.
+if nargin<2, save_figures=false; end
 if nargin<1,reuse_saved=false;end
 % Recompute the rolling Jacobian at each speed; vary lateral poles only.
 root=fileparts(fileparts(mfilename('fullpath')));addpath(genpath(root));
@@ -45,7 +47,7 @@ for speed=[2.375 1]
   for value=[1 5 10],run_case('chi',value,scale);end
  end
  for group={'theta','r','chi'}
-  name=group{1};fig=figure('Visible','off','Position',[30 30 max(1500,350*numel(scales)) 850]);
+  name=group{1};fig=figure('Position',[30 30 max(1500,350*numel(scales)) 850]);
   colors=lines(7);
   for col=1:numel(scales)
    ids=find(cellfun(@(z)z.speed==speed && z.scale==scales(col) && strcmp(z.group,name),records));
@@ -63,13 +65,15 @@ for speed=[2.375 1]
   end
   unit='deg';if strcmp(name,'r'),unit='m';end
   sgtitle(sprintf('Initial %s [%s] | v = %g m/s | mr = %g kg | b = %g',name,unit,speed,p.mr,p.BR));
-  exportgraphics(fig,fullfile(out,sprintf('v_%g_%s.png',speed,name)),'Resolution',150);close(fig);
+  if save_figures
+      exportgraphics(fig,fullfile(out,sprintf('v_%g_%s.png',speed,name)),'Resolution',150);
+  end
  end
 end
 summary=struct2table([records{:}]);writetable(summary,fullfile(out,'summary.csv'));
 fid=fopen(fullfile(out,'summary.json'),'w');fprintf(fid,'%s',jsonencode([records{:}],PrettyPrint=true));fclose(fid);
 save(fullfile(out,'experiments.mat'),'all_runs','summary','p','s','c','d','decisions');
-plot_pole_tolerance_summary(out);
+plot_pole_tolerance_summary(out,save_figures);
 fid=fopen(fullfile(out,'decisions.txt'),'w');fprintf(fid,'%s\n',decisions{:});fclose(fid);
  function score=test_theta(scale)
   score=0;

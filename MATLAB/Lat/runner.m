@@ -1,7 +1,8 @@
 clc;
 clear;
 close all;
-addpath("model/","controller/","plotter/","simulation/","param/")
+project_root=fileparts(mfilename('fullpath'));
+addpath(fullfile(project_root,'model'),fullfile(project_root,'analysis','controller'),fullfile(project_root,'plotter'),fullfile(project_root,'simulation'),fullfile(project_root,'param'));
 
 %% Choose simulation setting
 paramset = SegwayParamset();

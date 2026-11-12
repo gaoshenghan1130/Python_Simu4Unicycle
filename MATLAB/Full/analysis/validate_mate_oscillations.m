@@ -1,4 +1,6 @@
-function validate_mate_oscillations()
+function validate_mate_oscillations(save_figures)
+% Figures stay in MATLAB unless export is explicitly enabled.
+if nargin<1, save_figures=false; end
 % Long-horizon validation of candidates from run_mate_oscillation_study.
 root=fileparts(fileparts(mfilename('fullpath')));addpath(genpath(root));
 out=fullfile(root,'results','mate_oscillation_study');
@@ -50,12 +52,16 @@ labs={'theta [deg]','r [m]','gamma [deg]','Forward speed [m/s]','F [N]','M2 [N m
 for k=1:6
     subplot(3,2,k);plot(r.t,vals(:,k),'LineWidth',1);grid on;ylabel(labs{k});xlabel('Time [s]');
 end
-exportgraphics(f,fullfile(out,'candidate_120s.png'),'Resolution',140);
+if save_figures
+    exportgraphics(f,fullfile(out,'candidate_120s.png'),'Resolution',140);
+end
 f=figure('Position',[50 50 1100 750],'Name','Candidate oscillation frequencies');
 subplot(2,1,1);plot(r.t,r.X(:,7)*180/pi,'LineWidth',1.2);xlim([0 30]);ylabel('theta [deg]');xlabel('Time [s]');grid on;
 [freq,power]=spectrum(r);subplot(2,1,2);semilogy(freq,power/max(power),'LineWidth',1.2);xlim([0 1.5]);ylim([1e-6 1.2]);grid on;
 xlabel('Frequency [Hz]');ylabel('Normalized roll-rate power');
-exportgraphics(f,fullfile(out,'candidate_spectrum.png'),'Resolution',140);
+if save_figures
+    exportgraphics(f,fullfile(out,'candidate_spectrum.png'),'Resolution',140);
+end
 fprintf('Long-horizon and refinement validation completed.\n');
 end
 

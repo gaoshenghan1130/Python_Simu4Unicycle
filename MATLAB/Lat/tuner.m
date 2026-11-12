@@ -1,6 +1,7 @@
 clc;
 close all;
-addpath("controller/","model/","param/","paramTune/","plotter/","simulation/");
+project_root=fileparts(mfilename('fullpath'));
+addpath(fullfile(project_root,'model'),fullfile(project_root,'analysis','controller'),fullfile(project_root,'plotter'),fullfile(project_root,'simulation'),fullfile(project_root,'param'),fullfile(project_root,'paramTune'));
 
 initParam = SegwayParamset();
 %% Set Mode and Target Value inside paramset to drive the simulator

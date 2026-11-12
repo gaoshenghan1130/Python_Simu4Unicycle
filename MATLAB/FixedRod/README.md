@@ -14,6 +14,6 @@ addpath('/Users/gaoshenghan/Desktop/Matlab_Simu4Unicycle/MATLAB/FixedRod');
 test_fixed_rod
 ```
 
-仿真结果和图片写入本目录 `results/`。当前目录的同名 main 可能与 Full 的 `run_simulation.m` 冲突，请用编辑器打开这里的文件运行，或使用绝对路径 `run(...)`。
+仿真数值结果写入本目录 `results/`，图片仅显示；顶部设 `save_figures=true` 才导出 PNG。当前目录的同名 main 可能与 Full 的 `run_simulation.m` 冲突，请用编辑器打开这里的文件运行，或使用绝对路径 `run(...)`。
 
 推导见 [FixedRod_Model_Derivation.md](../../Derivation/FixedRod/FixedRod_Model_Derivation.md)。

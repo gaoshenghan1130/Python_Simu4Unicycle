@@ -38,3 +38,8 @@ velocity_comparison.png
 *.blg
 
 MATLAB/Full/results/allowable_theta_vs_speed/study.mat
+
+# Generated MATLAB figures (keep documentation and raw experimental assets).
+MATLAB/**/results/**/*.png
+MATLAB/**/results/**/*.fig
+MATLAB/friction/friction_output/

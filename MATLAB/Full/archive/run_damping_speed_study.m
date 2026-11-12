@@ -5,6 +5,7 @@ addpath(fullfile(project_root,'config'),fullfile(project_root,'model'), ...
     fullfile(project_root,'analysis'));
 output_dir=fullfile(project_root,'results','damping_speed_study');
 if ~exist(output_dir,'dir'), mkdir(output_dir); end
+save_figures=false; % Set true to export PNG files.
 speeds=[0.2 0.5 1 2 3 4 5 6];
 p=model_parameters(); p.BR=6.5;
 d=pole_placement_settings(); d.lateral_states='balance_chi';
@@ -91,7 +92,9 @@ for scenario=1:2
     end
     subplot(4,1,1); legend('show','Location','eastoutside');
     subplot(4,1,4); xlabel('Time [s]');
-    exportgraphics(f,fullfile(output_dir,sprintf('scenario_%d.png',scenario)),'Resolution',140);
+    if save_figures
+        exportgraphics(f,fullfile(output_dir,sprintf('scenario_%d.png',scenario)),'Resolution',140);
+    end
 end
 fprintf('Saved study to %s\n',output_dir);
 

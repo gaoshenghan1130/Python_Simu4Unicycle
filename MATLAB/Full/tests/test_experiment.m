@@ -99,6 +99,7 @@ function e=test_settings()
 % Fixed stationary fixture, independent of the user's current rolling preset.
 e=experiment_settings();
 e.design.lateral_states='balance';
+e.design.method='acker';
 e.design.lateral=[-0.8 -0.95 -1.05 -1.2];
 e.sweep.enabled=false;
 end

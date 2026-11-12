@@ -1,4 +1,6 @@
-function run_report_experiments()
+function run_report_experiments(save_figures)
+% Figures stay in MATLAB unless export is explicitly enabled.
+if nargin<1, save_figures=false; end
 % Comparable figures for FullModelPolePlacement_withDamping.md.
 root=fileparts(fileparts(mfilename('fullpath')));addpath(genpath(root));addpath(fullfile(root,'archive'));
 out=fullfile(root,'..','..','Derivation','FullModel','figures','pole_placement_report');
@@ -16,14 +18,16 @@ for j=1:4
  pp=p;pp.mr=masses(j);pp.BR=damping(j);ss=s;ss.theta0=pi/180;
  cc=c;cc.mode='lateral_open_loop';cc.kp_gamma=3;cc.kd_gamma=0.8;
  r=integrate(pp,cc,ss);all_runs{end+1}=r;records{end+1}=measure(r,sprintf('open_%d',j),pp.mr,pp.BR);
- fig=figure('Visible','off','Position',[50 50 1150 900]);
+ fig=figure('Position',[50 50 1150 900]);
  vals=[r.X(:,7)*180/pi,r.X(:,9),r.X(:,10)*180/pi,r.X(:,6)*180/pi,r.U];
  labs={'theta [deg]','r [m]','gamma [deg]','psi [deg]','F [N]','M2 [N m]'};
  for k=1:6
   subplot(3,2,k);plot(r.t,vals(:,k),'LineWidth',1.1);grid on;ylabel(labs{k});xlabel('Time [s]');xlim([0 s.t_end]);
  end
  sgtitle(sprintf('Lateral open loop + gamma PD | mr = %g kg | b = %g',pp.mr,pp.BR));
- exportgraphics(fig,fullfile(out,sprintf('open_%d.png',j)),'Resolution',140);close(fig);
+ if save_figures
+     exportgraphics(fig,fullfile(out,sprintf('open_%d.png',j)),'Resolution',140);
+ end
  fprintf('Open mr=%g: thetaMax=%g gammaMax=%g\n',pp.mr,max(abs(vals(:,1))),max(abs(vals(:,3))));
 end
 groups={}; % Closed-loop experiments are handled by the focused study below.
@@ -31,8 +35,8 @@ records=[records{:}];summary=struct2table(records);
 writetable(summary,fullfile(out,'summary.csv'));
 fid=fopen(fullfile(out,'summary.json'),'w');fprintf(fid,'%s',jsonencode(records,PrettyPrint=true));fclose(fid);
 save(fullfile(out,'experiments.mat'),'all_runs','summary','p','s','c','d','groups');
-fprintf('Open-loop figures/data saved to %s\n',out);
-run_pole_tolerance_study();
+fprintf('Open-loop data saved to %s\n',out);
+run_pole_tolerance_study(false,save_figures);
 end
 function r=integrate(p,c,s)
 x=initial_state(s,p);control=@(t,x)controller_output(t,x,p,c);
